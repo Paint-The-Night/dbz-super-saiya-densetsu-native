@@ -208,3 +208,9 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $028302 | words | Specialty-id → stream pointer table (bank 2) | 00:87F9 |
 | $0283C4 | long pairs | Per-index source word + VRAM dest word | 00:87F9 |
 | $028470 | long pairs | Alt DMA length/source when stream idx ≥ $26 | 00:87F9 |
+
+| DP+$73 / $75 | long | APU transfer source pointer (bank in $75) | 04:8490, 04:85F1 |
+| 1300 | word/byte | APU transfer phase; 0 triggers bank bump on size-0 | 04:8490, 04:85F1 |
+| $2140–$2143 | APU ports | Handshake/transfer mailbox ($BBAA / $CC / data) | 04:84E2, 04:85F1 |
+| $4210 | PPU status | BIT NMI-flag wait during APU handshake | 04:84E2 |
+| $4200 | NMITIMEN | Cleared around APU boot transfer | 04:8490 |

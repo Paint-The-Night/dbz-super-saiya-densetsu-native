@@ -330,10 +330,17 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
   if(bank == 4) {
     if(c->pc >= 0x844a && c->pc <= 0x848f) {
       done = specialty_sync_844a_step(c, c->pc); x->display_control_steps += done;
+    } else if((c->pc >= 0x8490 && c->pc <= 0x84b8) ||
+              (c->pc >= 0x84b9 && c->pc <= 0x84e1)) {
+      done = apu_boot_8490_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0x84e2 && c->pc <= 0x8513) {
+      done = apu_handshake_84e2_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0x85a1 && c->pc <= 0x85b5) {
       done = specialty_cmd_85a1_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0x85b6 && c->pc <= 0x85f0) {
       done = slot_alloc_85b6_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0x85f1 && c->pc <= 0x8673) {
+      done = apu_transfer_85f1_step(c, c->pc); x->display_control_steps += done;
     }
     return done;
   }

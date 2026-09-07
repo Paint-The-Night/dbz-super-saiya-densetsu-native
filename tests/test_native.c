@@ -2732,7 +2732,84 @@ int main(int argc,char **argv) {
     require(ca.pc==0x9000 && ca.sp==0x202,"87f9 full RTL");
   }
 
-        Cpu guard=make_cpu(a,0x82a3,0);guard.d=true;
+
+  /* $0484E2: $2140 already $BBAA → NMI wait + RTL */
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0x84e2,0), cb=make_cpu(b,0x84e2,0);
+    ca.k=cb.k=4; ca.db=cb.db=0; ca.xf=cb.xf=false;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+    word(a,0x2140,0xbbaa); word(b,0x2140,0xbbaa);
+    a->ram[0x4210]=b->ram[0x4210]=0x80; /* BIT sets N so BPL falls through */
+    unsigned steps=0;
+    while(!(ca.pc==0x9000 && ca.k==0) && steps++<20) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected 84e2 early");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0x9000 && ca.sp==0x202,"84e2 early RTL");
+  }
+  /* $0485F1: wait BBAA, send $CC, size-0 block with $1300!=0 → PLP/RTL */
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0x85f1,0), cb=make_cpu(b,0x85f1,0);
+    ca.k=cb.k=4; ca.db=cb.db=0; ca.xf=cb.xf=false;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+    word(a,0x2140,0xbbaa); word(b,0x2140,0xbbaa);
+    /* DP+$73 long pointer → $000700 (size word 0, addr word 0) */
+    a->ram[0x73]=b->ram[0x73]=0x00; a->ram[0x74]=b->ram[0x74]=0x07; a->ram[0x75]=b->ram[0x75]=0x00;
+    a->ram[0x1300]=b->ram[0x1300]=0x01; /* skip bank-advance */
+    unsigned steps=0;
+    while(!(ca.pc==0x9000 && ca.k==0) && steps++<200) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected 85f1 zero-block");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0x9000 && ca.sp==0x202,"85f1 zero-block RTL");
+  }
+  /* $048490: through native 84E2/85F1 (ROM seeds $188000 size 0 → bank bump) */
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0x8490,0), cb=make_cpu(b,0x8490,0);
+    ca.k=cb.k=4; ca.db=cb.db=0; ca.xf=cb.xf=false;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+    word(a,0x2140,0xbbaa); word(b,0x2140,0xbbaa);
+    a->ram[0x4210]=b->ram[0x4210]=0x80;
+    /* size 0 at mirrored $xx8000 */
+    a->ram[0x8000]=b->ram[0x8000]=0; a->ram[0x8001]=b->ram[0x8001]=0;
+    a->ram[0x8002]=b->ram[0x8002]=0; a->ram[0x8003]=b->ram[0x8003]=0;
+    unsigned steps=0;
+    while(!(ca.pc==0x9000 && ca.k==0) && steps++<400) {
+      bool in_boot = ca.k==4 && ((ca.pc>=0x8490 && ca.pc<=0x84b8) ||
+                                 (ca.pc>=0x84e2 && ca.pc<=0x8513) ||
+                                 (ca.pc>=0x85f1 && ca.pc<=0x8673));
+      a->count=b->count=0;
+      if(in_boot) require(dbz_native_step(&ca,stats),"expected 8490 full");
+      else lakesnes_cpu_runOpcode(&ca);
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0x9000 && ca.sp==0x202,"8490 full RTL");
+    require(a->ram[0x2140]==0 && a->ram[0x2141]==0 && a->ram[0x2142]==0 && a->ram[0x2143]==0,
+            "8490 cleared APU ports");
+    require(a->ram[0x1300]==1 && a->ram[0x75]==0x19,"8490 bank-advanced once");
+  }
+  /* $0484B9: same shape with $19B8A4 seed; stop at JSL $85F1 after handshake */
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0x84b9,1), cb=make_cpu(b,0x84b9,1);
+    ca.k=cb.k=4; ca.db=cb.db=0; ca.xf=cb.xf=false;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+    word(a,0x2140,0xbbaa); word(b,0x2140,0xbbaa);
+    a->ram[0x4210]=b->ram[0x4210]=0x80;
+    unsigned steps=0;
+    while(!(ca.pc==0x85f1 && ca.k==4) && steps++<80) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected 84b9 to 85f1");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0x85f1 && ca.k==4,"84b9 reached 85F1");
+    require(getword(a,0x73)==0xb8a4 && a->ram[0x75]==0x19,"84b9 seeded 19:B8A4");
+    require(getword(a,0x1300)==0 && a->ram[0x4200]==0,"84b9 cleared 1300/4200");
+  }
+
+          Cpu guard=make_cpu(a,0x82a3,0);guard.d=true;
   a->count=0;require(!dbz_native_step(&guard,stats)&&a->count==0,"decimal mode falls back without effects");
   guard.d=false;guard.intWanted=true;
   require(!dbz_native_step(&guard,stats)&&a->count==0,"pending interrupt falls back without effects");
@@ -2742,6 +2819,6 @@ int main(int argc,char **argv) {
   require(!dbz_native_step(&guard,stats)&&a->count==0,"controller emulation guard");
   guard=make_cpu(a,0x82fb,0);guard.mf=false;
   require(!dbz_native_step(&guard,stats)&&a->count==0,"scroll accumulator width guard");
-  printf("PASS: native equivalence suites including EBC1/85A1/844A/87E9/87F9/877E/8D4E/8DFA/8DAC/EAD4/EB52/8F46/8C84/E8EE/BB46/EFD7/EFEA/EFFD/F00F/E36B/E32E/EF29/E419/E42A/E461/E4D1/E4F4/E942/8B7A/8E96/A6CB/9255/E837/FC33/E340/9485/94E7/FC47/FC74/FBDA/849C/85E9/FB8D/EF11/F089/F14D/89B8/D812/9BBF/8D2B/85B6/C559/C68C/90E6/946F and 8DFE-to-F14D; CPU state and bus sequences match.\n");
+  printf("PASS: native equivalence suites including 8490/84B9/84E2/85F1/EBC1/85A1/844A/87E9/87F9/877E/8D4E/8DFA/8DAC/EAD4/EB52/8F46/8C84/E8EE/BB46/EFD7/EFEA/EFFD/F00F/E36B/E32E/EF29/E419/E42A/E461/E4D1/E4F4/E942/8B7A/8E96/A6CB/9255/E837/FC33/E340/9485/94E7/FC47/FC74/FBDA/849C/85E9/FB8D/EF11/F089/F14D/89B8/D812/9BBF/8D2B/85B6/C559/C68C/90E6/946F and 8DFE-to-F14D; CPU state and bus sequences match.\n");
   free(stats);free(a);free(b);free(rom);return 0;
 }
