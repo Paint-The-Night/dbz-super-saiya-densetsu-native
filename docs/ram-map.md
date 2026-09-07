@@ -121,3 +121,12 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | 0704 / 0706 | word / byte | Map base offset / bank for tile pointer | 06:F089 |
 | 0707 / 0709 | word / byte | Secondary map base / bank after ×2 index | 06:F089 |
 | $06F1EE,X | word table | Bank-6 tile→pointer table (X = tile×2) | 06:F089 |
+
+| 01BD | byte | Specialty actor/attr id written $9E/$9F when $01A0 is $15/$14 | 8B7A |
+| 0D87 | byte | Cleared during $01A0 specialty setup | 8B7A |
+| 01BB | byte | Actor-slot base index; $94E7 uses <<5 as X stride | 94E7 |
+| 0B00,X / 7E3800,X | byte | Actor slot flags cleared by $94E7 unless $0B01,X==$54 | 94E7 |
+| DP+$37..$3A | bytes | BG1 scroll shadows cleared by $94B2 / $9485 tail | 9485 |
+| 121F | byte | Set to $07 by scene specialty $FC47 | FC47 |
+| 01E2 / 01D2 | bytes | Cleared on $FC74 success path before SEC/RTL | FC74 |
+| 166C | word | Compared to #$0800 by $E340 early gate | E340 |

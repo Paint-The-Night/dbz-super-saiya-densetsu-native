@@ -52,8 +52,8 @@ compiled replacements run alongside an interpreter for unrecovered code.
 | 00:8DFE–8E25 | Scene setup chaining 88AE / 8921 / 8908 / 86C8 | 40 | 13 |
 | 00:8D2B–8D4D | Hardware multiply ×5 then dual table lookup | 35 | 17 |
 | 00:8E76–8E93 | Scene-mode[1] scroll snapshot; call 8D2B; JMP 8B7A | 32 | 11 |
-| 00:8B7A–8BD0 | Scene-mode[0] prefix: first JSLs, scroll snap, palette clear | 88 | 30 |
-| 00:8E96–8ED2 | Scene-mode[2] prefix: HDMA mask, scroll snapshot sibling of 8E76 | 62 | 24 |
+| 00:8B7A–8C10 | Scene-mode[0]: JSLs, scroll snap, palette clear, JSR $94E7/$9485, $01A0 specialty | 152 | 53 |
+| 00:8E96–8F12 | Scene-mode[2]: HDMA mask, scroll snap, PPU preset, JSL $8887 | 128 | 50 |
 | 00:90C1–90E5 | Scene graphics: decompress, rearrange, DMA, palette | 37 | 13 |
 | 00:90E6–9101 | DMA0 from $7E9000 using length DP+$89 | 28 | 11 |
 | 00:946F–9484 | Palette words from $08DD44 via 88C5 | 22 | 9 |
@@ -70,7 +70,12 @@ compiled replacements run alongside an interpreter for unrecovered code.
 | 03:FBDA–FC32 | Scene-entry deeper mode-0/2 handlers through RTL | 89 | 36 |
 | 00:849C–8586 (+85B9/85CF) | Actor→OAM writeback + alt entries | 285 | 156 |
 | 00:85E9–869D (+85EF) | Parallel screen-space actor→OAM writeback | 181 | 102 |
-| **Total** | **Sixty-four complete routines plus a reset prefix** | **3476** | **1683** |
+| 00:9485–94E6 | Mode-0 PPU register preset; $94B2 clears scrolls/windows then RTS | 98 | 38 |
+| 00:94E7–9518 | Actor-slot clear loop ($01BB<<5 stride) unless type $54 | 50 | 27 |
+| 03:FC47–FC73 | Scene specialty: HDMA mask, flag clears, helper JSLs, RTL | 45 | 16 |
+| 03:FC74–FC92 | Scene-entry predicate CLC/SEC RTL on $1648/$01D8/$15FA | 31 | 16 |
+| 03:E340–E34C | Early gate: CMP $166C vs #$0800; RTL when below | 13 | 6 |
+| **Total** | **Sixty-nine complete routines plus a reset prefix** | **3843** | **1835** |
 
 These are original code-region sizes, not C source sizes. Unsupported CPU modes
 and interrupts fall back to the baseline. The program accepts only the pinned
@@ -111,8 +116,8 @@ independent hardware-fidelity comparison with another emulator is still needed.
 ## How far from complete?
 
 The project now has a reproducible scoped tracker. The pinned static-analysis
-worklist contains 13,237 instruction variants. Of those, 1683 instruction sites
-are covered by reviewed C replacements: **12.71% of the discovered worklist**.
+worklist contains 13,237 instruction variants. Of those, 1835 instruction sites
+are covered by reviewed C replacements: **13.86% of the discovered worklist**.
 Run `python3 tools/progress.py` to recalculate this figure. If the local
 SNESRecomp manifest exists, the script sums it directly; a public clone uses the
 same checked-in probe total.
@@ -181,7 +186,7 @@ Next work is a reproducible actual battle and larger game-logic translations.
 `src/native_video.inc` reconstructs the complete frame graphics upload routine,
 unused-sprite hiding, and palette-shadow clearing. The new `ram-map.md` records
 the verified shadow buffers, flags, and eight-byte VRAM queue entry layout.
-The current inventory is 3476 ROM bytes / 1683 instruction sites.
+The current inventory is 3843 ROM bytes / 1835 instruction sites.
 
 The isolated suite now also covers interrupt-enable, VRAM queue find/mark,
 PPU multiply, DMA1 setup, pointer resolve, palette-shadow copy, actor-table
