@@ -264,3 +264,15 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | 0190,X / 01BB | bytes | Compacted type list / recount after shift | 03:FD64 |
 | 0C40 | byte | Cleared by $FD64 continue path | 03:FD64 |
 | $4212 | STAT78 | BIT bit7 wait in $A95B | 00:A95B |
+
+| $7E8000,X | words | Filled #$00FF by $B6ED | 01:B6ED |
+| $0800,X queue | bytes | $B700 seeds occ/$6000/$8000/$7E/#$1000 | 01:B700 |
+| 0D9B | byte | If negative, $F802 rewrites #$40 and RTL | 01:F802 |
+| $0E14,Y / $0E16,Y | word/byte | Slot prep outputs from $F802←$0594A1 | 01:F802 |
+| 0173 bit7 / 1303 | bit/byte | Cleared / set #$82 by $F375 success | 03:F375 |
+| 07BD / 07BE / 07BF / 07C0 | bytes/word | Snapshot of $1648/$01D8/$01D9/$01DC by $FE0E | 03:FE0E |
+| 01D9 | byte | Cleared by $FE0E after snapshot | 03:FE0E |
+| DP+$76..$7B | bytes | Mode-7 A/D/X/Y source for $A961→$211B–$2120 | 00:A961 |
+| $211B–$2120 | M7 regs | Matrix + center written by $A961 | 00:A961 |
+| $420C / $0062 / $0055 | HDMA/scratch | Cleared by frame-tail $8674 | 04:8674 |
+| 133D / 12DC | bytes | Cleared by $8674 before DP+$24→$25 | 04:8674 |
