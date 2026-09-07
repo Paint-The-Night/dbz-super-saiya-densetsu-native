@@ -301,6 +301,56 @@ int main(int argc,char **argv) {
     unsigned steps=0; while(ca.pc!=0x9000 && steps++<10) { a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected increment helper instruction"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b); }
     require(ca.pc==0x9000 && ca.sp==0x202,"increment helper return");
   }
+  /* $00:98D5-$990E: eight actor-slot dispatch loop. Exercise the empty
+   * loop, all selector branches, both JSL boundaries, and the final epilogue
+   * without pretending to execute either callee in this unit test. */
+  for(unsigned slot=0;slot<8;slot++) for(unsigned selector=0;selector<4;selector++) for(unsigned variant=0;variant<4;variant++) {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0x98d5,selector),cb=make_cpu(b,0x98d5,selector);
+    ca.db=cb.db=0;ca.xf=cb.xf=false;ca.k=cb.k=variant&1?0x80:0;
+    ca.dp=cb.dp=variant&2?0x101:0;word(a,0x200,0x8fff);word(b,0x200,0x8fff);
+    a->ram[0x0d00+slot*4]=b->ram[0x0d00+slot*4]=0x80;
+    a->ram[0x0d01+slot*4]=b->ram[0x0d01+slot*4]=(uint8_t)(0x30+selector);
+    a->ram[ca.dp+0x61]=b->ram[ca.dp+0x61]=(selector==1);
+    a->ram[0x0d86]=b->ram[0x0d86]=(selector==2)?0x80:0;
+    a->ram[0x0d85]=b->ram[0x0d85]=(uint8_t)(selector*0x31);
+    unsigned steps=0;
+    while(ca.pc!=0xc95a && steps++<120) {
+      a->count=b->count=0;require(dbz_native_step(&ca,stats),"expected 98d5 selector instruction");
+      lakesnes_cpu_runOpcode(&cb);compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0xc95a && ca.k==1,"98d5 first JSL boundary");
+    require(a->ram[ca.dp+4]==(uint8_t)(0x30+selector),"98d5 actor field");
+    require(a->ram[ca.dp+3]==(uint8_t)((selector==1||selector==2)?(0x80&0x0f):((selector*0x31<<1)&0x0f)),"98d5 selector result");
+  }
+  memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+  Cpu ca=make_cpu(a,0x98d5,0),cb=make_cpu(b,0x98d5,0);ca.db=cb.db=0;ca.xf=cb.xf=false;
+  word(a,0x200,0x8fff);word(b,0x200,0x8fff);unsigned steps=0;
+  while(ca.pc!=0x9000 && steps++<180) {
+    a->count=b->count=0;require(dbz_native_step(&ca,stats),"expected 98d5 empty-slot instruction");
+    lakesnes_cpu_runOpcode(&cb);compare(&ca,&cb,a,b);
+  }
+  require(ca.pc==0x9000 && ca.x==0x20 && ca.sp==0x202,"98d5 empty loop return");
+  memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+  ca=make_cpu(a,0x98fd,0);cb=make_cpu(b,0x98fd,0);ca.db=cb.db=0;ca.xf=cb.xf=false;ca.sp=cb.sp=0x1fd;
+  a->ram[0x1fe]=b->ram[0x1fe]=0x34;a->ram[0x1ff]=b->ram[0x1ff]=0x12;a->ram[0x715]=b->ram[0x715]=0xff;
+  word(a,0x200,0x8fff);word(b,0x200,0x8fff);steps=0;
+  while(ca.pc!=0xc91f && steps++<12) {
+    a->count=b->count=0;require(dbz_native_step(&ca,stats),"expected 98d5 second-boundary instruction");
+    lakesnes_cpu_runOpcode(&cb);compare(&ca,&cb,a,b);
+  }
+  require(ca.pc==0xc91f && ca.k==1 && ca.x==0x1234,"98d5 second JSL boundary");
+  require(a->ram[0x715]==0,"98d5 dirty-flag overflow");
+  memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+  ca=make_cpu(a,0x9905,0);cb=make_cpu(b,0x9905,0);ca.db=cb.db=0;ca.xf=cb.xf=false;ca.x=cb.x=0x1c;
+  word(a,0x200,0x8fff);word(b,0x200,0x8fff);steps=0;
+  while(ca.pc!=0x9000 && steps++<12) {
+    a->count=b->count=0;require(dbz_native_step(&ca,stats),"expected 98d5 epilogue instruction");
+    lakesnes_cpu_runOpcode(&cb);compare(&ca,&cb,a,b);
+  }
+  require(ca.pc==0x9000 && ca.x==0x20 && ca.sp==0x202,"98d5 epilogue return");
+  ca=make_cpu(a,0x98d5,0);ca.e=true;a->count=0;require(!dbz_native_step(&ca,stats)&&a->count==0,"98d5 emulation guard");
+  ca=make_cpu(a,0x98d5,0);ca.mf=false;a->count=0;require(!dbz_native_step(&ca,stats)&&a->count==0,"98d5 accumulator guard");
   for(unsigned occupied=0;occupied<8;occupied++) {
     memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
     Cpu ca=make_cpu(a,0x8711,occupied), cb=make_cpu(b,0x8711,occupied); ca.db=cb.db=0; ca.xf=cb.xf=false;

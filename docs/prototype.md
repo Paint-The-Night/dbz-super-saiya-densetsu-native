@@ -90,7 +90,8 @@ checkpoint variants. Python 3 is required for this integration test.
 For the longer takeoff/flight/event route, use `--frames 5700 --inputs
 tests/flight-event.inputs` with a fresh dump directory and no checkpoint.
 This returns to the flying overworld menu after an event dialogue; it does not
-yet provide a battle test. To branch from the opening's frame-3000 checkpoint,
+itself provide a battle test. See `battle-route.md` for the reset-to-battle test.
+To branch from the opening's frame-3000 checkpoint,
 use `--load-checkpoint .../final.dbzstate --frames 600 --inputs
 tests/kame-flight.inputs`. These replay files target the exact starting states
 described in their comments.

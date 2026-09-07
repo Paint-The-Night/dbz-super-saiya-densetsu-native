@@ -1599,6 +1599,51 @@ static void load_a_abs_x8(Cpu *c, uint16_t base) {
   (void)fetch(c); (void)fetch(c); idle(c); sample_interrupt(c);
   set_a8(c, c->read(c->mem, (((uint32_t)c->db << 16) + base + c->x) & 0xffffffu));
 }
+
+/* $00:98D5-$990E: walk the eight actor slots and dispatch occupied entries.
+ * The two JSL callees remain ordinary dispatch targets; this slice only
+ * reconstructs the loop and its selector/stack behavior. */
+static bool actor_slot_dispatch_98d5_step(Cpu *c, uint16_t pc) {
+  static const uint16_t sites[] = {
+    0x98d5,0x98d8,0x98db,0x98dd,0x98de,0x98e1,0x98e3,0x98e5,
+    0x98e7,0x98ea,0x98ec,0x98ef,0x98f0,0x98f2,0x98f5,0x98f7,
+    0x98f9,0x98fd,0x9900,0x9901,0x9905,0x9906,0x9907,0x9908,
+    0x9909,0x990c,0x990e
+  };
+  if((c->k & 0x7fu) != 0 || c->e || c->xf || c->d || !c->mf) return false;
+  bool known = false;
+  for(unsigned i=0;i<sizeof(sites)/sizeof(sites[0]);i++) known |= pc == sites[i];
+  if(!known) return false;
+  (void)fetch(c);
+  switch(pc) {
+    case 0x98d5: index_constant(c,false,0); break;
+    case 0x98d8: load_a_abs_x8(c,0x0d00); break;
+    case 0x98db: branch_to(c,!c->n,0x9905); break;
+    case 0x98dd: phx16(c); break;
+    case 0x98de: load_a_abs_x8(c,0x0d01); break;
+    case 0x98e1: store_dp(c,0x04,true); break;
+    case 0x98e3: load_dp8(c,0x61); break;
+    case 0x98e5: branch_to(c,!c->z,0x98f2); break;
+    case 0x98e7: video_load(c,0x0d86,false); break;
+    case 0x98ea: branch_to(c,c->n,0x98f2); break;
+    case 0x98ec: video_load(c,0x0d85,false); break;
+    case 0x98ef: asl_a8(c); break;
+    case 0x98f0: branch_to(c,true,0x98f5); break;
+    case 0x98f2: load_a_abs_x8(c,0x0d00); break;
+    case 0x98f5: and_constant8(c,0x0f); break;
+    case 0x98f7: store_dp(c,0x03,true); break;
+    case 0x98f9: jsl_to(c,0xc95a); break;
+    case 0x98fd: inc_abs8_native(c,0x0715); break;
+    case 0x9900: plx16(c); break;
+    case 0x9901: jsl_to(c,0xc91f); break;
+    case 0x9905: case 0x9906: case 0x9907: case 0x9908:
+      implied(c); c->x++; zn(c,c->x,false); break;
+    case 0x9909: cpx16_constant(c,0x0020); break;
+    case 0x990c: branch_to(c,!c->c,0x98d8); break;
+    case 0x990e: return_long(c); break;
+  }
+  return true;
+}
 static void store_a_long_x8(Cpu *c, uint32_t base) {
   (void)fetch(c); (void)fetch(c); (void)fetch(c); sample_interrupt(c);
   c->write(c->mem, (base + c->x) & 0xffffffu, (uint8_t)c->a);
