@@ -28,7 +28,37 @@ compiled replacements run alongside an interpreter for unrecovered code.
 | 00:8AFC–8B06 | Add 0x20 to X coordinate | 11 | 7 |
 | 00:8B07–8B0D | Increment Y six times | 7 | 7 |
 | 00:8B0E–8B14 | Increment X six times | 7 | 7 |
-| **Total** | **Twenty-two complete routines plus a reset prefix** | **619** | **292** |
+| 00:8275–8281 | Enable NMI/auto-joypad interrupt bits | 13 | 7 |
+| 00:86FC–8710 | Mode-7 hardware multiply readback | 21 | 9 |
+| 00:8711–8723 | Find free VRAM DMA queue entry | 19 | 13 |
+| 00:8724–8731 | Clear next VRAM queue occupied flag | 14 | 12 |
+| 00:8887–88AD | Program DMA1 VRAM transfer from DP+$02 | 39 | 16 |
+| 00:88C5–88D7 | Copy long-pointer words into palette shadow | 19 | 11 |
+| 00:88EA–8907 | Resolve 3-byte pointer table; set palette dirty | 30 | 18 |
+| 00:8AD6–8AE4 | Actor-type table lookup into $0B01,Y | 15 | 7 |
+| 00:8B15–8B26 | Clear $0D00 stride-4 control bytes | 18 | 10 |
+| 00:88D8–88E9 | Preset pointer $06F945; resolve via 88EA | 18 | 8 |
+| 00:88AE–88C4 | Preset pointer $06F876; indices; fall into 88C5 | 23 | 9 |
+| 00:8908–8920 | Copy $09D200 words into palette shadow $02C0 | 25 | 11 |
+| 00:86C8–86FB | Actor attribute nibble into $0D85 | 52 | 26 |
+| 00:8732–877D | CPU word copy from [DP+$00] into VRAM | 76 | 37 |
+| 00:8921–8953 | Dual palette load via 88D8 into $0300 | 51 | 23 |
+| 00:8B28–8B53 | HDMA-mask clear, wipe $0800 queue, scene dispatch | 44 | 20 |
+| 00:8996–89AB | Fill $7E4800 with $FFFF; clear $0D7D | 22 | 10 |
+| 00:9B36–9B78 | VRAM queue enqueue from [DP+$04] descriptor | 67 | 29 |
+| 00:9B79–9BBE | VRAM queue enqueue from DP+$00/$02; advance $0713 | 70 | 29 |
+| 00:8954–8995 | Palette index load via $06F945 / 8AF1 into $0300 | 66 | 37 |
+| 00:8E26–8E75 | Scene/actor pointer build into $0702–$0706 | 80 | 39 |
+| 00:8DFE–8E25 | Scene setup chaining 88AE / 8921 / 8908 / 86C8 | 40 | 13 |
+| 00:8D2B–8D4D | Hardware multiply ×5 then dual table lookup | 35 | 17 |
+| 00:8E76–8E93 | Scene-mode[1] scroll snapshot; call 8D2B; JMP 8B7A | 32 | 11 |
+| 00:90C1–90E5 | Scene graphics: decompress, rearrange, DMA, palette | 37 | 13 |
+| 00:90E6–9101 | DMA0 from $7E9000 using length DP+$89 | 28 | 11 |
+| 00:946F–9484 | Palette words from $08DD44 via 88C5 | 22 | 9 |
+| 00:C559–C5EC | Bit-packed decompress into $7E9000 | 148 | 83 |
+| 00:C68C–C706 | 16-byte tile rearrange via DP scratch + MVN | 123 | 57 |
+| 04:85B6–85F0 | Eight-slot ID allocator / clearer at $1309 | 59 | 33 |
+| **Total** | **Fifty-two complete routines plus a reset prefix** | **1925** | **920** |
 
 These are original code-region sizes, not C source sizes. Unsupported CPU modes
 and interrupts fall back to the baseline. The program accepts only the pinned
@@ -69,8 +99,8 @@ independent hardware-fidelity comparison with another emulator is still needed.
 ## How far from complete?
 
 The project now has a reproducible scoped tracker. The pinned static-analysis
-worklist contains 13,237 instruction variants. Of those, 180 instruction sites
-are covered by reviewed C replacements: **1.36% of the discovered worklist**.
+worklist contains 13,237 instruction variants. Of those, 920 instruction sites
+are covered by reviewed C replacements: **6.95% of the discovered worklist**.
 Run `python3 tools/progress.py` to recalculate this figure. If the local
 SNESRecomp manifest exists, the script sums it directly; a public clone uses the
 same checked-in probe total.
@@ -139,11 +169,12 @@ Next work is a reproducible actual battle and larger game-logic translations.
 `src/native_video.inc` reconstructs the complete frame graphics upload routine,
 unused-sprite hiding, and palette-shadow clearing. The new `ram-map.md` records
 the verified shadow buffers, flags, and eight-byte VRAM queue entry layout.
-The current inventory is 619 ROM bytes / 292 instruction sites.
+The current inventory is 807 ROM bytes / 920 instruction sites.
 
-The isolated suite now covers 399,426 cases, including 1,024 graphics-upload
-variants and 513 cases each for sprite cleanup and palette clearing, plus 512
-display-control, 512 transition-initializer, 512 transition-finalizer, 32 dispatch, 512 mosaic, and 512 timing cases. The upload
+The isolated suite now also covers interrupt-enable, VRAM queue find/mark,
+PPU multiply, DMA1 setup, pointer resolve, palette-shadow copy, actor-table
+lookup, and $0D00 clear helpers, in addition to the prior RNG/controller/scroll/
+graphics/display-transition cases. The upload
 tests vary queue lengths, palette dirtiness, HDMA control, direct-page alignment,
 and ROM/data-bank mirrors, comparing every CPU field and ordered bus transaction.
 Release and ASan/UBSan suites pass, including checkpoint equivalence.

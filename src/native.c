@@ -266,8 +266,16 @@ static bool reset_step(Cpu *c, uint16_t pc) {
 }
 
 bool dbz_native_step(Cpu *c, DbzExecution *x) {
-  if(c->resetWanted || c->waiting || c->stopped || c->intWanted || (c->k & 0x7f)) return false;
+  uint8_t bank = (uint8_t)(c->k & 0x7fu);
+  if(c->resetWanted || c->waiting || c->stopped || c->intWanted || (bank != 0 && bank != 4))
+    return false;
   bool done = false;
+  if(bank == 4) {
+    if(c->pc >= 0x85b6 && c->pc <= 0x85f0) {
+      done = slot_alloc_85b6_step(c, c->pc); x->display_control_steps += done;
+    }
+    return done;
+  }
   if(c->pc >= 0x8000 && c->pc <= 0x800d) {
     done = reset_step(c, c->pc); x->reset_steps += done;
   } else if(c->pc >= 0x828f && c->pc <= 0x82a2) {
@@ -284,7 +292,7 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
     done = sprite_tail_step(c, c->pc); x->sprite_steps += done;
   } else if(c->pc >= 0x86b6 && c->pc <= 0x86c7) {
     done = palette_clear_step(c, c->pc); x->palette_steps += done;
-  } else if((c->pc >= 0x8282 && c->pc <= 0x828e) || (c->pc >= 0x8460 && c->pc <= 0x8470)) {
+  } else if((c->pc >= 0x8275 && c->pc <= 0x828e) || (c->pc >= 0x8460 && c->pc <= 0x8470)) {
     done = display_control_step(c, c->pc); x->display_control_steps += done;
   } else if(c->pc >= 0x83e4 && c->pc <= 0x8401) {
     done = display_transition_init_step(c, c->pc); x->display_control_steps += done;
@@ -296,9 +304,62 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
     done = mosaic_step(c, c->pc); x->display_control_steps += done;
   } else if(c->pc >= 0x8402 && c->pc <= 0x8432) {
     done = transition_timing_step(c, c->pc); x->display_control_steps += done;
+  } else if(c->pc >= 0x86fc && c->pc <= 0x8710) {
+    done = ppu_multiply_step(c, c->pc); x->display_control_steps += done;
+  } else if(c->pc >= 0x8711 && c->pc <= 0x8723) {
+    done = vram_queue_find_step(c, c->pc); x->upload_steps += done;
+  } else if(c->pc >= 0x8724 && c->pc <= 0x8731) {
+    done = vram_queue_mark_step(c, c->pc); x->upload_steps += done;
+  } else if(c->pc >= 0x8887 && c->pc <= 0x88ad) {
+    done = vram_dma_setup_step(c, c->pc); x->upload_steps += done;
+  } else if(c->pc >= 0x86c8 && c->pc <= 0x86fb) {
+    done = attr_nibble_step(c, c->pc); x->display_control_steps += done;
+  } else if(c->pc >= 0x8732 && c->pc <= 0x877d) {
+    done = vram_cpu_copy_step(c, c->pc); x->upload_steps += done;
+  } else if(c->pc >= 0x88ae && c->pc <= 0x88c4) {
+    done = pointer_preset_88ae_step(c, c->pc); x->palette_steps += done;
+  } else if(c->pc >= 0x88c5 && c->pc <= 0x88d7) {
+    done = palette_copy_step(c, c->pc); x->palette_steps += done;
+  } else if(c->pc >= 0x88d8 && c->pc <= 0x88e9) {
+    done = pointer_preset_88d8_step(c, c->pc); x->palette_steps += done;
+  } else if(c->pc >= 0x88ea && c->pc <= 0x8907) {
+    done = pointer_resolve_step(c, c->pc); x->palette_steps += done;
+  } else if(c->pc >= 0x8908 && c->pc <= 0x8920) {
+    done = palette_rom_copy_step(c, c->pc); x->palette_steps += done;
+  } else if(c->pc >= 0x8921 && c->pc <= 0x8953) {
+    done = dual_palette_load_step(c, c->pc); x->palette_steps += done;
   } else if((c->pc >= 0x89ac && c->pc <= 0x89b7) ||
-            (c->pc >= 0x8af1 && c->pc <= 0x8b14)) {
+            (c->pc >= 0x8ad6 && c->pc <= 0x8ae4) ||
+            (c->pc >= 0x8af1 && c->pc <= 0x8b26)) {
     done = small_helper_step(c, c->pc); x->display_control_steps += done;
+  } else if(c->pc >= 0x8b28 && c->pc <= 0x8b51) {
+    done = hdma_queue_wipe_step(c, c->pc); x->upload_steps += done;
+  } else if(c->pc >= 0x8996 && c->pc <= 0x89ab) {
+    done = wram_fill_ffff_step(c, c->pc); x->palette_steps += done;
+  } else if(c->pc >= 0x9b36 && c->pc <= 0x9b78) {
+    done = vram_queue_enqueue_desc_step(c, c->pc); x->upload_steps += done;
+  } else if(c->pc >= 0x9b79 && c->pc <= 0x9bbe) {
+    done = vram_queue_enqueue_dp_step(c, c->pc); x->upload_steps += done;
+  } else if(c->pc >= 0x8954 && c->pc <= 0x8995) {
+    done = palette_index_load_step(c, c->pc); x->palette_steps += done;
+  } else if(c->pc >= 0x8e26 && c->pc <= 0x8e75) {
+    done = scene_pointer_build_step(c, c->pc); x->palette_steps += done;
+  } else if((c->pc >= 0x8dfe && c->pc <= 0x8e25)) {
+    done = scene_setup_8dfe_step(c, c->pc); x->palette_steps += done;
+  } else if(c->pc >= 0x8d2b && c->pc <= 0x8d4d) {
+    done = mul_table_8d2b_step(c, c->pc); x->display_control_steps += done;
+  } else if(c->pc >= 0x8e76 && c->pc <= 0x8e93) {
+    done = scene_path_8e76_step(c, c->pc); x->palette_steps += done;
+  } else if(c->pc >= 0x90c1 && c->pc <= 0x90e5) {
+    done = scene_gfx_90c1_step(c, c->pc); x->upload_steps += done;
+  } else if(c->pc >= 0x90e6 && c->pc <= 0x9101) {
+    done = dma_vram_from_7e9000_step(c, c->pc); x->upload_steps += done;
+  } else if(c->pc >= 0x946f && c->pc <= 0x9484) {
+    done = palette_dd44_step(c, c->pc); x->palette_steps += done;
+  } else if(c->pc >= 0xc559 && c->pc <= 0xc5ec) {
+    done = decompress_c559_step(c, c->pc); x->upload_steps += done;
+  } else if(c->pc >= 0xc68c && c->pc <= 0xc706) {
+    done = tile_rearrange_c68c_step(c, c->pc); x->upload_steps += done;
   }
   return done;
 }
