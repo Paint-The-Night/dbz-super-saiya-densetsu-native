@@ -20,10 +20,9 @@ static void record(Bus *b,uint32_t a,uint8_t v,uint8_t kind) {
 static uint8_t read_bus(void *mem,uint32_t address) {
   Bus *b=mem;uint8_t v;
   uint8_t bank=(uint8_t)(address>>16 & 0x7fu);
-  /* Bank 0: real ROM. Banks 2/3/4/6: real ROM for $02D812 / $03FB8D / $0485B6 / $06EF11+F14D.
-   * Bank 1 stays RAM-overlay so fixtures can stub $01C9F9 while natives cover $B61E/$C535.
+  /* Banks 0/1/2/3/4/6: real ROM at $8000+. Bank 1 unlocked with C9F9/B61E/C535 natives.
    * Other banks keep the RAM overlay so fixtures can plant stubs/tables. */
-  if((address & 0xffffu)>=0x8000 && (bank == 0 || bank == 2 || bank == 3 || bank == 4 || bank == 6)) {
+  if((address & 0xffffu)>=0x8000 && (bank == 0 || bank == 1 || bank == 2 || bank == 3 || bank == 4 || bank == 6)) {
     size_t off = (size_t)bank * 0x8000u + (address & 0x7fffu);
     v = b->rom[off];
   } else v=b->ram[address&65535];
@@ -2131,31 +2130,22 @@ int main(int argc,char **argv) {
   }
 
 
-  /* $008DAC: actor-slot walk; stub $01C9F9 RTL; native $8324/$8AF1 */
+  /* $008DAC: actor-slot walk; native $01C9F9/$8324/$8AF1 */
   for(unsigned av=0;av<4;av++) {
     memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
     Cpu ca=make_cpu(a,0x8dac,av), cb=make_cpu(b,0x8dac,av);
     ca.db=cb.db=0; ca.xf=cb.xf=false;
     word(a,0x200,0x8fff); word(b,0x200,0x8fff);
-    a->ram[0xc9f9]=b->ram[0xc9f9]=0x6b; /* bank-1 overlay RTL stub */
     for(unsigned slot=0;slot<9;slot++) {
       unsigned y = slot * 0x20u;
       a->ram[0x0b01+y]=b->ram[0x0b01+y]=(uint8_t)(1 + av + slot);
     }
     unsigned steps=0;
-    while(!(ca.pc==0x9000 && ca.k==0) && steps++<20000) {
-      bool in_8dac = ca.k==0 && ca.pc>=0x8dac && ca.pc<=0x8de3;
-      bool in_8324 = ca.k==0 && ca.pc>=0x8324 && ca.pc<=0x83cb;
-      bool in_8af1 = ca.k==0 && ca.pc>=0x8af1 && ca.pc<=0x8afb;
-      bool in_tail = ca.k==0 && ((ca.pc>=0x86a0 && ca.pc<=0x86c7) ||
-                                 (ca.pc>=0x8711 && ca.pc<=0x8731));
-      a->count=b->count=0;
-      if(in_8dac || in_8324 || in_8af1 || in_tail) require(dbz_native_step(&ca,stats),"expected 8dac");
-      else lakesnes_cpu_runOpcode(&ca);
+    while(!(ca.pc==0xc9f9 && ca.k==1) && steps++<80) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected 8dac to C9F9");
       lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
     }
-    require(ca.pc==0x9000 && ca.sp==0x202,"8dac RTL");
-    require(ca.y==0x0120,"8dac walked to Y=$0120");
+    require(ca.pc==0xc9f9 && ca.k==1,"8dac reached C9F9");
   }
   /* $06EAD4: selector paths to JSL $88EA (index!=3 via $02E44B) */
   {
@@ -2369,7 +2359,6 @@ int main(int argc,char **argv) {
     word(a,0x01aa,0x3333); word(b,0x01aa,0x3333);
     word(a,0x01ac,0x4444); word(b,0x01ac,0x4444);
     a->ram[0x0d59]=b->ram[0x0d59]=0x02; /* 8DF6[2]=08 */
-    a->ram[0xc535]=b->ram[0xc535]=0x6b; /* bank-1 overlay RTL — stop at JSL entry */
     unsigned steps=0;
     while(!(ca.pc==0xc535 && ca.k==1) && steps++<80) {
       a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected 8cb0");
@@ -2915,13 +2904,12 @@ int main(int argc,char **argv) {
   /* $008FB2: early JMP $9083 when $0C40 nonzero */
   {
     memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
-    Cpu ca=make_cpu(a,0x8fb6,0), cb=make_cpu(b,0x8fb6,0); /* skip JSL FD64 */
+    Cpu ca=make_cpu(a,0x8fd9,0), cb=make_cpu(b,0x8fd9,0); /* after unrecovered B6AC */
     ca.db=cb.db=0; ca.xf=cb.xf=false;
     word(a,0x200,0x8fff); word(b,0x200,0x8fff);
     a->ram[0x0c35]=b->ram[0x0c35]=0x00;
     a->ram[0x01d6]=b->ram[0x01d6]=0x00; /* BPL */
     a->ram[0x1648]=b->ram[0x1648]=0x80; /* BMI skip 01AE */
-    a->ram[0xb6ac]=b->ram[0xb6ac]=0x6b; /* bank1 overlay RTL */
     a->ram[0x01d7]=b->ram[0x01d7]=0x00; /* BPL → 8FE5 */
     a->ram[0x0c40]=b->ram[0x0c40]=0x01; /* nonzero → JMP 9083 */
     unsigned steps=0;
@@ -2941,7 +2929,6 @@ int main(int argc,char **argv) {
     ca.db=cb.db=0; ca.xf=cb.xf=false;
     word(a,0x200,0x8fff); word(b,0x200,0x8fff);
     a->ram[0x01bc]=b->ram[0x01bc]=0x01;
-    a->ram[0xfe4b]=b->ram[0xfe4b]=0x6b; /* bank1 overlay */
     unsigned steps=0;
     while(!(ca.pc==0xfe4b && ca.k==1) && steps++<40) {
       a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected 8ff1");
@@ -3135,6 +3122,70 @@ int main(int argc,char **argv) {
     require(getword(a,0x357e)==0,"b647 stopped below 0580");
   }
 
+  /* $01CAAB: queue slot fill at X */
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xcaab,0), cb=make_cpu(b,0xcaab,0);
+    ca.k=cb.k=1; ca.db=cb.db=0; ca.xf=cb.xf=false; ca.x=cb.x=0;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+    word(a,0x00,0x1234); word(b,0x00,0x1234);
+    word(a,0x0d77,0x9000); word(b,0x0d77,0x9000);
+    unsigned steps=0;
+    while(!(ca.pc==0x9000 && ca.k==0) && steps++<40) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected caab");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0x9000 && ca.sp==0x202,"caab RTL");
+    require(a->ram[0x0800]==0x80,"caab occupied");
+    require(getword(a,0x0801)==0x1234,"caab source");
+    require(getword(a,0x0803)==0x9000,"caab dest");
+    require(a->ram[0x0805]==0x7e,"caab bank");
+    require(getword(a,0x0806)==0x0100,"caab length");
+  }
+  /* $01CA98: seed decompress ptr until JSL $C559 */
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xca98,0), cb=make_cpu(b,0xca98,0);
+    ca.k=cb.k=1; ca.db=cb.db=0; ca.xf=cb.xf=false;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+    word(a,0x0d77,0x1234); word(b,0x0d77,0x1234);
+    a->ram[0x0d79]=b->ram[0x0d79]=0xab;
+    unsigned steps=0;
+    while(!(ca.pc==0xc559 && ca.k==0) && steps++<20) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected ca98");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0xc559 && ca.k==0,"ca98 reached C559");
+    require(getword(a,0x83)==0x1234 && a->ram[0x85]==0xab,"ca98 seeded ptr");
+  }
+  /* $01C9F9: prologue through bit-test until JSL $CA98 */
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xc9f9,0), cb=make_cpu(b,0xc9f9,0);
+    ca.k=cb.k=1; ca.db=cb.db=0; ca.xf=cb.xf=false; ca.x=cb.x=0;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+    word(a,0x12,0x0001); word(b,0x12,0x0001);
+    unsigned steps=0;
+    while(!(ca.pc==0xca98 && ca.k==1) && steps++<80) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected c9f9");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0xca98 && ca.k==1,"c9f9 reached CA98");
+  }
+  /* $01CA34: alt table path merges at shared body until JSL $CA98 */
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xca34,0), cb=make_cpu(b,0xca34,0);
+    ca.k=cb.k=1; ca.db=cb.db=0; ca.xf=cb.xf=false; ca.x=cb.x=0;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+    word(a,0x12,0x0002); word(b,0x12,0x0002);
+    unsigned steps=0;
+    while(!(ca.pc==0xca98 && ca.k==1) && steps++<80) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected ca34");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0xca98 && ca.k==1,"ca34 reached CA98");
+  }
           Cpu guard=make_cpu(a,0x82a3,0);guard.d=true;
   a->count=0;require(!dbz_native_step(&guard,stats)&&a->count==0,"decimal mode falls back without effects");
   guard.d=false;guard.intWanted=true;
@@ -3145,6 +3196,6 @@ int main(int argc,char **argv) {
   require(!dbz_native_step(&guard,stats)&&a->count==0,"controller emulation guard");
   guard=make_cpu(a,0x82fb,0);guard.mf=false;
   require(!dbz_native_step(&guard,stats)&&a->count==0,"scroll accumulator width guard");
-  printf("PASS: native equivalence suites including 8FB2/F021/F06F/8514/C535/B61E/B647/8490/84B9/84E2/85F1/EBC1/85A1/844A/87E9/87F9/877E/8D4E/8DFA/8DAC/EAD4/EB52/8F46/8C84/E8EE/BB46/EFD7/EFEA/EFFD/F00F/E36B/E32E/EF29/E419/E42A/E461/E4D1/E4F4/E942/8B7A/8E96/A6CB/9255/E837/FC33/E340/9485/94E7/FC47/FC74/FBDA/849C/85E9/FB8D/EF11/F089/F14D/89B8/D812/9BBF/8D2B/85B6/C559/C68C/90E6/946F and 8DFE-to-F14D; CPU state and bus sequences match.\n");
+  printf("PASS: native equivalence suites including 8FB2/F021/F06F/8514/C9F9/CA98/CAAB/CA34/C535/B61E/B647/8490/84B9/84E2/85F1/EBC1/85A1/844A/87E9/87F9/877E/8D4E/8DFA/8DAC/EAD4/EB52/8F46/8C84/E8EE/BB46/EFD7/EFEA/EFFD/F00F/E36B/E32E/EF29/E419/E42A/E461/E4D1/E4F4/E942/8B7A/8E96/A6CB/9255/E837/FC33/E340/9485/94E7/FC47/FC74/FBDA/849C/85E9/FB8D/EF11/F089/F14D/89B8/D812/9BBF/8D2B/85B6/C559/C68C/90E6/946F and 8DFE-to-F14D; CPU state and bus sequences match.\n");
   free(stats);free(a);free(b);free(rom);return 0;
 }

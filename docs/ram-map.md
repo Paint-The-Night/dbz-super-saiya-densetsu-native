@@ -239,3 +239,11 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | DP+$10 | byte | #$80/#$40 mask from $0061 for bit0 OR | 01:C535 |
 | 0D66 / $0061 | bytes | Early-exit / path select for $01B61E | 01:B61E |
 | $7E3000,X | words | Cleared or filled #$3D40 by $B61E/$B647 | 01:B61E |
+| 0D75 | byte | Cleared at end of $01C9F9 | 01:C9F9 |
+| 0D77 / 0D79 | word/byte | Gfx stream pointer (word + bank) for $C9F9/$CA98 | 01:C9F9 |
+| DP+$03 | byte | Nonzero → VRAM window $9100 else $9000 in $C9F9 | 01:C9F9 |
+| DP+$10 / $14 | bytes | Bitmask AND operands from tables in $C9F9 | 01:C9F9 |
+| DP+$12 | word | Actor type (from $8DAC) indexing $C9F9 tables | 01:C9F9 |
+| $02A3B4 / $02A552 | long | Stream pointer tables (word+bank) by type×3 | 01:C9F9 |
+| $02A57C / $02A595 | bytes | Bit fields vs $039B9B[type&7] | 01:C9F9 |
+| $0800,X queue | bytes | Filled by $CAAB (occ/src/dest/bank/len) | 01:CAAB |
