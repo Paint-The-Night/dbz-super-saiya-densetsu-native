@@ -2032,3 +2032,190 @@ static bool vram_queue_enqueue_tiled_step(Cpu *c, uint16_t pc) {
   }
   return true;
 }
+
+/* ---- $06F14D scroll clamp + $0089B8 actor field accumulate ---- */
+static void dec_a8(Cpu *c) {
+  implied(c); set_a8(c, (uint8_t)((uint8_t)c->a - 1u));
+}
+static void sbc8_constant(Cpu *c, uint8_t value) {
+  sample_interrupt(c); (void)fetch(c); sbc8_value(c, value);
+}
+static void cmp_dp8(Cpu *c, uint8_t offset) {
+  uint16_t address = dp_address(c, offset); sample_interrupt(c);
+  uint8_t value = c->read(c->mem, address);
+  uint8_t a = (uint8_t)c->a;
+  c->c = a >= value; zn(c, (uint8_t)(a - value), true);
+}
+static void adc_abs_x16(Cpu *c, uint16_t base) {
+  uint32_t address = video_address(c, base, true);
+  uint16_t value = c->read(c->mem, address); sample_interrupt(c);
+  value |= (uint16_t)c->read(c->mem, (address + 1) & 0xffffffu) << 8;
+  uint16_t old = c->a;
+  unsigned result = (unsigned)old + value + (c->c ? 1u : 0u);
+  c->v = (~(old ^ value) & (old ^ (uint16_t)result) & 0x8000u) != 0;
+  c->c = result > 0xffffu;
+  c->a = (uint16_t)result; zn(c, c->a, false);
+}
+static void adc_abs_x8(Cpu *c, uint16_t base) {
+  uint32_t address = video_address(c, base, true);
+  sample_interrupt(c);
+  uint8_t value = c->read(c->mem, address);
+  uint8_t old = (uint8_t)c->a;
+  unsigned sum = (unsigned)old + value + (c->c ? 1u : 0u);
+  c->v = ((~(old ^ value) & (old ^ (uint8_t)sum)) & 0x80u) != 0;
+  c->c = sum > 0xffu;
+  set_a8(c, (uint8_t)sum);
+}
+/* $06F14D: clamp BG scroll from $01A2/$01A4 using $0702/$0703 extents, then
+ * walk X=$22..0 calling $06EF11 + frame upload $008324; clear V scroll if $01A1
+ * negative. */
+static bool scroll_clamp_f14d_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7fu) != 0x06 || c->e || c->xf || c->d) return false;
+  if((pc == 0xf1c0 || pc == 0xf1c3 || pc == 0xf1d4 || pc == 0xf1d7) && c->mf) return false;
+  if((pc == 0xf14d || pc == 0xf150 || pc == 0xf151 || pc == 0xf153 || pc == 0xf156 ||
+      pc == 0xf157 || pc == 0xf159 || pc == 0xf15b || pc == 0xf15e || pc == 0xf160 ||
+      pc == 0xf162 || pc == 0xf164 || pc == 0xf166 || pc == 0xf168 || pc == 0xf16a ||
+      pc == 0xf16c || pc == 0xf16d || pc == 0xf16f || pc == 0xf171 || pc == 0xf173 ||
+      pc == 0xf175 || pc == 0xf178 || pc == 0xf179 || pc == 0xf17b || pc == 0xf17e ||
+      pc == 0xf17f || pc == 0xf181 || pc == 0xf183 || pc == 0xf186 || pc == 0xf188 ||
+      pc == 0xf18a || pc == 0xf18c || pc == 0xf18e || pc == 0xf190 || pc == 0xf192 ||
+      pc == 0xf194 || pc == 0xf195 || pc == 0xf197 || pc == 0xf199 || pc == 0xf19b ||
+      pc == 0xf19d || pc == 0xf19f || pc == 0xf1a1 || pc == 0xf1a3 || pc == 0xf1a5 ||
+      pc == 0xf1a7 || pc == 0xf1aa || pc == 0xf1ad || pc == 0xf1ae || pc == 0xf1b0 ||
+      pc == 0xf1b2 || pc == 0xf1b4 || pc == 0xf1b6 || pc == 0xf1b8 || pc == 0xf1ba ||
+      pc == 0xf1bc || pc == 0xf1be || pc == 0xf1ca || pc == 0xf1ce ||
+      pc == 0xf1d2 || pc == 0xf1de || pc == 0xf1df || pc == 0xf1e0 ||
+      pc == 0xf1e2 || pc == 0xf1e5 || pc == 0xf1e7 || pc == 0xf1e9 || pc == 0xf1eb) &&
+     !c->mf)
+    return false;
+  switch(pc) {
+    case 0xf14d: case 0xf150: case 0xf151: case 0xf153: case 0xf156: case 0xf157:
+    case 0xf159: case 0xf15b: case 0xf15e: case 0xf160: case 0xf162: case 0xf164:
+    case 0xf166: case 0xf168: case 0xf16a: case 0xf16c: case 0xf16d: case 0xf16f:
+    case 0xf171: case 0xf173: case 0xf175: case 0xf178: case 0xf179: case 0xf17b:
+    case 0xf17e: case 0xf17f: case 0xf181: case 0xf183: case 0xf186: case 0xf188:
+    case 0xf18a: case 0xf18c: case 0xf18e: case 0xf190: case 0xf192: case 0xf194:
+    case 0xf195: case 0xf197: case 0xf199: case 0xf19b: case 0xf19d: case 0xf19f:
+    case 0xf1a1: case 0xf1a3: case 0xf1a5: case 0xf1a7: case 0xf1aa: case 0xf1ad:
+    case 0xf1ae: case 0xf1b0: case 0xf1b2: case 0xf1b4: case 0xf1b6: case 0xf1b8:
+    case 0xf1ba: case 0xf1bc: case 0xf1be: case 0xf1c0: case 0xf1c2: case 0xf1c3:
+    case 0xf1c6: case 0xf1c8: case 0xf1ca: case 0xf1ce: case 0xf1d2: case 0xf1d4:
+    case 0xf1d6: case 0xf1d7: case 0xf1da: case 0xf1dc: case 0xf1de: case 0xf1df:
+    case 0xf1e0: case 0xf1e2: case 0xf1e5: case 0xf1e7: case 0xf1e9: case 0xf1eb:
+      break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0xf14d: video_load(c, 0x0702, false); break;
+    case 0xf150: case 0xf16c: case 0xf178: case 0xf194: dec_a8(c); break;
+    case 0xf151: case 0xf179: case 0xf1a1: store_dp(c, 0x00, true); break;
+    case 0xf153: video_load(c, 0x01a4, false); break;
+    case 0xf156: case 0xf17e: implied(c); c->c = true; break;
+    case 0xf157: sbc8_constant(c, 0x80); break;
+    case 0xf159: case 0xf168: case 0xf171: store_dp(c, 0x35, true); break;
+    case 0xf15b: video_load(c, 0x01a5, false); break;
+    case 0xf15e: case 0xf186: sbc8_constant(c, 0x00); break;
+    case 0xf160: branch_to(c, !c->c, 0xf16f); break;
+    case 0xf162: case 0xf18a: cmp_dp8(c, 0x00); break;
+    case 0xf164: branch_to(c, !c->c, 0xf173); break;
+    case 0xf166: case 0xf18e: byte_constant(c, 0xf8); break;
+    case 0xf16a: case 0xf192: load_dp8(c, 0x00); break;
+    case 0xf1b4: load_dp8(c, 0x36); break;
+    case 0xf16d: branch_to(c, true, 0xf173); break;
+    case 0xf16f: case 0xf197: byte_constant(c, 0x00); break;
+    case 0xf173: store_dp(c, 0x36, true); break;
+    case 0xf175: video_load(c, 0x0703, false); break;
+    case 0xf17b: video_load(c, 0x01a2, false); break;
+    case 0xf17f: sbc8_constant(c, 0x88); break;
+    case 0xf181: case 0xf190: case 0xf199: store_dp(c, 0x33, true); break;
+    case 0xf183: video_load(c, 0x01a3, false); break;
+    case 0xf188: branch_to(c, !c->c, 0xf197); break;
+    case 0xf18c: branch_to(c, !c->c, 0xf19b); break;
+    case 0xf195: branch_to(c, true, 0xf19b); break;
+    case 0xf19b: store_dp(c, 0x34, true); break;
+    case 0xf19d: case 0xf1b8: load_dp8(c, 0x33); break;
+    case 0xf19f: case 0xf1b0: and_constant8(c, 0xf8); break;
+    case 0xf1a3: load_dp8(c, 0x34); break;
+    case 0xf1a5: store_dp(c, 0x01, true); break;
+    case 0xf1a7: stz_abs8(c, 0x0800); break;
+    case 0xf1aa: index_constant(c, false, 0x0022); break;
+    case 0xf1ad: phx16(c); break;
+    case 0xf1ae: load_dp8(c, 0x35); break;
+    case 0xf1b2: store_dp(c, 0x02, true); break;
+    case 0xf1b6: store_dp(c, 0x03, true); break;
+    case 0xf1ba: and_constant8(c, 0x04); break;
+    case 0xf1bc: branch_to(c, c->z, 0xf1ca); break;
+    case 0xf1be: case 0xf1d2: set_m(c, false); break;
+    case 0xf1c0: load_dp16_to_a(c, 0x02); break;
+    case 0xf1c2: case 0xf1d6: implied(c); c->c = false; break;
+    case 0xf1c3: case 0xf1d7: adc16_constant(c, 0x0008); break;
+    case 0xf1c6: store_dp(c, 0x02, false); break;
+    case 0xf1c8: case 0xf1dc: set_m(c, true); break;
+    case 0xf1ca: jsl_to(c, 0xef11); break;
+    case 0xf1ce: jsl_to(c, 0x8324); break;
+    case 0xf1d4: load_dp16_to_a(c, 0x00); break;
+    case 0xf1da: store_dp(c, 0x00, false); break;
+    case 0xf1de: plx16(c); break;
+    case 0xf1df: implied(c); c->x--; zn(c, c->x, false); break;
+    case 0xf1e0: branch_to(c, !c->n, 0xf1ad); break;
+    case 0xf1e2: video_load(c, 0x01a1, false); break;
+    case 0xf1e5: branch_to(c, !c->n, 0xf1eb); break;
+    case 0xf1e7: stz_dp8(c, 0x35); break;
+    case 0xf1e9: stz_dp8(c, 0x36); break;
+    case 0xf1eb: return_long(c); break;
+  }
+  return true;
+}
+
+/* $0089B8: accumulate actor fields from [DP+$00],Y into $0B07,X stride; call
+ * $8A28 then $8A69. */
+static bool actor_accum_89b8_step(Cpu *c, uint16_t pc) {
+  if(c->e || c->xf || c->d) return false;
+  if((pc == 0x89be || pc == 0x89c0 || pc == 0x89c1 || pc == 0x89c4 || pc == 0x89d6 ||
+      pc == 0x89d8 || pc == 0x89e7 || pc == 0x89e9 || pc == 0x89ee || pc == 0x89f0 ||
+      pc == 0x89f1 || pc == 0x89f4) && c->mf)
+    return false;
+  if((pc == 0x89b8 || pc == 0x89c9 || pc == 0x89cb || pc == 0x89cd || pc == 0x89d0 ||
+      pc == 0x89dd || pc == 0x89df || pc == 0x89e1 || pc == 0x89f9 || pc == 0x89fb ||
+      pc == 0x89fd || pc == 0x8a00 || pc == 0x8a01 || pc == 0x8a05 || pc == 0x8a06) &&
+     !c->mf)
+    return false;
+  switch(pc) {
+    case 0x89b8: case 0x89bc: case 0x89be: case 0x89c0: case 0x89c1: case 0x89c4:
+    case 0x89c7: case 0x89c8: case 0x89c9: case 0x89cb: case 0x89cd: case 0x89d0:
+    case 0x89d3: case 0x89d4: case 0x89d6: case 0x89d8: case 0x89db: case 0x89dc:
+    case 0x89dd: case 0x89df: case 0x89e1: case 0x89e4: case 0x89e5: case 0x89e7:
+    case 0x89e9: case 0x89ec: case 0x89ed: case 0x89ee: case 0x89f0: case 0x89f1:
+    case 0x89f4: case 0x89f7: case 0x89f8: case 0x89f9: case 0x89fb: case 0x89fd:
+    case 0x8a00: case 0x8a01: case 0x8a05: case 0x8a06: break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0x89b8: jsl_to(c, 0x8a28); break;
+    case 0x89bc: case 0x89d4: case 0x89e5: set_m(c, false); break;
+    case 0x89be: case 0x89d6: case 0x89e7: case 0x89ee: lda_indirect_long_y16(c, 0x00); break;
+    case 0x89c0: case 0x89f0: implied(c); c->c = false; break;
+    case 0x89c1: adc_abs_x16(c, 0x0b07); break;
+    case 0x89c4: store_a_abs_x16(c, 0x0b07); break;
+    case 0x89c7: case 0x89c8: case 0x89d3: case 0x89db: case 0x89dc: case 0x89e4:
+    case 0x89ec: case 0x89ed: case 0x89f7: case 0x89f8:
+      implied(c); c->y++; zn(c, c->y, false); break;
+    case 0x89c9: case 0x89dd: case 0x89f9: set_m(c, true); break;
+    case 0x89cb: case 0x89df: case 0x89fb: lda_indirect_long_y8(c, 0x00); break;
+    case 0x89cd: adc_abs_x8(c, 0x0b09); break;
+    case 0x89d0: store_a_abs_x8(c, 0x0b09); break;
+    case 0x89d8: store_a_abs_x16(c, 0x0b0f); break;
+    case 0x89e1: store_a_abs_x8(c, 0x0b11); break;
+    case 0x89e9: store_a_abs_x16(c, 0x0b0a); break;
+    case 0x89f1: adc_abs_x16(c, 0x0b0c); break;
+    case 0x89f4: store_a_abs_x16(c, 0x0b0c); break;
+    case 0x89fd: store_a_abs_x8(c, 0x0b0e); break;
+    case 0x8a00: phx16(c); break;
+    case 0x8a01: jsl_to(c, 0x8a69); break;
+    case 0x8a05: plx16(c); break;
+    case 0x8a06: return_long(c); break;
+  }
+  return true;
+}

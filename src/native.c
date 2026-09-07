@@ -268,9 +268,15 @@ static bool reset_step(Cpu *c, uint16_t pc) {
 bool dbz_native_step(Cpu *c, DbzExecution *x) {
   uint8_t bank = (uint8_t)(c->k & 0x7fu);
   if(c->resetWanted || c->waiting || c->stopped || c->intWanted ||
-     (bank != 0 && bank != 2 && bank != 4))
+     (bank != 0 && bank != 2 && bank != 4 && bank != 6))
     return false;
   bool done = false;
+  if(bank == 6) {
+    if(c->pc >= 0xf14d && c->pc <= 0xf1eb) {
+      done = scroll_clamp_f14d_step(c, c->pc); x->scroll_steps += done;
+    }
+    return done;
+  }
   if(bank == 4) {
     if(c->pc >= 0x85b6 && c->pc <= 0x85f0) {
       done = slot_alloc_85b6_step(c, c->pc); x->display_control_steps += done;
@@ -335,6 +341,8 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
     done = palette_rom_copy_step(c, c->pc); x->palette_steps += done;
   } else if(c->pc >= 0x8921 && c->pc <= 0x8953) {
     done = dual_palette_load_step(c, c->pc); x->palette_steps += done;
+  } else if(c->pc >= 0x89b8 && c->pc <= 0x8a06) {
+    done = actor_accum_89b8_step(c, c->pc); x->display_control_steps += done;
   } else if((c->pc >= 0x89ac && c->pc <= 0x89b7) ||
             (c->pc >= 0x8ad6 && c->pc <= 0x8ae4) ||
             (c->pc >= 0x8af1 && c->pc <= 0x8b26)) {

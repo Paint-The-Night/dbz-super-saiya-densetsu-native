@@ -65,6 +65,13 @@ Names describe observed use and are not recovered original source identifiers.
 | DP+$09 / $0A | word | Tiled enqueue source cursor (starts $0A00) | 9BBF |
 | 0A00 onward / 0711 | bytes / word | Word-pair scratch / write cursor for tiled enqueue | 9BBF |
 
+| DP+$33/$34 | word (split) | Clamped BG2 H scroll from $01A2 via $0703 | 06:F14D |
+| DP+$35/$36 | word (split) | Clamped BG2 V scroll from $01A4 via $0702 | 06:F14D |
+| 0702 / 0703 | bytes | Map extent counters (DEC→limit) for scroll clamp | 06:F14D |
+| 0B07,X / 0B09,X | word / byte | Actor position accumulators updated from stream | 00:89B8 |
+| 0B0A,X / 0B0C,X / 0B0E,X | word / word / byte | Actor field copies / second accumulators | 00:89B8 |
+| 0B0F,X / 0B11,X | word / byte | Actor field copies from stream | 00:89B8 |
+
 VRAM entry layout:
 
 | Byte offset | Meaning |

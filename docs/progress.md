@@ -60,7 +60,9 @@ compiled replacements run alongside an interpreter for unrecovered code.
 | 04:85B6–85F0 | Eight-slot ID allocator / clearer at $1309 | 59 | 33 |
 | 02:D812–D843 | Conditional scroll snapshot into $01C0–$01CE | 50 | 20 |
 | 00:9BBF–9C4A | Tiled VRAM queue enqueue from [DP+$00] via $0A00 | 140 | 70 |
-| **Total** | **Fifty-four complete routines plus a reset prefix** | **2115** | **1010** |
+| 06:F14D–F1EB | Scroll clamp from $0702/$0703; loop $06EF11 + $8324 | 159 | 78 |
+| 00:89B8–8A06 | Actor-field accumulate from [DP+$00],Y into $0B07,X | 79 | 40 |
+| **Total** | **Fifty-six complete routines plus a reset prefix** | **2353** | **1128** |
 
 These are original code-region sizes, not C source sizes. Unsupported CPU modes
 and interrupts fall back to the baseline. The program accepts only the pinned
@@ -101,8 +103,8 @@ independent hardware-fidelity comparison with another emulator is still needed.
 ## How far from complete?
 
 The project now has a reproducible scoped tracker. The pinned static-analysis
-worklist contains 13,237 instruction variants. Of those, 1010 instruction sites
-are covered by reviewed C replacements: **7.63% of the discovered worklist**.
+worklist contains 13,237 instruction variants. Of those, 1128 instruction sites
+are covered by reviewed C replacements: **8.52% of the discovered worklist**.
 Run `python3 tools/progress.py` to recalculate this figure. If the local
 SNESRecomp manifest exists, the script sums it directly; a public clone uses the
 same checked-in probe total.
@@ -171,7 +173,7 @@ Next work is a reproducible actual battle and larger game-logic translations.
 `src/native_video.inc` reconstructs the complete frame graphics upload routine,
 unused-sprite hiding, and palette-shadow clearing. The new `ram-map.md` records
 the verified shadow buffers, flags, and eight-byte VRAM queue entry layout.
-The current inventory is 2115 ROM bytes / 1010 instruction sites.
+The current inventory is 2353 ROM bytes / 1128 instruction sites.
 
 The isolated suite now also covers interrupt-enable, VRAM queue find/mark,
 PPU multiply, DMA1 setup, pointer resolve, palette-shadow copy, actor-table
