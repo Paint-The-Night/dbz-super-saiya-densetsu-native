@@ -543,3 +543,7 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | DP+$00 | byte | $95C9 saves incoming A before $B6B2 | 05:95C9 |
 | $0022,Y / DP+$04/$05 | bytes | $DA45 face nibble merge via $DA64/$DA6D | 05:DA45 |
 | $0031,Y | byte | $DA7C stores DP+$04 operand | 05:DA7C |
+
+| $15F1..$15F9 / $1400↔$1440 | bytes | $D274 face-slot swap snapshot + reseed | 05:D274 |
+| DP+$05/$04 / $01EF / $1540 | bytes | $D306 tier from $DBF3 then $F85E/$E073→$DC48 | 05:D306 |
+| $0B00,X / $003F,Y / DP+$00/$02/$10..$16 | actors/temps | $D330 bit6 scan + scale fold before $C07B | 05:D330 |

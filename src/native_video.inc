@@ -16206,3 +16206,237 @@ static bool actor_hdl_f167_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+
+/* ==== Batch: CAFA D274 / D306 / D330 ==== */
+
+static void cmp_dp16(Cpu *c, uint8_t offset) {
+  uint16_t address = dp_address(c, offset);
+  uint16_t value = read16(c, address);
+  c->c = c->a >= value; zn(c, (uint16_t)(c->a - value), false);
+}
+
+/* $05:D274–$D305: ($CAFA,8E) face-slot swap — copy $0020 via $B6C0/$B6B2, ORA #$80,
+ * JSR $C07B, snapshot $15F1..$15F9, swap $1400↔$1440 (X=#$000D..0), reseed $1401/#$31,
+ * $141B/#$04, flag bits, STY #$000A→$1403, clear $0C37/$0C36/$01EE; LDA #0 / JMP $DD51. */
+static bool actor_op_d274_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7fu) != 0x05 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) {
+    case 0xd274: case 0xd277: case 0xd27a: case 0xd27b: case 0xd27e: case 0xd27f:
+    case 0xd282: case 0xd285: case 0xd287: case 0xd28a: case 0xd28d: case 0xd28f:
+    case 0xd292: case 0xd295: case 0xd298: case 0xd29b: case 0xd29e: case 0xd2a1:
+    case 0xd2a4: case 0xd2a7: case 0xd2aa: case 0xd2ad: case 0xd2b0: case 0xd2b3:
+    case 0xd2b6: case 0xd2b9: case 0xd2bc: case 0xd2bd: case 0xd2c0: case 0xd2c3:
+    case 0xd2c4: case 0xd2c7: case 0xd2c8: case 0xd2ca: case 0xd2cd: case 0xd2d0:
+    case 0xd2d2: case 0xd2d5: case 0xd2d7: case 0xd2da: case 0xd2dd: case 0xd2df:
+    case 0xd2e2: case 0xd2e5: case 0xd2e7: case 0xd2ea: case 0xd2ed: case 0xd2ef:
+    case 0xd2f2: case 0xd2f5: case 0xd2f8: case 0xd2fb: case 0xd2fe: case 0xd301:
+    case 0xd303:
+      break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0xd274: jsr_abs_native(c, 0xb6c0); break;
+    case 0xd277: load_a_abs_y8(c, 0x0020); break;
+    case 0xd27a: pha8(c); break;
+    case 0xd27b: jsr_abs_native(c, 0xb6b2); break;
+    case 0xd27e: pla8(c); break;
+    case 0xd27f: store_a_abs_y8(c, 0x0020); break;
+    case 0xd282: load_a_abs_y8(c, 0x0021); break;
+    case 0xd285: ora_constant8(c, 0x80); break;
+    case 0xd287: store_a_abs_y8(c, 0x0021); break;
+    case 0xd28a: jsr_abs_native(c, 0xc07b); break;
+    case 0xd28d: byte_constant(c, 0x02); break;
+    case 0xd28f: store_register8(c, 0x15f1); break;
+    case 0xd292: ldx_abs16(c, 0x14c3); break;
+    case 0xd295: stx_abs16(c, 0x15f2); break;
+    case 0xd298: ldx_abs16(c, 0x14c5); break;
+    case 0xd29b: stx_abs16(c, 0x15f4); break;
+    case 0xd29e: video_load(c, 0x1401, false); break;
+    case 0xd2a1: store_register8(c, 0x15f6); break;
+    case 0xd2a4: video_load(c, 0x1441, false); break;
+    case 0xd2a7: store_register8(c, 0x15f7); break;
+    case 0xd2aa: video_load(c, 0x141b, false); break;
+    case 0xd2ad: store_register8(c, 0x15f8); break;
+    case 0xd2b0: video_load(c, 0x145b, false); break;
+    case 0xd2b3: store_register8(c, 0x15f9); break;
+    case 0xd2b6: index_constant(c, false, 0x000d); break;
+    case 0xd2b9: load_a_abs_x8(c, 0x1400); break;
+    case 0xd2bc: pha8(c); break;
+    case 0xd2bd: load_a_abs_x8(c, 0x1440); break;
+    case 0xd2c0: store_a_abs_x8(c, 0x1400); break;
+    case 0xd2c3: pla8(c); break;
+    case 0xd2c4: store_a_abs_x8(c, 0x1440); break;
+    case 0xd2c7: implied(c); c->x--; zn(c, c->x, false); break;
+    case 0xd2c8: branch_to(c, !c->n, 0xd2b9); break;
+    case 0xd2ca: video_load(c, 0x141b, false); break;
+    case 0xd2cd: store_register8(c, 0x145b); break;
+    case 0xd2d0: byte_constant(c, 0x31); break;
+    case 0xd2d2: store_register8(c, 0x1401); break;
+    case 0xd2d5: byte_constant(c, 0x04); break;
+    case 0xd2d7: store_register8(c, 0x141b); break;
+    case 0xd2da: video_load(c, 0x1400, false); break;
+    case 0xd2dd: ora_constant8(c, 0x80); break;
+    case 0xd2df: store_register8(c, 0x1400); break;
+    case 0xd2e2: video_load(c, 0x1440, false); break;
+    case 0xd2e5: and_constant8(c, 0x7f); break;
+    case 0xd2e7: store_register8(c, 0x1440); break;
+    case 0xd2ea: video_load(c, 0x1418, false); break;
+    case 0xd2ed: ora_constant8(c, 0x70); break;
+    case 0xd2ef: store_register8(c, 0x1418); break;
+    case 0xd2f2: index_constant(c, true, 0x000a); break;
+    case 0xd2f5: store_y_abs16(c, 0x1403); break;
+    case 0xd2f8: stz_abs8(c, 0x0c37); break;
+    case 0xd2fb: stz_abs8(c, 0x0c36); break;
+    case 0xd2fe: stz_abs8(c, 0x01ee); break;
+    case 0xd301: byte_constant(c, 0x00); break;
+    case 0xd303: jmp_abs_native(c, 0xdd51); break;
+  }
+  return true;
+}
+
+/* $05:D306–$D32F: ($CAFA,7C) DP+$05=#$02 / JSR $DBF3; tier DP+$04 from $01EF
+ * thresholds #$04/#$0A/#$10; STA $1540; JSR $F85E/$E073; JMP $DC48. */
+static bool actor_op_d306_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7fu) != 0x05 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) {
+    case 0xd306: case 0xd308: case 0xd30a: case 0xd30d: case 0xd310: case 0xd312:
+    case 0xd314: case 0xd316: case 0xd318: case 0xd31a: case 0xd31c: case 0xd31e:
+    case 0xd320: case 0xd322: case 0xd324: case 0xd327: case 0xd32a: case 0xd32d:
+      break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0xd306: byte_constant(c, 0x02); break;
+    case 0xd308: store_dp(c, 0x05, true); break;
+    case 0xd30a: jsr_abs_native(c, 0xdbf3); break;
+    case 0xd30d: video_load(c, 0x01ef, false); break;
+    case 0xd310: cmp_constant8(c, 0x04); break;
+    case 0xd312: branch_to(c, !c->c, 0xd322); break;
+    case 0xd314: inc_dp8(c, 0x04); break;
+    case 0xd316: cmp_constant8(c, 0x0a); break;
+    case 0xd318: branch_to(c, !c->c, 0xd322); break;
+    case 0xd31a: inc_dp8(c, 0x04); break;
+    case 0xd31c: cmp_constant8(c, 0x10); break;
+    case 0xd31e: branch_to(c, !c->c, 0xd322); break;
+    case 0xd320: inc_dp8(c, 0x04); break;
+    case 0xd322: load_dp8(c, 0x04); break;
+    case 0xd324: store_register8(c, 0x1540); break;
+    case 0xd327: jsr_abs_native(c, 0xf85e); break;
+    case 0xd32a: jsr_abs_native(c, 0xe073); break;
+    case 0xd32d: jmp_abs_native(c, 0xdc48); break;
+  }
+  return true;
+}
+
+/* $05:D330–$D3D5: ($CAFA,7A)/(,8C@$D3C1) — backup type at $003F,Y; scan $0B00.. for
+ * bit6 actors (skip types #$61/#$54); pick max $0B03 → copy type/coords/scale into Y
+ * slot; ORA #$80 / $C07B; $B11D → JSL $1D8583/$859B; LDA #0 / JMP $DD51. */
+static bool actor_op_d330_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7fu) != 0x05 || c->e || c->xf || c->d) return false;
+  const bool m16 =
+      (pc == 0xd340 || pc == 0xd343 || pc == 0xd346 || pc == 0xd348 || pc == 0xd34b ||
+       pc == 0xd34e || pc == 0xd351 || pc == 0xd353 || pc == 0xd356 || pc == 0xd358 ||
+       pc == 0xd35b || pc == 0xd35d || pc == 0xd35f || pc == 0xd361 || pc == 0xd363 ||
+       pc == 0xd364 || pc == 0xd365 || pc == 0xd368 || pc == 0xd369 || pc == 0xd36c ||
+       pc == 0xd37d || pc == 0xd380 || pc == 0xd383 || pc == 0xd386 || pc == 0xd389 ||
+       pc == 0xd38c || pc == 0xd38e || pc == 0xd3a5 || pc == 0xd3a7 || pc == 0xd3a8 ||
+       pc == 0xd3aa);
+  const bool sep_entry = (pc == 0xd36e || pc == 0xd390 || pc == 0xd3ad);
+  const bool rep_entry = (pc == 0xd33e || pc == 0xd37b || pc == 0xd3a3);
+  if(m16 && c->mf) return false;
+  if(sep_entry && c->mf) return false;
+  if(rep_entry && !c->mf) return false;
+  if(!m16 && !sep_entry && !rep_entry && !c->mf) return false;
+  switch(pc) {
+    case 0xd330: case 0xd333: case 0xd336: case 0xd339: case 0xd33c: case 0xd33e:
+    case 0xd340: case 0xd343: case 0xd346: case 0xd348: case 0xd34b: case 0xd34e:
+    case 0xd351: case 0xd353: case 0xd356: case 0xd358: case 0xd35b: case 0xd35d:
+    case 0xd35f: case 0xd361: case 0xd363: case 0xd364: case 0xd365: case 0xd368:
+    case 0xd369: case 0xd36c: case 0xd36e: case 0xd370: case 0xd372: case 0xd375:
+    case 0xd378: case 0xd37b: case 0xd37d: case 0xd380: case 0xd383: case 0xd386:
+    case 0xd389: case 0xd38c: case 0xd38e: case 0xd390: case 0xd392: case 0xd395:
+    case 0xd397: case 0xd398: case 0xd39a: case 0xd39c: case 0xd39d: case 0xd39f:
+    case 0xd3a1: case 0xd3a3: case 0xd3a5: case 0xd3a7: case 0xd3a8: case 0xd3aa:
+    case 0xd3ad: case 0xd3af: case 0xd3b1: case 0xd3b3: case 0xd3b6: case 0xd3b9:
+    case 0xd3bb: case 0xd3be: case 0xd3c1: case 0xd3c4: case 0xd3c5: case 0xd3c7:
+    case 0xd3cb: case 0xd3cd: case 0xd3d1: case 0xd3d3:
+      break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0xd330: jsr_abs_native(c, 0xb6b2); break;
+    case 0xd333: load_a_abs_y8(c, 0x0001); break;
+    case 0xd336: store_a_abs_y8(c, 0x003f); break;
+    case 0xd339: index_constant(c, false, 0x0000); break;
+    case 0xd33c: stx_dp16(c, 0x00); break;
+    case 0xd33e: sep_rep_native(c, 0x20, false); break;
+    case 0xd340: video_load(c, 0x0b00, true); break;
+    case 0xd343: and_constant16(c, 0x0040); break;
+    case 0xd346: branch_to(c, c->z, 0xd363); break;
+    case 0xd348: video_load(c, 0x0b01, true); break;
+    case 0xd34b: and_constant16(c, 0x00ff); break;
+    case 0xd34e: cmp_constant16(c, 0x0061); break;
+    case 0xd351: branch_to(c, c->z, 0xd363); break;
+    case 0xd353: cmp_constant16(c, 0x0054); break;
+    case 0xd356: branch_to(c, c->z, 0xd363); break;
+    case 0xd358: video_load(c, 0x0b03, true); break;
+    case 0xd35b: cmp_dp16(c, 0x00); break;
+    case 0xd35d: branch_to(c, !c->c, 0xd363); break;
+    case 0xd35f: store_dp(c, 0x00, false); break;
+    case 0xd361: stx_dp16(c, 0x02); break;
+    case 0xd363: txa16(c); break;
+    case 0xd364: implied(c); c->c = false; break;
+    case 0xd365: adc16_constant(c, 0x0020); break;
+    case 0xd368: tax16(c); break;
+    case 0xd369: cpx16_constant(c, 0x0120); break;
+    case 0xd36c: branch_to(c, !c->c, 0xd340); break;
+    case 0xd36e: sep_rep_native(c, 0x20, true); break;
+    case 0xd370: ldx_dp16(c, 0x02); break;
+    case 0xd372: load_a_abs_x8(c, 0x0b01); break;
+    case 0xd375: store_a_abs_y8(c, 0x0001); break;
+    case 0xd378: store_a_abs_y8(c, 0x0020); break;
+    case 0xd37b: sep_rep_native(c, 0x20, false); break;
+    case 0xd37d: video_load(c, 0x0b03, true); break;
+    case 0xd380: store_a_abs_y16(c, 0x0003); break;
+    case 0xd383: video_load(c, 0x0b0a, true); break;
+    case 0xd386: store_a_abs_y16(c, 0x000a); break;
+    case 0xd389: video_load(c, 0x0b07, true); break;
+    case 0xd38c: store_dp(c, 0x10, false); break;
+    case 0xd38e: store_dp(c, 0x14, false); break;
+    case 0xd390: sep_rep_native(c, 0x20, true); break;
+    case 0xd392: load_a_abs_x8(c, 0x0b09); break;
+    case 0xd395: store_dp(c, 0x16, true); break;
+    case 0xd397: lsr_a8(c); break;
+    case 0xd398: ror_dp8(c, 0x11); break;
+    case 0xd39a: ror_dp8(c, 0x10); break;
+    case 0xd39c: lsr_a8(c); break;
+    case 0xd39d: ror_dp8(c, 0x11); break;
+    case 0xd39f: ror_dp8(c, 0x10); break;
+    case 0xd3a1: store_dp(c, 0x12, true); break;
+    case 0xd3a3: sep_rep_native(c, 0x20, false); break;
+    case 0xd3a5: load_dp16_to_a(c, 0x14); break;
+    case 0xd3a7: implied(c); c->c = true; break;
+    case 0xd3a8: sbc_dp16(c, 0x10); break;
+    case 0xd3aa: store_a_abs_y16(c, 0x0007); break;
+    case 0xd3ad: sep_rep_native(c, 0x20, true); break;
+    case 0xd3af: load_dp8(c, 0x16); break;
+    case 0xd3b1: sbc_dp8(c, 0x12); break;
+    case 0xd3b3: store_a_abs_y8(c, 0x0009); break;
+    case 0xd3b6: load_a_abs_y8(c, 0x0021); break;
+    case 0xd3b9: ora_constant8(c, 0x80); break;
+    case 0xd3bb: store_a_abs_y8(c, 0x0021); break;
+    case 0xd3be: jsr_abs_native(c, 0xc07b); break;
+    case 0xd3c1: jsr_abs_native(c, 0xb11d); break;
+    case 0xd3c4: lsr_a8(c); break;
+    case 0xd3c5: branch_to(c, !c->c, 0xd3cd); break;
+    case 0xd3c7: jsl_to(c, 0x8583); break;
+    case 0xd3cb: branch_to(c, true, 0xd3d1); break;
+    case 0xd3cd: jsl_to(c, 0x859b); break;
+    case 0xd3d1: byte_constant(c, 0x00); break;
+    case 0xd3d3: jmp_abs_native(c, 0xdd51); break;
+  }
+  return true;
+}
