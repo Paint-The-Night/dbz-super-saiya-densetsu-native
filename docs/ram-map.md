@@ -167,3 +167,21 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | 0C41 / 0EA2 | bytes | Seeded $49 / $20 by $E36B tail | E36B |
 | 01D7 bit6 | bit | Cleared by $E36B before JMP $E32E | E36B |
 
+| DP+$12 / $13 | word | Actor-type×1 scratch for ×3 index in slot walk | 00:8DAC |
+| $008DE4 | words | Per-slot (Y>>4) parameter words for $01C9F9 | 00:8DAC |
+| $008DF6 | bytes | $0D59-indexed values written to $01E3 | 00:8C84 |
+| 01E3 | byte | Scene specialty / mode seed (from $8DF6 or #$04) | 00:8C84 |
+| 0D55 / 0D57 | words | Written #$0001 when $01BC bit0 clear in mode[0] cont. | 00:8C84 |
+| 0D59 | byte | Index into $008DF6 for $01E3 | 00:8C84 |
+| DP+$00 / $02 | long | Scratch pointer preset $00C000 before $01C535 | 00:8C84 |
+| 01BC bits | nibble/bits | Low nibble / bit0 / bit4 via $01E7 / bit6 select palette&gfx idx | 06:EAD4, 06:EB52 |
+| 01E7 | byte | Bit0/bit4 contribute fixed palette/gfx indices 5/2/6 | 06:EAD4, 06:EB52 |
+| 1648 / 164B | bytes | When bit7 set, use $164B as index; else $01A0→$02E44B | 06:EAD4, 06:EB52 |
+| $02E44B | bytes | Scene→index table | 06:EAD4, 06:EB52 |
+| $02E47B | bytes/words | Palette idx (m8) / packed idx word (m16) | 06:EAD4, 06:EB52 |
+| $02E4AA | 3-byte ents | Palette long-pointer table (bank $02) | 06:EAD4 |
+| $02E489 | 3-byte ents | Compressed-stream long pointers (addr at +0, bank at +2) | 06:EB52 |
+| DP+$25 / $26 / $27 | bytes | Scene body seeds (#$03 / 0 / #$02) | 00:8F46 |
+| 0716 / 0D66 / DP+$61 | bytes | Written #$61 / #$23 / #$01 in scene body | 00:8F46 |
+| 0B12,X | bytes | Cleared for X=0..$100 step $20 | 00:8F46 |
+| 07BC / 07BB / 0C40 | bytes | If $07BC bit7 set: clear it and copy $07BB→$0C40 | 00:8F46 |
