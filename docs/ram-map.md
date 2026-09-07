@@ -299,6 +299,18 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $0D01 / $0D7A / $0D75 | byte/word/byte | $F53B SEC-path seeds before $C987 | 01:F53B |
 | $7F0000,X | bytes | $F53B bulk copy of $0E01,Y (or 0) then DMA bursts | 01:F53B |
 | $0E0F,Y | words | $F53B multiply-table fill from $01FC2D | 01:F53B |
+| DP+$00 | word | $FC00 scale result from $0E0F/$0E10,Y | 01:FC00 |
+| DP+$02/$03 | byte/byte | $FBBC temp (table+4)&$FE / zero before $FC00 | 01:FBBC |
+| DP+$10 | byte | $FAE9 saved table index (entry A) | 01:FAE9 |
+| DP+$00/$02 | long | $FAE9 stream pointer (bank $02) after table lookup | 01:FAE9 |
+| DP+$03/$05 | long | $FAE9 temp $02:($AB20+A*2) then length (A+4)*2 | 01:FAE9 |
+| $7E4000,X | words | $FAE9 blit destination | 01:FAE9 |
+| $01FD10,X | byte | $FBBC per-type table byte (PHA → $FAE9) | 01:FBBC |
+| $0D75 bit7 | flag | $C987 BPL early RTL when clear | 01:C987 |
+| $0D75 bits6..4 | flags | $C987 ASL dispatch → $C9F9 / $C9D9 / $CA34 | 01:C987 |
+| $0D40,Y | byte | $C987 XBA/ADC scratch written per nibble index | 01:C987 |
+| $02A4EF,X | long | $C9D9 stream pointer table (word+bank) | 01:C9D9 |
+| $02A58F,X | word | $C9D9 bitmask table before BRA $CA17 | 01:C9D9 |
 | 122A | byte | $8974 gate/counter (<$10 queue; ==$10 -> $B67A; >$10 -> #$80) | 04:8974 |
 | $0800,X queue | bytes | $8974 seeds occ / ($122A&$1F)<<10/<<11 / $7F / #$0800 | 04:8974 |
 | 0715 / $212C | byte/reg | Inc when $122A hits 2; TM=#$11 when hits 4 | 04:8974 |
