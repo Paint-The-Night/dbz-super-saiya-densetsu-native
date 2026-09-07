@@ -490,3 +490,14 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $0800 queue | bytes | $F91E seeds occ/$6000/$0000/$7F/#$0580; $F93D length pick | 05:F91E |
 | $14D8/$14DA/$1414/$1416/$1418 | bytes/words | $8B7C flight event copy/seed before $8AB3 | 1D:8B7C |
 | $1D8BDC,X → $1400,X | 32 bytes | $8B7C template blit | 1D:8B7C |
+| $0035,Y/$0036,Y / $002B,Y | bytes | $DD51 wrap addend + clear script counter | 05:DD51 |
+| $002E,$0024,Y / $002F,$0026,Y | frac/words | $DD69/$DD83/$DD9D/$DDB7 ±$14C9/$14CA move | 05:DD69 |
+| $14C8/$14C9/$14CB / DP+$00/$02 | bytes/words | $DFF3 scale via $86FC into $14C9 word | 05:DFF3 |
+| DP+$B0 bit1 | byte | $F548 ORA #$02 flag for ($E117,2) | 05:F548 |
+| $0021,Y / DP+$04 | bytes | $D7F4 ORA #$80 face from operand | 05:D7F4 |
+| $002C/$002D/$0030,Y / $148C | bytes | $D81E script seed + optional APU-ish $83 | 05:D81E |
+| $0030,Y | byte | $D849 gate ($FF → wrap via $DD51) | 05:D849 |
+| $0032,Y / DP+$04 / $14C9 | face/ops | $D743 scale-step + multiply probe | 05:D743 |
+| $7F0000,X stream / $17DB/$17DD | tiles/words | $F410 ($E117,2) tile expand + temps | 05:F410 |
+| $1527 / DP+$B6 / $152C | word/bytes | $A581 type-alt seeds | 05:A581 |
+

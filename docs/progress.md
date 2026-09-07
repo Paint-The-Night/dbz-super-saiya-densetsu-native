@@ -207,7 +207,7 @@ compiled replacements run alongside an interpreter for unrecovered code.
 | 1D:8A85–8AA1 | Scan WRAM list $1D0100 for A; RTL #$FF if missing | 29 | 14 |
 | 1D:8AA2–8AB2 | Append A into list at $0100,$01B2; INC $01B2; RTL | 17 | 10 |
 | 01:F692–F6DB | Fill $0E00.. from $02BF0B[$0EA3×5]; stride +$20; JSL $01B8DE; RTL | 74 | 32 |
-| 05:CA90–CAF7 | Jump-table body: bank-$1E stream via $0033,Y/$B6B2; JMP ($CAFA,X) | 106 | 54 |
+| 05:CA8D–CAF7 | $CA8D JSR $DD51 trampoline + jump-table body; JMP ($CAFA,X) | 109 | 55 |
 | 05:DEC3–DF5F | Script walker [$00] via $002C/$0030,Y; shared $DF51 advance leaf | 157 | 75 |
 | 01:F719–F7F1 | F692 sibling: scale $0E00 slots from $02B214×$0E; stride +$20; RTL | 217 | 91 |
 | 05:B6B2–B6CD | Slot Y select pair: #$1400/#$1440 from $14C2 bit0 (B6C0 inverted) | 28 | 12 |
@@ -230,7 +230,18 @@ compiled replacements run alongside an interpreter for unrecovered code.
 | 05:F91E–F951 | VRAM-queue seed $0800 + $1541 length pick sibling | 52 | 21 |
 | 05:F952–F997 | Mirror-XOR $7F0000 rows (EOR #$4000) via $96D7 stride | 70 | 33 |
 | 1D:8B7C–8BDB | Post-$8B7B: $14D8 gate, copy $1D8BDC→$1400, JSL $8AB3; RTL | 96 | 43 |
-| **Total** | **Two hundred twenty-two complete routines plus a reset prefix** | **16731** | **7519** |
+| 05:DD51–DD68 | Wrap leaf: INC A → $0035/$0036,Y; clear $002B,Y; RTS | 24 | 11 |
+| 05:DD69–DDD0 | ± $14C9/$14CA into $002E/$24 or $002F/$26 (four ± helpers) | 104 | 44 |
+| 05:DFF3–E017 | Scale helper: STX DP+$00; $14C8→×; JSL $86FC; fold → $14CB/$14C9 | 37 | 17 |
+| 05:F548–F54E | ORA #$02 into DP+$B0; RTS (callee of $F410) | 7 | 4 |
+| 05:D7F4–D81D | ($CAFA,6)+$D802/$D817 face ORA/#$80 CMP tails → JMP $CA8D | 42 | 18 |
+| 05:D81E–D848 | ($CAFA,8) seed $002C/$2D/$30; optional $148C; JMP $DD51 | 43 | 18 |
+| 05:D849–D857 | ($CAFA,A) $0030,Y==$FF → LDA #0 / JMP $DD51 else RTS | 15 | 7 |
+| 05:D6E2–D6E9 + D743–D7F3 | ($CAFA,4)/(,E): $DFF3/$DD69/$DD83 + $D566 siblings → $DD51/$CA8D | 186 | 89 |
+| 05:F410–F47F | ($E117,2): $F998 stream/$F952/$F91E/$F548; JSL $1D89D1; RTS | 112 | 47 |
+| 05:A581–A5F6 | $A52E fail/alt: type gates; RTS for #$36/#$37/#$5E; else JMP $A8E9/$A907 | 118 | 49 |
+| **Total** | **Two hundred thirty-two complete routines plus a reset prefix** | **17422** | **7824** |
+
 
 These are original code-region sizes, not C source sizes. Unsupported CPU modes
 and interrupts fall back to the baseline. The program accepts only the pinned
@@ -271,8 +282,8 @@ independent hardware-fidelity comparison with another emulator is still needed.
 ## How far from complete?
 
 The project now has a reproducible scoped tracker. The pinned static-analysis
-worklist contains 13,237 instruction variants. Of those, 7519 instruction sites
-are covered by reviewed C replacements: **56.80% of the discovered worklist**.
+worklist contains 13,237 instruction variants. Of those, 7824 instruction sites
+are covered by reviewed C replacements: **59.11% of the discovered worklist**.
 Run `python3 tools/progress.py` to recalculate this figure. If the local
 SNESRecomp manifest exists, the script sums it directly; a public clone uses the
 same checked-in probe total.
@@ -341,7 +352,7 @@ Next work is a reproducible actual battle and larger game-logic translations.
 `src/native_video.inc` reconstructs the complete frame graphics upload routine,
 unused-sprite hiding, and palette-shadow clearing. The new `ram-map.md` records
 the verified shadow buffers, flags, and eight-byte VRAM queue entry layout.
-The current inventory is 16731 ROM bytes / 7519 instruction sites.
+The current inventory is 17422 ROM bytes / 7824 instruction sites.
 
 The isolated suite now also covers interrupt-enable, VRAM queue find/mark,
 PPU multiply, DMA1 setup, pointer resolve, palette-shadow copy, actor-table
