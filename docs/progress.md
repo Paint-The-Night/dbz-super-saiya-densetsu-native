@@ -217,7 +217,16 @@ compiled replacements run alongside an interpreter for unrecovered code.
 | 05:A435–A52D | Battle face/setup probe with nested $A4DF/$A4F5 leaves | 249 | 102 |
 | 1D:8AB3–8ABC | Clear list byte $1D0101,X then JML $01C639 | 10 | 3 |
 | 1D:8ABD–8B45 | Flight/input face nudge on $01D6/$01E7/$15FA/$4F/$50/$1482..; RTL | 137 | 63 |
-| **Total** | **Two hundred nine complete routines plus a reset prefix** | **16015** | **7206** |
+| 05:95F6–9625 | Face-class → APU #$1C/#$1D via $0485B6; closes $DF60 | 48 | 23 |
+| 05:B124–B130 | $14C2 bit0 invert+3 → DP+$B6; first $A435 callee | 13 | 7 |
+| 05:BDDC–BE11 | $1700&3 gate via $B6C0; SEC early or SBC $14CF/$14D1 | 54 | 25 |
+| 05:A9F4–AA0A | Scan $05AA0B; ASL bit into DP+$00 or STZ | 23 | 11 |
+| 05:9491–94A0 | PHX; $A9F4; mask-clear $14D2; PLX; finishes $93A9 remap | 16 | 8 |
+| 05:D521–D530 | ($CAFA,0)/(,6) — $B6B2; ORA #$80/#$40 into DP+$B8; RTS | 16 | 8 |
+| 05:F3AA–F40F | ($E117,0) — $F998/$1546 tails through RTS | 102 | 39 |
+| 05:A52E–A580 | Deepen $A435: $B6C0/$B582 gates; optional $1C8136; RTS | 83 | 32 |
+| 1D:8B46–8B7B | After $8ABD: $0C35 gates via $8AA2/$0594A1; RTL | 54 | 21 |
+| **Total** | **Two hundred eighteen complete routines plus a reset prefix** | **16424** | **7380** |
 
 These are original code-region sizes, not C source sizes. Unsupported CPU modes
 and interrupts fall back to the baseline. The program accepts only the pinned
@@ -258,8 +267,8 @@ independent hardware-fidelity comparison with another emulator is still needed.
 ## How far from complete?
 
 The project now has a reproducible scoped tracker. The pinned static-analysis
-worklist contains 13,237 instruction variants. Of those, 7206 instruction sites
-are covered by reviewed C replacements: **54.44% of the discovered worklist**.
+worklist contains 13,237 instruction variants. Of those, 7380 instruction sites
+are covered by reviewed C replacements: **55.75% of the discovered worklist**.
 Run `python3 tools/progress.py` to recalculate this figure. If the local
 SNESRecomp manifest exists, the script sums it directly; a public clone uses the
 same checked-in probe total.
@@ -328,7 +337,7 @@ Next work is a reproducible actual battle and larger game-logic translations.
 `src/native_video.inc` reconstructs the complete frame graphics upload routine,
 unused-sprite hiding, and palette-shadow clearing. The new `ram-map.md` records
 the verified shadow buffers, flags, and eight-byte VRAM queue entry layout.
-The current inventory is 16015 ROM bytes / 7206 instruction sites.
+The current inventory is 16424 ROM bytes / 7380 instruction sites.
 
 The isolated suite now also covers interrupt-enable, VRAM queue find/mark,
 PPU multiply, DMA1 setup, pointer resolve, palette-shadow copy, actor-table

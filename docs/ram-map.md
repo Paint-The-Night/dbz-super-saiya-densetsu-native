@@ -476,3 +476,11 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $0033,Y / $0035,Y | byte/word | $CA90 stream-class select / base addend | 05:CA90 |
 | $002C,Y / $0030,Y / $002D,Y | bytes | $DEC3 script gate/cursor/timer; $DF51 advances cursor | 05:DEC3 |
 | $0E00,Y fields / DP+$12 | records/word | $F719 fills scale words from $02B214 tables; DP+$12 scale factor | 01:F719 |
+
+| DP+$B6 | byte | $B124: (~$14C2&1)+3 seed used by battle/setup | 05:B124 |
+| $14D2 | byte | $9491/$A9F4 bit-clear mask from $05AA0B scan | 05:9491 |
+| DP+$B8 | byte | $D521 ORA #$80/#$40 facing/script flags | 05:D521 |
+| $1546 / $17DB/$17DD | bytes/words | $F3AA phase and temp seeds around $F998 | 05:F3AA |
+| $1700 / $14CF/$14D1 | bytes | $BDDC gate and coordinate subtract | 05:BDDC |
+| $0C35 / $14D8/$14DA | bytes | $8B46 flight event list seeds | 1D:8B46 |
+| face class at $0021,Y | byte | $95F6 → APU #$1C/#$1D via $0485B6 | 05:95F6 |
