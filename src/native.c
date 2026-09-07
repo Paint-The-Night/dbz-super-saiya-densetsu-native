@@ -392,7 +392,13 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
     return done;
   }
   if(bank == 4) {
-    if(c->pc >= 0x844a && c->pc <= 0x848f) {
+    if(c->pc >= 0x8282 && c->pc <= 0x82eb) {
+      done = stream_unpack_8282_step(c, c->pc); x->upload_steps += done;
+    } else if(c->pc >= 0x83b2 && c->pc <= 0x8410) {
+      done = bitplane_83b2_step(c, c->pc); x->upload_steps += done;
+    } else if(c->pc >= 0x8411 && c->pc <= 0x8449) {
+      done = wram_copy_8411_step(c, c->pc); x->upload_steps += done;
+    } else if(c->pc >= 0x844a && c->pc <= 0x848f) {
       done = specialty_sync_844a_step(c, c->pc); x->display_control_steps += done;
     } else if((c->pc >= 0x8490 && c->pc <= 0x84b8) ||
               (c->pc >= 0x84b9 && c->pc <= 0x84e1)) {
@@ -411,6 +417,8 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = frame_tail_8674_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0x871e && c->pc <= 0x8802) {
       done = frame_gfx_871e_step(c, c->pc); x->upload_steps += done;
+    } else if(c->pc >= 0x889e && c->pc <= 0x88c5) {
+      done = wram_fill_889e_step(c, c->pc); x->upload_steps += done;
     } else if(c->pc >= 0x8938 && c->pc <= 0x8973) {
       done = vram_seed_8938_step(c, c->pc); x->upload_steps += done;
     } else if(c->pc >= 0x8974 && c->pc <= 0x89e1) {

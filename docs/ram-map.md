@@ -328,3 +328,13 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | DP+$00/$02 | long | $C8C8 builds bank-$02 then $C885 forces bank $09 | 01:C8C8 |
 | DP+$03 | byte | $C885 palette-slot index (×16 into $0300) | 01:C885 |
 | $0300,X | words | $C885 16-word palette copy destination | 01:C885 |
+
+| DP+$73/$75 | long | $889E fill destination ($0000,$7F) | 04:889E |
+| $7F0000,Y | bytes/words | $889E $FF then $00FF fill | 04:889E |
+| DP+$73/$75 | long | $8411 source $7E9000 | 04:8411 |
+| $7F0000,X | bytes | $8411 dest with +$C0 every 64 bytes | 04:8411 |
+| DP+$86/$88/$89 | long/len | $83B2 source pointer + length | 04:83B2 |
+| DP+$91..$94 / $8F / $8D / $73/$75 | scratch | $83B2 bitplane shift / end / stride | 04:83B2 |
+| $7F0001,X | bytes | $83B2 unpacked bitplane dest | 04:83B2 |
+| DP+$73/$76/$79/$7B | longs/words | $8282 stream src/dst/count/addend | 04:8282 |
+| $82A3,X | word table | $8282 mode vectors $82AB/$82C0/$82D5/$82EB | 04:8282 |
