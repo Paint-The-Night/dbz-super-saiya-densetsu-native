@@ -268,7 +268,7 @@ static bool reset_step(Cpu *c, uint16_t pc) {
 bool dbz_native_step(Cpu *c, DbzExecution *x) {
   uint8_t bank = (uint8_t)(c->k & 0x7fu);
   if(c->resetWanted || c->waiting || c->stopped || c->intWanted ||
-     (bank != 0 && bank != 1 && bank != 2 && bank != 3 && bank != 4 && bank != 5 && bank != 6))
+     (bank != 0 && bank != 1 && bank != 2 && bank != 3 && bank != 4 && bank != 5 && bank != 6 && bank != 0x1d))
     return false;
   bool done = false;
   if(bank == 1) {
@@ -409,6 +409,18 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = actor_flag_c1c8_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xc1ee && c->pc <= 0xc272) {
       done = actor_timer_c1ee_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xe38e && c->pc <= 0xe3cb) {
+      done = oam_caller_e38e_step(c, c->pc); x->sprite_steps += done;
+    } else if(c->pc >= 0xe3cc && c->pc <= 0xe3f1) {
+      done = scale_helper_e3cc_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0x86f5 && c->pc <= 0x871c) {
+      done = actor_flag_wrap_86f5_step(c, c->pc); x->display_control_steps += done;
+    }
+    return done;
+  }
+  if(bank == 0x1d) {
+    if(c->pc >= 0x8807 && c->pc <= 0x8842) {
+      done = slot_seed_1d8807_step(c, c->pc); x->display_control_steps += done;
     }
     return done;
   }

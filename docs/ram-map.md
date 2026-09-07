@@ -410,3 +410,12 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $05C273,X / DP+$10 | words | $C1EE ASL(timer) mask table → AND scratch | 05:C1EE |
 | $15E9,X / $0803–06,Y | word | $C1EE queue index → long ptr + length for AND walk | 05:C1EE |
 | DP+$00 long | ptr | $C1EE AND-mask destination (bank from queue) | 05:C1EE |
+
+| $1546 | byte | $E38E gate (<$8A) and post-loop INC; AND #$7F → DP+$03 scale | 05:E38E |
+| $05E40E,X / DP+$00 | words/long | $E38E sprite-stream pointers (bank #$05) before $9626 | 05:E38E |
+| $05E400,X / $05E3F2,X | bytes | $E3CC signed scale factor + base offset for ±$4216 | 05:E3CC |
+| $4202/$4203/$4216 | mul | $E3CC hardware 8×8 product | 05:E3CC |
+| $153B/$153C | bytes | $86F5 stores dual $C1C8 results | 05:86F5 |
+| DP+$AB/$AC | bytes | $86F5 INC $AB / STZ $AC after flag push | 05:86F5 |
+| $1480/$14A0 | bytes | $86F5 $69 keep / force #$80 sync | 05:86F5 |
+| $1558–$155D,X | bytes | $1D:8807 RNG-seeded slot fields when $1559,X was 0 | 1D:8807 |
