@@ -464,3 +464,7 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | DP+$B7/$B8/$B9 | bytes | $C98F stores type and clears pair/attrs | 05:C98F |
 | $01B2 / $1D0100 list | byte / words | $1D:8A85 scan / $8AA2 append | 1D:8A85 |
 | $0EA0 / $0E00,Y | byte / records | $01:F692 fills actor slots from $02BF0B×$0EA3 | 01:F692 |
+| DP+$00/$02/$04/$06 | long/words | $CA90 bank-$1E stream ptr + opcode operands before ($CAFA,X) | 05:CA90 |
+| $0033,Y / $0035,Y | byte/word | $CA90 stream-class select / base addend | 05:CA90 |
+| $002C,Y / $0030,Y / $002D,Y | bytes | $DEC3 script gate/cursor/timer; $DF51 advances cursor | 05:DEC3 |
+| $0E00,Y fields / DP+$12 | records/word | $F719 fills scale words from $02B214 tables; DP+$12 scale factor | 01:F719 |

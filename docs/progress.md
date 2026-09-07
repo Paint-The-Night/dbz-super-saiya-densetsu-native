@@ -207,7 +207,10 @@ compiled replacements run alongside an interpreter for unrecovered code.
 | 1D:8A85–8AA1 | Scan WRAM list $1D0100 for A; RTL #$FF if missing | 29 | 14 |
 | 1D:8AA2–8AB2 | Append A into list at $0100,$01B2; INC $01B2; RTL | 17 | 10 |
 | 01:F692–F6DB | Fill $0E00.. from $02BF0B[$0EA3×5]; stride +$20; JSL $01B8DE; RTL | 74 | 32 |
-| **Total** | **One hundred ninety-nine complete routines plus a reset prefix** | **14769** | **6658** |
+| 05:CA90–CAF7 | Jump-table body: bank-$1E stream via $0033,Y/$B6B2; JMP ($CAFA,X) | 106 | 54 |
+| 05:DEC3–DF5F | Script walker [$00] via $002C/$0030,Y; shared $DF51 advance leaf | 157 | 75 |
+| 01:F719–F7F1 | F692 sibling: scale $0E00 slots from $02B214×$0E; stride +$20; RTL | 217 | 91 |
+| **Total** | **Two hundred two complete routines plus a reset prefix** | **15249** | **6878** |
 
 These are original code-region sizes, not C source sizes. Unsupported CPU modes
 and interrupts fall back to the baseline. The program accepts only the pinned
@@ -248,8 +251,8 @@ independent hardware-fidelity comparison with another emulator is still needed.
 ## How far from complete?
 
 The project now has a reproducible scoped tracker. The pinned static-analysis
-worklist contains 13,237 instruction variants. Of those, 6658 instruction sites
-are covered by reviewed C replacements: **50.30% of the discovered worklist**.
+worklist contains 13,237 instruction variants. Of those, 6878 instruction sites
+are covered by reviewed C replacements: **51.96% of the discovered worklist**.
 Run `python3 tools/progress.py` to recalculate this figure. If the local
 SNESRecomp manifest exists, the script sums it directly; a public clone uses the
 same checked-in probe total.
@@ -318,7 +321,7 @@ Next work is a reproducible actual battle and larger game-logic translations.
 `src/native_video.inc` reconstructs the complete frame graphics upload routine,
 unused-sprite hiding, and palette-shadow clearing. The new `ram-map.md` records
 the verified shadow buffers, flags, and eight-byte VRAM queue entry layout.
-The current inventory is 14769 ROM bytes / 6658 instruction sites.
+The current inventory is 15249 ROM bytes / 6878 instruction sites.
 
 The isolated suite now also covers interrupt-enable, VRAM queue find/mark,
 PPU multiply, DMA1 setup, pointer resolve, palette-shadow copy, actor-table
