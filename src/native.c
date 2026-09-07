@@ -511,6 +511,8 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = actor_move_dd69_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xddd1 && c->pc <= 0xde25) {
       done = actor_helper_ddd1_step(c, c->pc); x->display_control_steps += done;
+    } else if((c->pc >= 0xde26 && c->pc <= 0xde62) || (c->pc >= 0xdea1 && c->pc <= 0xdeb1)) {
+      done = actor_helper_de26_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xdff3 && c->pc <= 0xe017) {
       done = actor_scale_dff3_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xe018 && c->pc <= 0xe088) {
@@ -599,8 +601,14 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = actor_gate_f353_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xf364 && c->pc <= 0xf385) {
       done = actor_scale_f364_step(c, c->pc); x->display_control_steps += done;
-    } else if(c->pc >= 0xeaa4 && c->pc <= 0xeacf) {
+    } else if(c->pc >= 0xea8c && c->pc <= 0xeacf) {
       done = stream_expand_eaa4_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xeed4 && c->pc <= 0xef1f) {
+      done = actor_hdl_eed4_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xef26 && c->pc <= 0xefff) {
+      done = actor_hdl_ef26_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xece4 && c->pc <= 0xed45) {
+      done = actor_hdl_ece4_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xf386 && c->pc <= 0xf3a1) {
       done = actor_adj_f386_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xf82b && c->pc <= 0xf85d) {
@@ -639,6 +647,8 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = flight_post_1d8b7c_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0x89d1 && c->pc <= 0x89f7) {
       done = timer_seed_1d89d1_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0x8583 && c->pc <= 0x85db) {
+      done = face_queue_1d8583_step(c, c->pc); x->display_control_steps += done;
     }
     return done;
   }

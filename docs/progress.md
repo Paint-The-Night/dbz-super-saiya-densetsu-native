@@ -274,8 +274,8 @@ compiled replacements run alongside an interpreter for unrecovered code.
 | 05:F386–F3A1 | m16 A adjust via $14C7&2 + $05F3A2[($14D4&$FF)<<1]; RTS | 28 | 16 |
 | 05:F0EA–F118 | ($E117,E8/EA) scroll prep sibling — #$9C/#$82→$1558; early $155A/$155C | 47 | 20 |
 | 05:F119–F13A | ($E117,3E) $F998; fill $7F0280.. with #$0001; $F91E/$F93D/$F85E | 34 | 14 |
-| 05:F13B–F164 | ($E117,114+) $F998; #$83EC/#$8464 → $EAA4; optional $F952 | 42 | 18 |
-| 05:EAA4–EACF | Stream expand [DP+$00]→$7F0000,X until #$FFFF; $F91E/$F93D/$F85E | 44 | 22 |
+| 05:F13B–F164 | ($E117,114+) $F998; #$83EC/#$8464 → $EAA4 (now in $EA8C); optional $F952 | 42 | 18 |
+| 05:EA8C–EACF | ($E117,60+) $F998/$1540-#$30/$17969C + stream expand until #$FFFF/#$FFFE; $F91E/$F93D/$F85E | 68 | 34 |
 | 05:F167–F352 | ($E117,20..) phase/DMA via $F353/$F364/$F386/$8711; $F29C tile path | 492 | 215 |
 | 05:F353–F363 | Y-slot gate: DP+$B9==#$81 → CPY #$1400 else #$1440; RTS | 17 | 10 |
 | 05:F364–F385 | Scale: [$12]×$1548 via $4202/03; wrap; LDY $4216; RTS | 34 | 14 |
@@ -284,7 +284,12 @@ compiled replacements run alongside an interpreter for unrecovered code.
 | 05:D330–D3D5 | ($CAFA,7A)/(,8C@$D3C1) actor scan $0B00; copy/scale; $C07B/$B11D; JSL $1D8583/$859B; JMP $DD51 | 166 | 70 |
 | 05:DB2B–DC3A | ($CAFA,42..) $DB2B/$DB65/$DB6F/$DB8E/$DB99/$DBB0/$DBC6 + $DBF3/$DC1E helpers | 272 | 116 |
 | 05:DC3B–DD50 | ($CAFA,50..) $DC48 (unblocks $D306) /$DC7C/$DC93/$DC9C/$DCB2/$DCC2/$DCDE/$DD29 + $DD02 | 278 | 122 |
-| 05:DDD1–DE25 | Helpers $DDD1 pair-SBC + $DDF4 remap (early RTS; $DE26+ still interpreted) | 85 | 44 |
+| 05:DDD1–DE25 | Helpers $DDD1 pair-SBC + $DDF4 remap (early RTS; deep path separate) | 85 | 44 |
+| 05:DE26–DE62 + DEA1–DEB1 | Deep $DDF4: $05DE63,X pair-table + $B6B2/$B572 match; $DEA1→$05DEB2 | 78 | 38 |
+| 05:EED4–EF1F | ($E117,44) INC $1546 phase; $05EF20,X → $155A/$155C | 76 | 31 |
+| 05:EF26–EFFF | ($E117,42/46/4A) EF26 nudge + EF5A/EFCC phase; shared $EFB0/$EFC0/$EFC6 | 218 | 92 |
+| 05:ECE4–ED45 | ($E117,4C) #$80 seed / m16 $155A+=2,$155C-=3 → $1558 | 98 | 44 |
+| 1D:8583–85DE | Face→$0D0x queue seed ($8583/$859B); remap FF/FE; JML $01C987 | 92 | 37 |
 | 05:E018–E088 | $E018/$E01E queue seed + mid-entry $E073 ($1540→$1502,X) — $D306/$DB99 callee | 113 | 51 |
 | 05:B594–B5C3 | Type remap $B594/$B5AA (09↔10 / 0F↔11 / 42↔4D); PHX/TXA/PLX | 48 | 24 |
 | 05:D3D6–D484 | ($CAFA,9C/@$D408)/(,98@$D44E)/(,74@$D45F) + $D3D6/$D3E9; $B594/$1D8583 paths | 175 | 77 |
@@ -401,7 +406,7 @@ Next work is a reproducible actual battle and larger game-logic translations.
 `src/native_video.inc` reconstructs the complete frame graphics upload routine,
 unused-sprite hiding, and palette-shadow clearing. The new `ram-map.md` records
 the verified shadow buffers, flags, and eight-byte VRAM queue entry layout.
-The current inventory is 23177 ROM bytes / 10391 instruction sites.
+The current inventory is 23763 ROM bytes / 10645 instruction sites.
 
 The isolated suite now also covers interrupt-enable, VRAM queue find/mark,
 PPU multiply, DMA1 setup, pointer resolve, palette-shadow copy, actor-table

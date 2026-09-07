@@ -532,7 +532,7 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $1558 / $155C / $155A / $155E / $1546 | bytes/words | $F06A ($E117,40/48) scroll prep | 05:F06A |
 | $1558 / $155A / $155C | bytes/words | $F0EA ($E117,E8/EA) scroll prep sibling of $F06A | 05:F0EA |
 | $7F0280..$7F037F | words | $F119 fill with #$0001 before queue helpers | 05:F119 |
-| DP+$00 / $7F0000,X | long/tiles | $EAA4 stream expand until #$FFFF/#$FEFF | 05:EAA4 |
+| DP+$00 / $7F0000,X | long/tiles | $EA8C/$EAA4 stream expand until #$FFFF/#$FFFE | 05:EA8C |
 | DP+$10/$12/$14/$15/$18/$1A | words | $F167 scratch — index, stream ptr, bank, scale temps | 05:F167 |
 | DP+$B9 / Y | byte/index | $F353 slot gate (#$81→$1400 else $1440) | 05:F353 |
 | $1548 / $4202/$4203/$4216 | byte/regs | $F364 multiply scale + wrap | 05:F364 |
@@ -556,3 +556,8 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | DP+$B6 | byte | $DD29 ($CAFA,5A) face-class from $14C2 / DP+$04 | 05:DD29 |
 
 | $0B00,X / $003F,Y / DP+$00/$02/$10..$16 | actors/temps | $D330 bit6 scan + scale fold before $C07B | 05:D330 |
+
+| $05DE63,X / [DP+$00],Y | words/pairs | $DE26 deep $DDF4 pair-table; keys vs $B572 | 05:DE26 |
+| $05DEB2,X | bytes | $DEA1 nibble remap (BMI→#$20) | 05:DEA1 |
+| $1558/$155A/$155C/$1546 | bytes/words | $EED4/$EF5A/$EFCC/$ECE4 ($E117) phase seeds | 05:EED4 |
+| $0D7A/$0D75/$0D01,Y/$0D02,Y/$0D03,Y | words/bytes | $1D8583/$859B face→queue before JML $01C987 | 1D:8583 |
