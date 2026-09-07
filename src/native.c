@@ -507,7 +507,11 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = actor_scale_dff3_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xf548 && c->pc <= 0xf54e) {
       done = actor_ora_f548_step(c, c->pc); x->display_control_steps += done;
-    } else if((c->pc >= 0xd6e2 && c->pc <= 0xd6e9) || (c->pc >= 0xd743 && c->pc <= 0xd7f3)) {
+    } else if(c->pc >= 0xd572 && c->pc <= 0xd60e) {
+      done = actor_op_d5b9_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xd60f && c->pc <= 0xd6d8) {
+      done = actor_op_d60f_step(c, c->pc); x->display_control_steps += done;
+    } else if((c->pc >= 0xd6d9 && c->pc <= 0xd6e9) || (c->pc >= 0xd6eb && c->pc <= 0xd7f3)) {
       done = actor_op_d743_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xd7f4 && c->pc <= 0xd81d) {
       done = actor_op_d7f4_step(c, c->pc); x->display_control_steps += done;
@@ -515,6 +519,8 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = actor_op_d81e_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xd849 && c->pc <= 0xd857) {
       done = actor_op_d849_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xd858 && c->pc <= 0xd8d8) {
+      done = actor_op_d873_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xf410 && c->pc <= 0xf47f) {
       done = actor_hdl_f410_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xa581 && c->pc <= 0xa5f6) {

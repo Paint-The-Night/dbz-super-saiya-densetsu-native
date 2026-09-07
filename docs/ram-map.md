@@ -499,5 +499,11 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $0030,Y | byte | $D849 gate ($FF → wrap via $DD51) | 05:D849 |
 | $0032,Y / DP+$04 / $14C9 | face/ops | $D743 scale-step + multiply probe | 05:D743 |
 | $7F0000,X stream / $17DB/$17DD | tiles/words | $F410 ($E117,2) tile expand + temps | 05:F410 |
+| $14CC / $14CD | bytes | ($CAFA,10) $D873/$D858 stream-index pick before [$00],Y | 05:D873 |
+| $0027,Y | byte | ($CAFA,14) $D8B3 face-slot seed (#$01) | 05:D8B3 |
+| $17D2 bit0 | byte | $D681/$D6F6 BCS → $D6D9/$D73A alternate scale | 05:D6F6 |
+| $17E5 / #$0128 | word | $D5B9 vertical clamp gate before #$0070 store | 05:D5B9 |
+| $1484 / $1486 | words | $D69C/$D711 mirror of $0024/$0026,Y after scale | 05:D69C |
+
 | $1527 / DP+$B6 / $152C | word/bytes | $A581 type-alt seeds | 05:A581 |
 
