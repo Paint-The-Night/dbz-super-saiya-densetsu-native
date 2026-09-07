@@ -4,6 +4,27 @@ Target: a faithful, portable reconstruction of Japanese Rev 1 game logic in C,
 with a native Mac application first. The current executable is a hybrid:
 compiled replacements run alongside an interpreter for unrecovered code.
 
+## Integration check — 8 September 2026
+
+The 56-commit reconstruction advance through `eb21a9b` builds locally and passes
+the native and checkpoint equivalence suites. A compiler warning exposed an
+incorrectly grouped face-byte assertion at `$05:DA64`; it now checks the complete
+merge result over all 65,536 input-byte pairs. The expanded native suite also
+passes with address and undefined-behavior sanitizers enabled.
+
+The opening checkpoint plus `research/scout/battle-route.inputs` passes 1,800
+frames with every state, video, and audio comparison matching the reference.
+The local report is `artifacts/grok-integration-battle/report.json`: 20,555,315
+native steps and 3,178,685 interpreted steps. These counts describe this route,
+not overall game completion. Earlier milestone sections below retain their
+historical coverage and artifact references.
+
+The README tracker can be refreshed with
+`python3 tools/progress.py --update-readme`; `--check-readme` detects stale text
+and runs through CTest.
+This checks agreement with the maintained inventory, not the inventory's
+completeness or the fidelity of untested game routes.
+
 ## Reconstructed and verified
 
 | Original region | Behavior | ROM bytes | Instruction sites |

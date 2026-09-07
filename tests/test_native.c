@@ -5816,23 +5816,24 @@ int main(int argc,char **argv) {
     }
     require(ca.pc==0x90b3 && ca.c,"90a5 SEC RTS");
   }
-  /* $05DA64: Y=$1440 → OR #$40 into face byte via DP+$04 */
-  {
+  /* $05DA64: exhaust both input bytes; equality must compare the full merge,
+   * rather than XOR the boolean result of an equality check. */
+  for(unsigned face=0;face<256;face++) for(unsigned toggle=0;toggle<256;toggle++) {
     memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
     Cpu ca=make_cpu(a,0xda64,0), cb=make_cpu(b,0xda64,0);
     ca.k=cb.k=5; ca.db=cb.db=0; ca.xf=cb.xf=false;
     ca.y=cb.y=0x1440;
     word(a,0x1fe,0xda7b); word(b,0x1fe,0xda7b);
     ca.sp=cb.sp=0x1fd;
-    a->ram[0x04]=b->ram[0x04]=0x01;
-    a->ram[0x1462]=b->ram[0x1462]=0x22; /* $0022,Y */
+    a->ram[0x04]=b->ram[0x04]=(uint8_t)toggle;
+    a->ram[0x1462]=b->ram[0x1462]=(uint8_t)face; /* $0022,Y */
     unsigned steps=0;
     while(!(ca.pc==0xda7c) && steps++<20) {
       a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected da64");
       lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
     }
     require(ca.pc==0xda7c,"da64 RTS");
-    require(a->ram[0x1462]==((0x22 & 0x3f) | 0x40) ^ 0x01,"da64 merged face");
+    require(a->ram[0x1462]==(((face & 0x3f) | 0x40) ^ toggle),"da64 merged face");
   }
   /* $05DFE3: DP+$B8&$C0 != $C0 → PLA×3 RTL */
   {

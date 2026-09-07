@@ -33,6 +33,10 @@ enable_testing()
 add_executable(test-native tests/test_native.c)
 target_link_libraries(test-native PRIVATE dbz_core)
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
+add_test(NAME progress_consistency COMMAND ${Python3_EXECUTABLE}
+  "${CMAKE_CURRENT_SOURCE_DIR}/tools/progress.py" --check-readme)
+add_test(NAME progress_tool COMMAND ${Python3_EXECUTABLE}
+  "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_progress.py")
 set(DBZ_TEST_ROM "" CACHE FILEPATH "Local unmodified Japanese Rev 1 ROM used by differential tests")
 if(NOT DBZ_TEST_ROM AND DEFINED ENV{DBZ_ROM})
   set(DBZ_TEST_ROM "$ENV{DBZ_ROM}")

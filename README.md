@@ -28,17 +28,22 @@ The native host provides an SDL2 window, keyboard input, audio, battery saves,
 deterministic input replays, frame captures, checkpoints, and per-frame
 differential verification against a second interpreter instance.
 
-The verified route reaches the Kame House overworld, takeoff, flight, and an
-event dialogue. Battles and most game logic still require reconstruction.
+Verified routes reach the Kame House overworld, takeoff, flight, encounter
+dialogue, and battle commands and animations. Reconstruction now also includes
+scene and actor updates and substantial battle routines. Full-game progression
+and elimination of the remaining interpreter fallback are still unfinished.
 
 ### Progress tracker
 
-**2.21% — 292 / 13,237 discovered instruction sites reconstructed and verified**
+**89.54% — 11,853 / 13,237 discovered instruction sites reconstructed and verified**
 
 This percentage uses the pinned static-analysis worklist as its denominator.
 That worklist is incomplete, so it is a useful progress gauge for this project,
-not a claim that 2.21% of the entire game has been decompiled. Recalculate it
+not a claim about whole-game completion. Recalculate it
 with `python3 tools/progress.py`; use `--json` for automation.
+Run `python3 tools/progress.py --check-readme` to verify this block, or
+`python3 tools/progress.py --update-readme` to synchronize it. These progress
+checks are ROM-free and run as part of the test suite.
 
 See [the progress record](docs/progress.md) for measured coverage and evidence,
 [the prototype guide](docs/prototype.md) for commands and controls, and [the
@@ -70,8 +75,8 @@ cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo \
   -DDBZ_TEST_ROM="$DBZ_ROM"
 ```
 
-Without that option, the portable build still succeeds and CTest reports no
-ROM-dependent tests rather than expecting an untracked game file.
+Without a local test ROM, the portable build still succeeds and CTest runs the
+ROM-free progress checks. The differential tests run when a test ROM is available.
 
 The test suite compares the translated routines with the actual original ROM
 instructions across exhaustive and randomized cases. It also verifies that a
