@@ -601,6 +601,18 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = actor_gate_f353_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xf364 && c->pc <= 0xf385) {
       done = actor_scale_f364_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xe565 && c->pc <= 0xe5a9) {
+      done = actor_hdl_e565_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xe5aa && c->pc <= 0xe61a) {
+      done = actor_hdl_e5aa_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xe61b && c->pc <= 0xe6b0) {
+      done = actor_hdl_e61b_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xe6b1 && c->pc <= 0xe6d5) {
+      done = actor_hdl_e6b1_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xe6d6 && c->pc <= 0xe7fe) {
+      done = actor_hdl_e6d6_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xe7ff && c->pc <= 0xe844) {
+      done = actor_hdl_e7ff_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xe845 && c->pc <= 0xe87e) {
       done = actor_hdl_e845_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xe87f && c->pc <= 0xe8db) {

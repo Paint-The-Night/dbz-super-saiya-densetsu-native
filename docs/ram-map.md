@@ -577,3 +577,12 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $1558/$155A/$155C/$155E / DP+$51 | bytes/words | $E9A2 face seed + controller gate | 05:E9A2 |
 | DP+$00 / $1558/$155A/$155C | words | $E9D4/$EA0E shared $EA2D m16 drift threshold | 05:E9D4 |
 | $1558/$155A/$155C/$155E | bytes/words | $E8DC/$E87F/$E845 phase seeds + drift | 05:E8DC |
+
+| DP+$51 / $4204..06 / $4216 / DP+$B7 | words/div | $E7FF m16÷3 remainder + class → $1558 | 05:E7FF |
+| $0001,Y / $155A/$155C/$155E | bytes/words | $E7FF $B6B2 slot pick #$44/#$60 | 05:E7FF |
+| $1546 / $1560/$1562/$1564 | bytes/words | $E6B1 #$81-phase bank | 05:E6B1 |
+| $1558/$1568/$155A/$155C/$156A/$156C/$155F/$156F | bytes | $E68A dual-bank seed for $E61B/$E655/$E659 | 05:E68A |
+| $14C2 / $155C/$156C | bytes | $E61B scroll nudge ±6/±4 | 05:E61B |
+| $0021,Y / $155A/$155C / $1558 | words/bytes | $E5AA $B6B2±3 drift + phase clamp | 05:E5AA |
+| $1540 / $17DD/$17DB / $2108 / $7Fxxxx | bytes/words | $E6D6 phase #$80/#$81 stream and scroll | 05:E6D6 |
+| $155B/$155F / $155A | bytes | $E565 bit2 toggle and |#$60 phase | 05:E565 |
