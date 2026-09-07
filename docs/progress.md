@@ -293,7 +293,14 @@ compiled replacements run alongside an interpreter for unrecovered code.
 | 05:E018–E088 | $E018/$E01E queue seed + mid-entry $E073 ($1540→$1502,X) — $D306/$DB99 callee | 113 | 51 |
 | 05:B594–B5C3 | Type remap $B594/$B5AA (09↔10 / 0F↔11 / 42↔4D); PHX/TXA/PLX | 48 | 24 |
 | 05:D3D6–D484 | ($CAFA,9C/@$D408)/(,98@$D44E)/(,74@$D45F) + $D3D6/$D3E9; $B594/$1D8583 paths | 175 | 77 |
-| **Total** | **Two hundred eighty complete routines plus a reset prefix** | **23177** | **10391** |
+| 05:EA52–EA8B | ($E117) stream prologues $EA52/$EA6F → $F998 + JMP $EAA4 | 58 | 28 |
+| 05:EAD0–EB30 | ($E117) $EAD0/$EAEB/$EB08 queue-stream via $96ED/$F91E/$F93D/$F85E | 97 | 47 |
+| 05:EB31–ECD3 | ($E117,4E/E6/F8) $EB36/$EC61 large phase/scroll oscillator + $05ECD4 | 419 | 184 |
+| 05:ED46–ED87 | ($E117,D0/5E) #$83/#$80 ÷3 remainder → $1558 + coord seed | 66 | 32 |
+| 05:EDB4–EDFA | ($E117,5C) phase/$B6B2 class → $05EDFB pair into $155A/$155C | 71 | 29 |
+| 05:EE01–EE55 | ($E117,5A) #$82-phase; DP+$B7 gates → $05EE56 pair | 85 | 35 |
+| 05:E921–E97A | ($E117,D8) dual-bank scroll seed + m16 $1562/$1564 drift | 90 | 35 |
+| **Total** | **Two hundred eighty-seven complete routines plus a reset prefix** | **24649** | **11035** |
 
 
 
@@ -336,8 +343,8 @@ independent hardware-fidelity comparison with another emulator is still needed.
 ## How far from complete?
 
 The project now has a reproducible scoped tracker. The pinned static-analysis
-worklist contains 13,237 instruction variants. Of those, 10391 instruction sites
-are covered by reviewed C replacements: **78.50% of the discovered worklist**.
+worklist contains 13,237 instruction variants. Of those, 11035 instruction sites
+are covered by reviewed C replacements: **83.36% of the discovered worklist**.
 Run `python3 tools/progress.py` to recalculate this figure. If the local
 SNESRecomp manifest exists, the script sums it directly; a public clone uses the
 same checked-in probe total.
@@ -406,7 +413,7 @@ Next work is a reproducible actual battle and larger game-logic translations.
 `src/native_video.inc` reconstructs the complete frame graphics upload routine,
 unused-sprite hiding, and palette-shadow clearing. The new `ram-map.md` records
 the verified shadow buffers, flags, and eight-byte VRAM queue entry layout.
-The current inventory is 23763 ROM bytes / 10645 instruction sites.
+The current inventory is 24649 ROM bytes / 11035 instruction sites.
 
 The isolated suite now also covers interrupt-enable, VRAM queue find/mark,
 PPU multiply, DMA1 setup, pointer resolve, palette-shadow copy, actor-table

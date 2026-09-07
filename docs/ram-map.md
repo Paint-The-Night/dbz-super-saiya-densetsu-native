@@ -561,3 +561,13 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $05DEB2,X | bytes | $DEA1 nibble remap (BMI→#$20) | 05:DEA1 |
 | $1558/$155A/$155C/$1546 | bytes/words | $EED4/$EF5A/$EFCC/$ECE4 ($E117) phase seeds | 05:EED4 |
 | $0D7A/$0D75/$0D01,Y/$0D02,Y/$0D03,Y | words/bytes | $1D8583/$859B face→queue before JML $01C987 | 1D:8583 |
+
+
+| DP+$10/$11 / $1547..$154F / $1558..$155C | words/bytes | $EB36/$EC61 phase oscillator + seed | 05:EB36 |
+| $05ECD4,X word pairs | table | $EC61 ± drift into $155A/$155C | 05:EC61 |
+| DP+$02 / $1093ED / $1EC0C6 | bank/ptrs | $EA52/$EA6F stream prologues before $EAA4 | 05:EA52 |
+| DP+$83/$85 / $17969C / $1093ED | stream | $EAD0/$EB08 queue expand via $96ED | 05:EB08 |
+| $1540 EOR #$03 / $1546 | bytes | $EAEB toggle before JSR $EB08 | 05:EAEB |
+| $4204..06 / $4216 / DP+$00 | div/rem | $ED46/$ED4A ÷3 remainder + seed → $1558 | 05:ED4A |
+| $05EDFB,X / $05EE56,X | byte pairs | $EDB4/$EE01 class → $155A/$155C | 05:EDB4 |
+| $1560..$1566 / $1558..$155C | bytes/words | $E921 dual scroll bank seed + drift | 05:E921 |

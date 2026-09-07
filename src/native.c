@@ -601,14 +601,28 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = actor_gate_f353_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xf364 && c->pc <= 0xf385) {
       done = actor_scale_f364_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xe921 && c->pc <= 0xe97a) {
+      done = actor_hdl_e921_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xea52 && c->pc <= 0xea8b) {
+      done = stream_prolog_ea52_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xea8c && c->pc <= 0xeacf) {
       done = stream_expand_eaa4_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xead0 && c->pc <= 0xeb30) {
+      done = queue_stream_ead0_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xeb31 && c->pc <= 0xecd3) {
+      done = actor_hdl_eb36_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xece4 && c->pc <= 0xed45) {
+      done = actor_hdl_ece4_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xed46 && c->pc <= 0xed87) {
+      done = actor_hdl_ed4a_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xedb4 && c->pc <= 0xedfa) {
+      done = actor_hdl_edb4_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xee01 && c->pc <= 0xee55) {
+      done = actor_hdl_ee01_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xeed4 && c->pc <= 0xef1f) {
       done = actor_hdl_eed4_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xef26 && c->pc <= 0xefff) {
       done = actor_hdl_ef26_step(c, c->pc); x->display_control_steps += done;
-    } else if(c->pc >= 0xece4 && c->pc <= 0xed45) {
-      done = actor_hdl_ece4_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xf386 && c->pc <= 0xf3a1) {
       done = actor_adj_f386_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xf82b && c->pc <= 0xf85d) {
