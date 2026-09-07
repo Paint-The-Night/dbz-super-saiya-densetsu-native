@@ -16,7 +16,9 @@ compiled replacements run alongside an interpreter for unrecovered code.
 | 00:8324–83CB | Frame graphics DMA uploads | 168 | 67 |
 | 00:86A0–86B5 | Hide unused sprites | 22 | 12 |
 | 00:86B6–86C7 | Clear palette shadow | 18 | 9 |
-| **Total** | **Nine complete routines plus a reset prefix** | **358** | **166** |
+| 00:8282–828E | Disable selected interrupts/display control | 13 | 7 |
+| 00:8460–8470 | Update brightness/timing display state | 17 | 7 |
+| **Total** | **Eleven complete routines plus a reset prefix** | **388** | **180** |
 
 These are original code-region sizes, not C source sizes. Unsupported CPU modes
 and interrupts fall back to the baseline. The program accepts only the pinned
@@ -57,8 +59,8 @@ independent hardware-fidelity comparison with another emulator is still needed.
 ## How far from complete?
 
 The project now has a reproducible scoped tracker. The pinned static-analysis
-worklist contains 13,237 instruction variants. Of those, 166 instruction sites
-are covered by reviewed C replacements: **1.25% of the discovered worklist**.
+worklist contains 13,237 instruction variants. Of those, 180 instruction sites
+are covered by reviewed C replacements: **1.36% of the discovered worklist**.
 Run `python3 tools/progress.py` to recalculate this figure. If the local
 SNESRecomp manifest exists, the script sums it directly; a public clone uses the
 same checked-in probe total.
@@ -127,10 +129,11 @@ Next work is a reproducible actual battle and larger game-logic translations.
 `src/native_video.inc` reconstructs the complete frame graphics upload routine,
 unused-sprite hiding, and palette-shadow clearing. The new `ram-map.md` records
 the verified shadow buffers, flags, and eight-byte VRAM queue entry layout.
-The current inventory is 358 ROM bytes / 166 instruction sites.
+The current inventory is 388 ROM bytes / 180 instruction sites.
 
-The isolated suite now covers 396,834 cases, including 1,024 graphics-upload
-variants and 513 cases each for sprite cleanup and palette clearing. The upload
+The isolated suite now covers 397,346 cases, including 1,024 graphics-upload
+variants and 513 cases each for sprite cleanup and palette clearing, plus 512
+display-control cases. The upload
 tests vary queue lengths, palette dirtiness, HDMA control, direct-page alignment,
 and ROM/data-bank mirrors, comparing every CPU field and ordered bus transaction.
 Release and ASan/UBSan suites pass, including checkpoint equivalence.
