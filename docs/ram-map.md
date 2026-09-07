@@ -338,3 +338,17 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $7F0001,X | bytes | $83B2 unpacked bitplane dest | 04:83B2 |
 | DP+$73/$76/$79/$7B | longs/words | $8282 stream src/dst/count/addend | 04:8282 |
 | $82A3,X | word table | $8282 mode vectors $82AB/$82C0/$82D5/$82EB | 04:8282 |
+
+| $0D91 | byte | $A99B BMI gate into $A9B1 | 00:A99B |
+| DP+$48 bit4 | flag | $A99B BIT gate (with $0D91) before RTS | 00:A99B |
+| DP+$7C | byte | $A9B1 nonzero → compare loop; zero → JMP $A153 | 00:A99B |
+| $7004E0,X / $AAD9,Y | bytes | $A9C1 password-style compare window | 00:A99B |
+| $0300,X | words | $FA86 clears $001E bytes of palette shadow | 01:FA86 |
+| $7F2800,X | long×6 | $FA86 slot pointers (word+bank) | 01:FA86 |
+| $01FADF,X | words | $FA86 dest offsets into $0200 ($0120/$0140/$0160/$0040/$0060) | 01:FA86 |
+| 0715 | byte | $FA86 increments on completion | 01:FA86 |
+| $7F0000,X | byte | $BE54 per-slot type before $BEAB | 05:BE54 |
+| $05BEA1,X | words | $BE61 dest base table ($0000..$0020 step 8) | 05:BE54 |
+| DP+$86/$88 / DP+$12 | long/word | $BE61/$BEAB pointer + scaled index | 05:BE54 |
+| $1ECB06/$08/$09,X | tables | $BE61 pack words + $BEAB scale source | 05:BE54 |
+| $7F2800,Y | bytes | $BE61 writes packed triple after DB=$7F | 05:BE54 |

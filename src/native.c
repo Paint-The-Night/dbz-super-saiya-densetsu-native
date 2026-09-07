@@ -268,7 +268,7 @@ static bool reset_step(Cpu *c, uint16_t pc) {
 bool dbz_native_step(Cpu *c, DbzExecution *x) {
   uint8_t bank = (uint8_t)(c->k & 0x7fu);
   if(c->resetWanted || c->waiting || c->stopped || c->intWanted ||
-     (bank != 0 && bank != 1 && bank != 2 && bank != 3 && bank != 4 && bank != 6))
+     (bank != 0 && bank != 1 && bank != 2 && bank != 3 && bank != 4 && bank != 5 && bank != 6))
     return false;
   bool done = false;
   if(bank == 1) {
@@ -306,6 +306,8 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = actor_expand_fb2a_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xfa1a && c->pc <= 0xfa85) {
       done = actor_adjust_fa1a_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xfa86 && c->pc <= 0xfae8) {
+      done = actor_copy_fa86_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xfae9 && c->pc <= 0xfb29) {
       done = actor_blit_fae9_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xfbbc && c->pc <= 0xfbff) {
@@ -366,6 +368,13 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = scene_snap_fe0e_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xf375 && c->pc <= 0xf39d) {
       done = scene_gate_f375_step(c, c->pc); x->display_control_steps += done;
+    }
+    return done;
+  }
+
+  if(bank == 5) {
+    if(c->pc >= 0xbe54 && c->pc <= 0xbeca) {
+      done = actor_pack_be54_step(c, c->pc); x->display_control_steps += done;
     }
     return done;
   }
@@ -543,6 +552,8 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
     done = hblank_wait_a95b_step(c, c->pc); x->display_control_steps += done;
   } else if(c->pc >= 0xa961 && c->pc <= 0xa99a) {
     done = mode7_matrix_a961_step(c, c->pc); x->display_control_steps += done;
+  } else if(c->pc >= 0xa99b && c->pc <= 0xa9e8) {
+    done = mode7_epilogue_a99b_step(c, c->pc); x->display_control_steps += done;
   } else if(c->pc >= 0xab00 && c->pc <= 0xab2b) {
     done = scroll_latch_ab00_step(c, c->pc); x->scroll_steps += done;
   } else if(c->pc >= 0xb960 && c->pc <= 0xb9a4) {
