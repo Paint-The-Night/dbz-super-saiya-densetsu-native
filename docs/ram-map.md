@@ -404,3 +404,9 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | DP+$86/$88 | word/byte | $96ED seeds stream ptr bank #$7F before $96F3 | 05:96ED |
 | $0D8200,X | byte | $B572 type table after A&$7F | 05:B572 |
 | DP+$20,X / DP+$00,X / $01EE | bytes | $C1C8 type → $B572; flag bits → #$80–#$83 | 05:C1C8 |
+
+| $059B89,X / $0029,Y | word/byte | $C1EE/$C20D actor Y + timer (dec / scene-$13/$14 clear) | 05:C1EE |
+| $1474 / $0021,Y | bytes | $C1EE scene id gate; optional OR #$80 after timer dec | 05:C1EE |
+| $05C273,X / DP+$10 | words | $C1EE ASL(timer) mask table → AND scratch | 05:C1EE |
+| $15E9,X / $0803–06,Y | word | $C1EE queue index → long ptr + length for AND walk | 05:C1EE |
+| DP+$00 long | ptr | $C1EE AND-mask destination (bank from queue) | 05:C1EE |

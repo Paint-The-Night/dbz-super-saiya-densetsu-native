@@ -407,6 +407,8 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = palette_slot_c116_step(c, c->pc); x->palette_steps += done;
     } else if(c->pc >= 0xc1c8 && c->pc <= 0xc1ed) {
       done = actor_flag_c1c8_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xc1ee && c->pc <= 0xc272) {
+      done = actor_timer_c1ee_step(c, c->pc); x->display_control_steps += done;
     }
     return done;
   }

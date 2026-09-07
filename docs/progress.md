@@ -174,7 +174,8 @@ compiled replacements run alongside an interpreter for unrecovered code.
 | 05:96ED–9700 | Extends $96F3: STY $86 / bank $7F then VMAIN+$C5ED/$C707; RTS | 20 | 8 |
 | 05:B572–B581 | Type&$7F → $0D8200,X table byte&$7F; RTS | 16 | 10 |
 | 05:C1C8–C1ED | Actor flag predicate via $B572 → #$80/#$81/#$82/#$83; RTS | 38 | 20 |
-| **Total** | **One hundred sixty-six complete routines plus a reset prefix** | **12418** | **5664** |
+| 05:C1EE–C272 | Timer/anim mask via $059B89/$05C273; mid $C20D; AND [$00] words; RTL | 133 | 65 |
+| **Total** | **One hundred sixty-seven complete routines plus a reset prefix** | **12551** | **5729** |
 
 These are original code-region sizes, not C source sizes. Unsupported CPU modes
 and interrupts fall back to the baseline. The program accepts only the pinned
@@ -215,8 +216,8 @@ independent hardware-fidelity comparison with another emulator is still needed.
 ## How far from complete?
 
 The project now has a reproducible scoped tracker. The pinned static-analysis
-worklist contains 13,237 instruction variants. Of those, 5664 instruction sites
-are covered by reviewed C replacements: **42.79% of the discovered worklist**.
+worklist contains 13,237 instruction variants. Of those, 5729 instruction sites
+are covered by reviewed C replacements: **43.28% of the discovered worklist**.
 Run `python3 tools/progress.py` to recalculate this figure. If the local
 SNESRecomp manifest exists, the script sums it directly; a public clone uses the
 same checked-in probe total.
@@ -285,7 +286,7 @@ Next work is a reproducible actual battle and larger game-logic translations.
 `src/native_video.inc` reconstructs the complete frame graphics upload routine,
 unused-sprite hiding, and palette-shadow clearing. The new `ram-map.md` records
 the verified shadow buffers, flags, and eight-byte VRAM queue entry layout.
-The current inventory is 12418 ROM bytes / 5664 instruction sites.
+The current inventory is 12551 ROM bytes / 5729 instruction sites.
 
 The isolated suite now also covers interrupt-enable, VRAM queue find/mark,
 PPU multiply, DMA1 setup, pointer resolve, palette-shadow copy, actor-table

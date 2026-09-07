@@ -3594,6 +3594,11 @@ static void ora_dp16(Cpu *c, uint8_t offset) {
   uint16_t value = read16(c, address);
   c->a |= value; zn(c, c->a, false);
 }
+static void and_dp16(Cpu *c, uint8_t offset) {
+  uint16_t address = dp_address(c, offset);
+  uint16_t value = read16(c, address);
+  c->a &= value; zn(c, c->a, false);
+}
 static void inc_dp8(Cpu *c, uint8_t offset) {
   uint16_t address = dp_address(c, offset);
   uint8_t value = c->read(c->mem, address); idle(c); sample_interrupt(c);
@@ -9727,6 +9732,94 @@ static bool actor_flag_c1c8_step(Cpu *c, uint16_t pc) {
     case 0xc1e6: branch_to(c, !c->z, 0xc1eb); break;
     case 0xc1e8: byte_constant(c, 0x83); break;
     case 0xc1eb: byte_constant(c, 0x80); break;
+  }
+  return true;
+}
+
+/* $05:C1EE–$C272: actor timer/anim mask — Y from $059B89,X; scene $13/$14 may
+ * clear $0029,Y early. Else dec timer, optional $0021 bit7, index $05C273 mask
+ * into DP+$10, then AND-mask words at [$00] via $15E9,X queue length. Mid-entry
+ * $C20D skips the scene clear; $C216 is the shared body. Data follows at $C273. */
+static bool actor_timer_c1ee_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7fu) != 0x05 || c->e || c->xf || c->d) return false;
+  const bool m16 =
+      (pc == 0xc1f0 || pc == 0xc1f4 || pc == 0xc20f || pc == 0xc213 ||
+       pc == 0xc24b || pc == 0xc24f || pc == 0xc251 || pc == 0xc252 ||
+       pc == 0xc255 || pc == 0xc256 || pc == 0xc259 || pc == 0xc25b ||
+       pc == 0xc25e || pc == 0xc260 || pc == 0xc263 || pc == 0xc264 ||
+       pc == 0xc265 || pc == 0xc266 || pc == 0xc268 || pc == 0xc26a ||
+       pc == 0xc26c || pc == 0xc26d || pc == 0xc26e);
+  const bool sep_entry = (pc == 0xc1f5 || pc == 0xc214 || pc == 0xc270);
+  const bool rep_entry = (pc == 0xc1ee || pc == 0xc20d || pc == 0xc249);
+  if(m16 && c->mf) return false;
+  if(sep_entry && c->mf) return false;
+  if(rep_entry && !c->mf) return false;
+  if(!m16 && !sep_entry && !rep_entry && !c->mf) return false;
+  switch(pc) {
+    case 0xc1ee: case 0xc1f0: case 0xc1f4: case 0xc1f5: case 0xc1f7: case 0xc1fa:
+    case 0xc1fc: case 0xc1fe: case 0xc200: case 0xc202: case 0xc205: case 0xc207:
+    case 0xc209: case 0xc20c: case 0xc20d: case 0xc20f: case 0xc213: case 0xc214:
+    case 0xc216: case 0xc219: case 0xc21b: case 0xc21d: case 0xc220: case 0xc221:
+    case 0xc224: case 0xc227: case 0xc229: case 0xc22c: case 0xc22e: case 0xc230:
+    case 0xc233: case 0xc235: case 0xc238: case 0xc23b: case 0xc23d: case 0xc23f:
+    case 0xc241: case 0xc242: case 0xc243: case 0xc245: case 0xc246: case 0xc247:
+    case 0xc248: case 0xc249: case 0xc24b: case 0xc24f: case 0xc251: case 0xc252:
+    case 0xc255: case 0xc256: case 0xc259: case 0xc25b: case 0xc25e: case 0xc260:
+    case 0xc263: case 0xc264: case 0xc265: case 0xc266: case 0xc268: case 0xc26a:
+    case 0xc26c: case 0xc26d: case 0xc26e: case 0xc270: case 0xc272:
+      break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0xc1ee: case 0xc20d: case 0xc249: sep_rep_native(c, 0x20, false); break;
+    case 0xc1f0: case 0xc20f: lda_long_x16(c, 0x059b89); break;
+    case 0xc1f4: case 0xc213: case 0xc255: case 0xc263: tay16(c); break;
+    case 0xc1f5: case 0xc214: case 0xc270: sep_rep_native(c, 0x20, true); break;
+    case 0xc1f7: video_load(c, 0x1474, false); break;
+    case 0xc1fa: cmp_constant8(c, 0x13); break;
+    case 0xc1fc: branch_to(c, c->z, 0xc202); break;
+    case 0xc1fe: cmp_constant8(c, 0x14); break;
+    case 0xc200: branch_to(c, !c->z, 0xc216); break;
+    case 0xc202: load_a_abs_y8(c, 0x0029); break;
+    case 0xc205: branch_to(c, c->n, 0xc216); break;
+    case 0xc207: byte_constant(c, 0x00); break;
+    case 0xc209: store_a_abs_y8(c, 0x0029); break;
+    case 0xc20c: case 0xc272: return_long(c); break;
+    case 0xc216: case 0xc21d: case 0xc229: case 0xc238: load_a_abs_y8(c, 0x0029); break;
+    case 0xc219: case 0xc22c: case 0xc23d: and_constant8(c, 0x7f); break;
+    case 0xc21b: branch_to(c, c->z, 0xc272); break;
+    case 0xc220: dec_a8(c); break;
+    case 0xc221: store_a_abs_y8(c, 0x0029); break;
+    case 0xc224: case 0xc230: load_a_abs_y8(c, 0x0021); break;
+    case 0xc227: branch_to(c, c->n, 0xc272); break;
+    case 0xc22e: branch_to(c, c->z, 0xc238); break;
+    case 0xc233: ora_constant8(c, 0x80); break;
+    case 0xc235: store_a_abs_y8(c, 0x0021); break;
+    case 0xc23b: branch_to(c, !c->n, 0xc241); break;
+    case 0xc23f: ora_constant8(c, 0x10); break;
+    case 0xc241: asl_a8(c); break;
+    case 0xc242: pha8(c); break;
+    case 0xc243: byte_constant(c, 0x00); break;
+    case 0xc245: xba_native(c); break;
+    case 0xc246: pla8(c); break;
+    case 0xc247: phx16(c); break;
+    case 0xc248: tax16(c); break;
+    case 0xc24b: lda_long_x16(c, 0x05c273); break;
+    case 0xc24f: store_dp(c, 0x10, false); break;
+    case 0xc251: plx16(c); break;
+    case 0xc252: video_load(c, 0x15e9, true); break;
+    case 0xc256: lda_abs_y16(c, 0x0803); break;
+    case 0xc259: store_dp(c, 0x00, false); break;
+    case 0xc25b: lda_abs_y16(c, 0x0805); break;
+    case 0xc25e: store_dp(c, 0x02, false); break;
+    case 0xc260: lda_abs_y16(c, 0x0806); break;
+    case 0xc264: case 0xc265: case 0xc26c: case 0xc26d:
+      implied(c); c->y--; zn(c, c->y, false); break;
+    case 0xc266: lda_indirect_long_y16(c, 0x00); break;
+    case 0xc268: and_dp16(c, 0x10); break;
+    case 0xc26a: sta_indirect_long_y16(c, 0x00); break;
+    case 0xc26e: branch_to(c, !c->n, 0xc266); break;
   }
   return true;
 }
