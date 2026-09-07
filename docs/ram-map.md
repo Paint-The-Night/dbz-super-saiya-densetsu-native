@@ -276,3 +276,19 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $211B–$2120 | M7 regs | Matrix + center written by $A961 | 00:A961 |
 | $420C / $0062 / $0055 | HDMA/scratch | Cleared by frame-tail $8674 | 04:8674 |
 | 133D / 12DC | bytes | Cleared by $8674 before DP+$24→$25 | 04:8674 |
+
+| DP+$20 | word | Slot-walk X cursor advanced +#$0100 per $F4B2 iter | 01:F4B2 |
+| $0E00,Y bit6 | flag | Occupied → $F983/$FB2A (Y<$60) or $9D2A (Y=$60/$80) | 01:F4B2 |
+| DP+$00/$02 | long | $F983 builds bank-$02 pointer from $02A597 | 01:F983 |
+| $7E5000,X | bytes | $FB2A expands [DP+$00] records; term #$80 | 01:FB2A |
+| $01FBB3,X | table | Nibble→attr for $FB2A | 01:FB2A |
+| $4360–$4375 | HDMA | Mode-7 channels programmed by $B960 | 00:B960 |
+| DP+$3B..$42 | bytes | BG3/BG4 scroll sources for $AB00 | 00:AB00 |
+| $2111–$2114 | BG scrolls | Written by $AB00 | 00:AB00 |
+| $0800,X queue | bytes | $8938 seeds occ/$0000/$0000/$7F/#$8000 | 04:8938 |
+| 0715 | byte | Inc by $8938 after queue seed | 04:8938 |
+| $2105/$2101/$212C | PPU | Mode-7/obj/TM presets by $89E2 | 04:89E2 |
+| $1200..$1218 | words | Mode-7 matrix/center seeds by $89E2 | 04:89E2 |
+| 0D66 | byte | $B72B dispatch index (==$29 early RTL) | 01:B72B |
+| $02E0F2,X | long words | Table pairs for $B72B → DP+$00/$02 | 01:B72B |
+| 01B3 | byte | Typed seed written on $0D66=$0B path | 01:B72B |
