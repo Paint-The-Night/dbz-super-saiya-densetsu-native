@@ -415,7 +415,15 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $05E40E,X / DP+$00 | words/long | $E38E sprite-stream pointers (bank #$05) before $9626 | 05:E38E |
 | $05E400,X / $05E3F2,X | bytes | $E3CC signed scale factor + base offset for ±$4216 | 05:E3CC |
 | $4202/$4203/$4216 | mul | $E3CC hardware 8×8 product | 05:E3CC |
-| $153B/$153C | bytes | $86F5 stores dual $C1C8 results | 05:86F5 |
-| DP+$AB/$AC | bytes | $86F5 INC $AB / STZ $AC after flag push | 05:86F5 |
-| $1480/$14A0 | bytes | $86F5 $69 keep / force #$80 sync | 05:86F5 |
+| $153B/$153C | bytes | $86DE/$86F5 stores dual $C1C8 results | 05:86DE |
+| DP+$AB/$AC | bytes | $86DE INC $AB / STZ $AC after flag push | 05:86DE |
+| $1480/$14A0 | bytes | $86DE $69 keep / force #$80 sync | 05:86DE |
+| $1429/$1469 | bytes | $86DE seeds #$0F before $B045 | 05:86DE |
 | $1558–$155D,X | bytes | $1D:8807 RNG-seeded slot fields when $1559,X was 0 | 1D:8807 |
+| $1570,Y / $1571,Y / $1573,Y | bytes/words | $1D:8843 timer + position words; BMI on $1570 | 1D:8843 |
+| DP+$0A/$0C | words | $1D:8843 scale scratch (ASL/ROR/×3) before add | 1D:8843 |
+| $1D8968/69/6B,X | byte/words | $1D:8843 type + ΔX/ΔY table | 1D:8843 |
+| DP+$AB/$AC/$B0/$B6 | bytes | $8857 seeds after optional $C07B | 05:8857 |
+| $0B19,Y / $0E19,Y | bytes | $9768 clears #$80 markers via $96E2 walk | 05:9768 |
+| $17C6,Y → $0140,Y | bytes | $9768 12-byte copy before scroll seed | 05:9768 |
+| $0738/$073A / $071B | word/bytes | $9768 scroll pointer bank #$07; clear $071B | 05:9768 |
