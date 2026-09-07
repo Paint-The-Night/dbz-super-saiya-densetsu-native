@@ -214,3 +214,28 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $2140–$2143 | APU ports | Handshake/transfer mailbox ($BBAA / $CC / data) | 04:84E2, 04:85F1 |
 | $4210 | PPU status | BIT NMI-flag wait during APU handshake | 04:84E2 |
 | $4200 | NMITIMEN | Cleared around APU boot transfer | 04:8490 |
+
+| 0C35 | byte | Bit7 cleared in scene continuation $8FB2 | 00:8FB2 |
+| 0C41 | byte | Set #$20 when $1648 clear and $01AE negative | 00:8FB2 |
+| 0C40 | byte | Nonzero → early JMP $9083 from $8FB2 | 00:8FB2 |
+| 01BC | byte | Bit5 set when bit0 was set during $8FB2 | 00:8FB2 |
+| $2132 | COLDATA | Written #$E0 in $8FB2 | 00:8FB2 |
+| 0D5F / 0D67 | bytes | Seeded #$10 / polled until bit7 set in $8FB2 wait | 00:8FB2 |
+| 1303 | byte | Written #$82 before $04844A in $8FB2 | 00:8FB2 |
+| 073C | byte | Set #$02 before $01F455 when $01D6 bit6 clear and $01AE neg | 00:8FB2 |
+| DP+$00 | byte | Search key for $03F021 actor $0B1C,Y compare | 03:F021 |
+| 0B00,Y / 0B1C,Y | bytes | Type / match field walked by $F021 | 03:F021 |
+| 0B01,Y | byte | Type; $F06F rewrites $3A→$39 | 03:F06F |
+| 0C36 / 0C37 | bytes | Gate / cleared on $F06F rewrite | 03:F06F |
+| 1306 / 1307 / 1308 | bytes | APU command / last echoed / retry counter | 04:8514 |
+| 1318 | byte | Extra byte to $2143 when command == $88 | 04:8514 |
+| 1309–1310 | bytes | 8-byte APU ID queue (shifted by $8514) | 04:8514 |
+| 1311 / 1313 | bytes | Last ID sent to $2141 / handshake phase | 04:8514 |
+| $2140 / $2141 / $2143 | APU | Command echo / queue ID / $88 payload | 04:8514 |
+| 01B2 | byte | Loop count (DEC→DP+$00) for $01C535 | 01:C535 |
+| $0100,Y / $0101,Y | bytes | Index / rewritten flag byte | 01:C535 |
+| $01C584 | bytes | Flag-template table indexed by $0100,Y | 01:C535 |
+| 0EA3 | byte | When ==5 and index==$1A → force template #$84 | 01:C535 |
+| DP+$10 | byte | #$80/#$40 mask from $0061 for bit0 OR | 01:C535 |
+| 0D66 / $0061 | bytes | Early-exit / path select for $01B61E | 01:B61E |
+| $7E3000,X | words | Cleared or filled #$3D40 by $B61E/$B647 | 01:B61E |
