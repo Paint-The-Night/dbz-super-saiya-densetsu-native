@@ -447,6 +447,14 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $0D8200,X | byte | $B582 type table bit7 → EOR #$80 (predicate sibling of $B572) | 05:B582 |
 | $071B | byte | $9488 nonzero → PLA×3 discard JSL frame then RTL | 05:9488 |
 | $14C2 bit0 | flag | $1D:8A77 selects Y=#$1400 vs #$1440 | 1D:8A77 |
+| $14C2 bit0 | flag | $05:B6B2 same-polarity / $B6C0 inverted Y=#$1400 vs #$1440 | 05:B6B2 |
+| $1640–$1645 / $7E3000 grid | bytes/words | $93A9 face-id seeds and $7E3000 pattern fill before JML $89AC | 05:93A9 |
+| $1552–$1557 / DP+$04 | bytes | $DF60 face-adjust seeds after $1D8FEC table scale | 05:DF60 |
+| $1540 / $1546 / ($E117,X) | bytes/table | $E102 dispatch index and BMI gate | 05:E102 |
+| $1527/$1528 / $14CC–$14D1 | bytes | $A435 probe clears and scene gates | 05:A435 |
+| $1D0101,X | byte | $8AB3 list clear before JML $01C639 | 1D:8AB3 |
+| $1481–$1485 / DP+$4F/$50 | bytes | $8ABD flight facing / scroll nudge | 1D:8ABD |
+
 | $0B00,X | byte | $97C9 keeps only #$C0 bits via $96D7 walk to #$0120 | 05:97C9 |
 | $14F3/$14F4 | byte/word | $97C9 clears after actor mask walk | 05:97C9 |
 | DP+$24 / $0716 | bytes | $97C9 scene result &#$7F; always STA #$81 to $0716 | 05:97C9 |
