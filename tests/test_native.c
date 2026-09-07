@@ -20,9 +20,9 @@ static void record(Bus *b,uint32_t a,uint8_t v,uint8_t kind) {
 static uint8_t read_bus(void *mem,uint32_t address) {
   Bus *b=mem;uint8_t v;
   uint8_t bank=(uint8_t)(address>>16 & 0x7fu);
-  /* Bank 0: real ROM. Banks 2/4/6: real ROM for $02D812 / $0485B6 / $06EF11+F14D.
+  /* Bank 0: real ROM. Banks 2/3/4/6: real ROM for $02D812 / $03FB8D / $0485B6 / $06EF11+F14D.
    * Other banks keep the RAM overlay so fixtures can plant stubs/tables. */
-  if((address & 0xffffu)>=0x8000 && (bank == 0 || bank == 2 || bank == 4 || bank == 6)) {
+  if((address & 0xffffu)>=0x8000 && (bank == 0 || bank == 2 || bank == 3 || bank == 4 || bank == 6)) {
     size_t off = (size_t)bank * 0x8000u + (address & 0x7fffu);
     v = b->rom[off];
   } else v=b->ram[address&65535];
@@ -476,8 +476,7 @@ int main(int argc,char **argv) {
     word(a,0x200,0x8fff); word(b,0x200,0x8fff);
     a->ram[0x62]=b->ram[0x62]=(uint8_t)(0xff - mask);
     a->ram[0x24]=b->ram[0x24]=(uint8_t)(mask & 3);
-    a->ram[0x85b6]=b->ram[0x85b6]=0x6b; /* stub JSL $0485B6 */
-    a->ram[0xfb8d]=b->ram[0xfb8d]=0x6b; /* stub JSL $03FB8D */
+    /* $0485B6 / $03FB8D come from real bank-4/3 ROM (both now natively mapped). */
     for(unsigned i=0;i<0x80;i++) a->ram[0x800+i]=b->ram[0x800+i]=0x5a;
     unsigned steps=0;
     while(ca.pc>=0x8b28 && ca.pc<=0x8b53 && steps++<2000) {
@@ -944,6 +943,163 @@ int main(int argc,char **argv) {
     }
     require(ca.pc==0x9000 && ca.sp==0x202,"89b8 return");
   }
+  /* $00849C: early RTL when record list immediately ends ($80) */
+  for(unsigned av=0;av<8;av++) {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0x849c,av), cb=make_cpu(b,0x849c,av);
+    ca.db=cb.db=0; ca.xf=cb.xf=false; ca.x=cb.x=0x10+av;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+    word(a,0x0a,0x0080); word(b,0x0a,0x0080);
+    word(a,0x0c,0x0040); word(b,0x0c,0x0040);
+    word(a,0x33,0x0010); word(b,0x33,0x0010);
+    word(a,0x35,0x0020); word(b,0x35,0x0020);
+    word(a,0x55,0x0004); word(b,0x55,0x0004);
+    /* long pointer DP+$00 -> $000500; Y=1 reads terminator */
+    a->ram[0]=b->ram[0]=0x00; a->ram[1]=b->ram[1]=0x05; a->ram[2]=b->ram[2]=0x00;
+    a->ram[0x500]=b->ram[0x500]=0x00; /* flags */
+    a->ram[0x501]=b->ram[0x501]=0x80; /* end marker */
+    unsigned steps=0;
+    while(ca.pc!=0x9000 && steps++<80) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected 849c early rtl");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0x9000 && ca.sp==0x202,"849c early rtl");
+    require(getword(a,0x55)==0x0004,"849c preserved OAM cursor");
+  }
+  /* $00849C: one on-screen sprite write into $0400 and $0600 */
+  for(unsigned av=0;av<4;av++) {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0x849c,av), cb=make_cpu(b,0x849c,av);
+    ca.db=cb.db=0; ca.xf=cb.xf=false;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+    word(a,0x0a,0x0030); word(b,0x0a,0x0030); /* world Y */
+    word(a,0x0c,0x0040); word(b,0x0c,0x0040); /* world X */
+    word(a,0x33,0x0000); word(b,0x33,0x0000);
+    word(a,0x35,0x0000); word(b,0x35,0x0000);
+    word(a,0x55,0x0000); word(b,0x55,0x0000);
+    a->ram[0]=b->ram[0]=0x00; a->ram[1]=b->ram[1]=0x05; a->ram[2]=b->ram[2]=0x00;
+    /* record: flags, x, tile, attr, y, then end */
+    a->ram[0x500]=b->ram[0x500]=0x00;
+    a->ram[0x501]=b->ram[0x501]=0x10; /* x */
+    a->ram[0x502]=b->ram[0x502]=0x22; /* tile */
+    a->ram[0x503]=b->ram[0x503]=0x00; /* attr */
+    a->ram[0x504]=b->ram[0x504]=0x20; /* y */
+    a->ram[0x505]=b->ram[0x505]=0x80; /* end */
+    unsigned steps=0;
+    while(ca.pc!=0x9000 && steps++<400) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected 849c sprite");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0x9000 && ca.sp==0x202,"849c sprite rtl");
+    require(a->ram[0x400]==0x60 && a->ram[0x401]==0x40 && a->ram[0x402]==0x22,"849c OAM bytes");
+  }
+  /* $0085B9 / $0085CF: alt entries reach shared walker then early RTL */
+  for(unsigned entry=0;entry<2;entry++) {
+    uint16_t start=entry?0x85cf:0x85b9;
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,start,entry), cb=make_cpu(b,start,entry);
+    ca.db=cb.db=0; ca.xf=cb.xf=false;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+    word(a,0x0a,0x0010); word(b,0x0a,0x0010);
+    word(a,0x0c,0x0010); word(b,0x0c,0x0010);
+    word(a,0x55,0x0008); word(b,0x55,0x0008);
+    a->ram[0]=b->ram[0]=0x00; a->ram[1]=b->ram[1]=0x05; a->ram[2]=b->ram[2]=0x00;
+    a->ram[0x500]=b->ram[0x500]=0x00; a->ram[0x501]=b->ram[0x501]=0x80;
+    unsigned steps=0;
+    while(ca.pc!=0x9000 && steps++<80) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected 85b9/85cf");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0x9000 && ca.sp==0x202,"85b9/85cf rtl");
+  }
+
+  /* $03FB8D: early RTL when $1648>=0 and $01A0 not in {5,$18} */
+  for(unsigned av=0;av<8;av++) {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xfb8d,av), cb=make_cpu(b,0xfb8d,av);
+    ca.k=cb.k=3; ca.db=cb.db=0; ca.xf=cb.xf=false;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+    a->ram[0x1648]=b->ram[0x1648]=(uint8_t)(av&0x7f); /* BPL path */
+    a->ram[0x1a0]=b->ram[0x1a0]=(uint8_t)((av==5)?0:av); /* avoid 5/$18 */
+    if(a->ram[0x1a0]==0x18) a->ram[0x1a0]=b->ram[0x1a0]=0x19;
+    unsigned steps=0;
+    while(!(ca.pc==0x9000 && ca.k==0) && steps++<40) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected fb8d early rtl");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0x9000 && ca.sp==0x202,"fb8d early rtl");
+  }
+  /* $03FB8D: $01A0==5 and DP+$24 masked not in {0,2,7} -> RTL at FBD9 */
+  for(unsigned mode=0;mode<4;mode++) {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xfb8d,mode), cb=make_cpu(b,0xfb8d,mode);
+    ca.k=cb.k=3; ca.db=cb.db=0; ca.xf=cb.xf=false;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+    a->ram[0x1a0]=b->ram[0x1a0]=0x05;
+    static const uint8_t modes[]={1,3,4,6};
+    a->ram[0x24]=b->ram[0x24]=modes[mode];
+    unsigned steps=0;
+    while(!(ca.pc==0x9000 && ca.k==0) && steps++<40) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected fb8d mode rtl");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0x9000 && ca.sp==0x202,"fb8d FBD9 rtl");
+  }
+  /* $03FB8D: $1648 bit7 set and $01D8==$32 -> JMP $FCFD (leave native prefix) */
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xfb8d,0), cb=make_cpu(b,0xfb8d,0);
+    ca.k=cb.k=3; ca.db=cb.db=0; ca.xf=cb.xf=false;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+    a->ram[0x1648]=b->ram[0x1648]=0x80;
+    a->ram[0x1d8]=b->ram[0x1d8]=0x32;
+    unsigned steps=0;
+    while(!(ca.pc==0xfcfd && ca.k==3) && steps++<40) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected fb8d jmp fcfd");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0xfcfd && ca.k==3,"fb8d reached FCFD");
+  }
+  /* $03FB8D: $01A0==5 and DP+$24==0 -> branch to unrecovered $FBDA */
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xfb8d,1), cb=make_cpu(b,0xfb8d,1);
+    ca.k=cb.k=3; ca.db=cb.db=0; ca.xf=cb.xf=false;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+    a->ram[0x1a0]=b->ram[0x1a0]=0x05;
+    a->ram[0x24]=b->ram[0x24]=0x00;
+    unsigned steps=0;
+    while(!(ca.pc==0xfbda && ca.k==3) && steps++<40) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected fb8d to fbda");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0xfbda && ca.k==3,"fb8d reached FBDA");
+  }
+  /* $008B42 path: native wipe through native FB8D early RTL then scene JMP */
+  for(unsigned mask=0;mask<4;mask++) {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0x8b28,mask), cb=make_cpu(b,0x8b28,mask);
+    ca.db=cb.db=0; ca.xf=cb.xf=false;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+    a->ram[0x62]=b->ram[0x62]=(uint8_t)(0xff - mask);
+    a->ram[0x24]=b->ram[0x24]=(uint8_t)(mask & 3); /* modes 0..3 -> table targets */
+    /* zeroed $1648/$01A0 => FB8D early RTL; 85B6 runs natively from bank-4 ROM */
+    for(unsigned i=0;i<0x80;i++) a->ram[0x800+i]=b->ram[0x800+i]=0x5a;
+    unsigned steps=0;
+    while(steps++<4000) {
+      bool in_wipe = ca.k==0 && ca.pc>=0x8b28 && ca.pc<=0x8b53;
+      bool in_fb8d = ca.k==3 && ca.pc>=0xfb8d && ca.pc<=0xfbd9;
+      bool in_85b6 = ca.k==4 && ca.pc>=0x85b6 && ca.pc<=0x85f0;
+      if(!(in_wipe || in_fb8d || in_85b6)) break;
+      a->count=b->count=0;
+      if(!dbz_native_step(&ca,stats)) lakesnes_cpu_runOpcode(&ca);
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(steps<4000 && !(ca.k==0 && ca.pc>=0x8b28 && ca.pc<=0x8b53),
+            "8b28+fb8d reached jump target");
+    for(unsigned i=0;i<0x80;i++) require(a->ram[0x800+i]==0,"8b28+fb8d queue wiped");
+  }
+
     Cpu guard=make_cpu(a,0x82a3,0);guard.d=true;
   a->count=0;require(!dbz_native_step(&guard,stats)&&a->count==0,"decimal mode falls back without effects");
   guard.d=false;guard.intWanted=true;
@@ -954,6 +1110,6 @@ int main(int argc,char **argv) {
   require(!dbz_native_step(&guard,stats)&&a->count==0,"controller emulation guard");
   guard=make_cpu(a,0x82fb,0);guard.mf=false;
   require(!dbz_native_step(&guard,stats)&&a->count==0,"scroll accumulator width guard");
-  printf("PASS: native equivalence suites including EF11/F089/F14D/89B8/D812/9BBF/8D2B/85B6/C559/C68C/90E6/946F and 8DFE-to-F14D; CPU state and bus sequences match.\n");
+  printf("PASS: native equivalence suites including 849C/FB8D/EF11/F089/F14D/89B8/D812/9BBF/8D2B/85B6/C559/C68C/90E6/946F and 8DFE-to-F14D; CPU state and bus sequences match.\n");
   free(stats);free(a);free(b);free(rom);return 0;
 }

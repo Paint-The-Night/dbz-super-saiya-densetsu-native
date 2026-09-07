@@ -72,6 +72,19 @@ Names describe observed use and are not recovered original source identifiers.
 | 0B0A,X / 0B0C,X / 0B0E,X | word / word / byte | Actor field copies / second accumulators | 00:89B8 |
 | 0B0F,X / 0B11,X | word / byte | Actor field copies from stream | 00:89B8 |
 
+| 1648 | byte | Scene-entry gate; bit7 selects $01D8 specialty compares | 03:FB8D |
+| 01D8 | byte | Specialty compare ($48 early RTL / $32/$36/$42 JMP handlers) | 03:FB8D |
+| 01D6 bit6 | bit | When set, JMP $FD3D from scene-entry dispatch | 03:FB8D |
+| 01A0 | byte | Scene-entry selector ($05 mode dispatch / $18 JMP $FC93 / else RTL) | 03:FB8D |
+
+| DP+$0A / $0C | words | Actor world Y / X for OAM writeback | 00:849C |
+| DP+$12 / $14 | words | Camera-relative Y / X (world − scroll) | 00:849C |
+| DP+$0E | byte | On-screen Y clip threshold (often $F0) | 00:849C |
+| DP+$04 / $06 / $08 / $09 / $10 | bytes | OAM size/xhigh scratch / temp X / attr / clipped Y | 00:849C |
+| DP+$55 | word | Next free OAM shadow index ($0400) | 00:849C, 86A0 |
+| 0400–061F | (see above) | OAM shadow written by actor walk | 00:849C |
+| 8589 / 8599 | ROM | OAM high-table set/clear nibble masks | 00:849C |
+
 VRAM entry layout:
 
 | Byte offset | Meaning |

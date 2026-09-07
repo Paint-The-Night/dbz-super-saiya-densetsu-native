@@ -268,9 +268,15 @@ static bool reset_step(Cpu *c, uint16_t pc) {
 bool dbz_native_step(Cpu *c, DbzExecution *x) {
   uint8_t bank = (uint8_t)(c->k & 0x7fu);
   if(c->resetWanted || c->waiting || c->stopped || c->intWanted ||
-     (bank != 0 && bank != 2 && bank != 4 && bank != 6))
+     (bank != 0 && bank != 2 && bank != 3 && bank != 4 && bank != 6))
     return false;
   bool done = false;
+  if(bank == 3) {
+    if(c->pc >= 0xfb8d && c->pc <= 0xfbd9) {
+      done = early_exit_fb8d_step(c, c->pc); x->display_control_steps += done;
+    }
+    return done;
+  }
   if(bank == 6) {
     if(c->pc >= 0xef11 && c->pc <= 0xef9a) {
       done = queue_fill_ef11_step(c, c->pc); x->upload_steps += done;
@@ -319,6 +325,9 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
     done = display_transition_dispatch_step(c, c->pc); x->display_control_steps += done;
   } else if(c->pc >= 0x8471 && c->pc <= 0x849b) {
     done = mosaic_step(c, c->pc); x->display_control_steps += done;
+  } else if((c->pc >= 0x849c && c->pc <= 0x8586) ||
+            (c->pc >= 0x85b9 && c->pc <= 0x85e6)) {
+    done = oam_writeback_849c_step(c, c->pc); x->sprite_steps += done;
   } else if(c->pc >= 0x8402 && c->pc <= 0x8432) {
     done = transition_timing_step(c, c->pc); x->display_control_steps += done;
   } else if(c->pc >= 0x86fc && c->pc <= 0x8710) {
