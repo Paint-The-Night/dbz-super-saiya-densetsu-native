@@ -130,3 +130,14 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | 121F | byte | Set to $07 by scene specialty $FC47 | FC47 |
 | 01E2 / 01D2 | bytes | Cleared on $FC74 success path before SEC/RTL | FC74 |
 | 166C | word | Compared to #$0800 by $E340 early gate | E340 |
+
+| 01D6 | byte | When ==$60, $A6CB clears it and runs $E419/$E4F4 | A6CB |
+| 01BC | byte | Cleared by $A6CB success path; nibble-masked in mode0 BMI path | A6CB, 8B7A |
+| 0707 / 0709 | word / byte | Decompress source pointer set by mode0/2 tails | 8B7A, 8E96 |
+| DP+$83 / $85 | word / byte | Secondary long-pointer set before $C559 | 8B7A, 8E96 |
+| 074C | word | Set to $FFFF on mode0 BMI path | 8B7A |
+| 01E7 bit4 | bit | Selects mode2 decompress pointer bank/addr | 8E96 |
+| 0C40 / 0C36 / 0C37 / 0C42 / 0C35 | bytes | Cleared by scene wipe $E837 | E837 |
+| 10C1 / 10C2 / 0726 / 0727 / 0EA1 / 01EE | bytes | Cleared by scene wipe $E837 | E837 |
+| 0EA3 / 0EA0 | bytes | Seeded $15 / $01 by $E340 continue path | E340 |
+| 1000,Y | bytes | Cleared stride-6 by $9255 via $8B07 | 9255 |

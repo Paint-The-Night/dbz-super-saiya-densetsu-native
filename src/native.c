@@ -276,12 +276,16 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = early_exit_fb8d_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xfbda && c->pc <= 0xfc32) {
       done = scene_entry_fbda_step(c, c->pc); x->display_control_steps += done;
-    } else if(c->pc >= 0xfc47 && c->pc <= 0xfc73) {
+    } else if(c->pc >= 0xfc33 && c->pc <= 0xfc73) {
       done = scene_specialty_fc47_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xfc74 && c->pc <= 0xfc92) {
       done = scene_pred_fc74_step(c, c->pc); x->display_control_steps += done;
-    } else if(c->pc >= 0xe340 && c->pc <= 0xe34c) {
+    } else if(c->pc >= 0xe340 && c->pc <= 0xe36a) {
       done = early_gate_e340_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xa6cb && c->pc <= 0xa6e0) {
+      done = scene_gate_a6cb_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0x9255 && c->pc <= 0x9266) {
+      done = clear_1000_9255_step(c, c->pc); x->display_control_steps += done;
     }
     return done;
   }
@@ -292,6 +296,8 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = tile_fetch_f089_step(c, c->pc); x->upload_steps += done;
     } else if(c->pc >= 0xf14d && c->pc <= 0xf1eb) {
       done = scroll_clamp_f14d_step(c, c->pc); x->scroll_steps += done;
+    } else if(c->pc >= 0xe837 && c->pc <= 0xe8ed) {
+      done = scene_wipe_e837_step(c, c->pc); x->display_control_steps += done;
     }
     return done;
   }
@@ -390,9 +396,9 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
     done = mul_table_8d2b_step(c, c->pc); x->display_control_steps += done;
   } else if(c->pc >= 0x8e76 && c->pc <= 0x8e93) {
     done = scene_path_8e76_step(c, c->pc); x->palette_steps += done;
-  } else if(c->pc >= 0x8b7a && c->pc <= 0x8c10) {
+  } else if(c->pc >= 0x8b7a && c->pc <= 0x8c83) {
     done = scene_mode0_8b7a_step(c, c->pc); x->palette_steps += done;
-  } else if(c->pc >= 0x8e96 && c->pc <= 0x8f12) {
+  } else if(c->pc >= 0x8e96 && c->pc <= 0x8f45) {
     done = scene_mode2_8e96_step(c, c->pc); x->palette_steps += done;
   } else if(c->pc >= 0x90c1 && c->pc <= 0x90e5) {
     done = scene_gfx_90c1_step(c, c->pc); x->upload_steps += done;
