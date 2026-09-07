@@ -280,20 +280,28 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = scene_specialty_fc47_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xfc74 && c->pc <= 0xfc92) {
       done = scene_pred_fc74_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xe32e && c->pc <= 0xe33f) {
+      done = swap_epilogue_e32e_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xe340 && c->pc <= 0xe36a) {
       done = early_gate_e340_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xe36b && c->pc <= 0xe418) {
+      done = mvn_restore_e36b_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xa6cb && c->pc <= 0xa6e0) {
       done = scene_gate_a6cb_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0x9255 && c->pc <= 0x9266) {
       done = clear_1000_9255_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xef29 && c->pc <= 0xefd6) {
       done = scene_actor_ef29_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xefd7 && c->pc <= 0xf020) {
+      done = clear_siblings_efd7_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xe419 && c->pc <= 0xe460) {
       done = actor_backup_e419_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xe461 && c->pc <= 0xe48f) {
       done = actor_restore_e461_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xe4d1 && c->pc <= 0xe513) {
       done = actor_type_list_e4d1_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xbb46 && c->pc <= 0xbb86) {
+      done = wipe_actor_bb46_step(c, c->pc); x->display_control_steps += done;
     }
     return done;
   }
@@ -306,6 +314,8 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = scroll_clamp_f14d_step(c, c->pc); x->scroll_steps += done;
     } else if(c->pc >= 0xe837 && c->pc <= 0xe8ed) {
       done = scene_wipe_e837_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xe8ee && c->pc <= 0xe941) {
+      done = actor_attr_e8ee_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xe942 && c->pc <= 0xe968) {
       done = wipe_gate_e942_step(c, c->pc); x->display_control_steps += done;
     }

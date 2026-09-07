@@ -152,3 +152,18 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | 0190,X | bytes | Collected high-actor types ($0B00>=$C0), $FF terminated | E4D1, E4F4 |
 | 0D9B bit6 | bit | Enables wipe-gate $E942 body; cleared when taken | E942 |
 | 0170 bit3 | bit | Wipe-gate predicate with $01A0==$09 and $01BB>=$08 | E942 |
+
+| 0B17 / 0B1B,Y | bytes | Attr bytes from $02B21D/$02B214 ×$0E product | E8EE |
+| 0B0E,Y | byte | Set to $01 when type $54; else loaded from [DP+$00],Y | E8EE |
+| 0B00,Y=$C0 / 0B01=$54 / 0B1C=$0C | bytes | Wipe-actor identity seeded by $BB46 | BB46 |
+| 0B03/0A=$0033 / 0B05/0C=$0006 | words | Wipe-actor X/Y coords | BB46 |
+| 7E29A0–7E2ABF | 288 bytes | Cleared by $EFD7; source for $E36B→$0B00 MVN | EFD7, E36B |
+| 7E3A00–7E3B1F | 288 bytes | Cleared by $EFEA; dest for $E36B←$0B00 MVN | EFEA, E36B |
+| 7E2B00–7E2B9F | 160 bytes | Source for $E36B→$0E00 MVN | E36B |
+| 7E3B20 / 7E2AC0 | bytes | $01BB backup / restore around MVN body | E36B |
+| 7E2AE0 / 7E2AEC / 7E2AED | bytes | Restore $1648 / $0C36 / $0C37 | E36B |
+| 7E2AF0–7E2AF7 / 7E2AE2–7E2AEB | words | Scroll-word backup/restore ($01A2/$A4/$AA/$AC) + $10C1 | E36B |
+| 018F | byte | Swapped with $01BC by $E32E epilogue | E32E |
+| 0C41 / 0EA2 | bytes | Seeded $49 / $20 by $E36B tail | E36B |
+| 01D7 bit6 | bit | Cleared by $E36B before JMP $E32E | E36B |
+
