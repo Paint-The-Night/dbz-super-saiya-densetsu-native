@@ -525,6 +525,13 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $7F1760,X | bytes | $F782 clear loop (16 bytes) when $1546!=#$82 after $F000 | 05:F782 |
 | $0801/$0803/$0806 | words | $F000 queue seed from $1540/$1541 + PHY'd Y | 05:F000 |
 | $121B/$121C/$121E / $15E8 / DP+$24 | bytes | $95C9 face-table write; $DA8D forces $15E8=#$02 | 05:95C9 |
+| $01E7 / $17D2 / DP+$04 | bytes | $D48F ($CAFA,22) BMI/BIT/AND score gates before INY | 05:D48F |
+| $14C1 / $14D3 / $14CC / $14E8 / DP+$B7 | bytes | $D4A4/$D4CB/$D503/$D4A9 compare siblings | 05:D48F |
+| $0001,X / $0034,X | bytes | $D4D2 after $B6B2→TYX CMP paths | 05:D4D2 |
+| $14CD / $121B / $15E8 / $1425/$1465 | bytes | $DA9C ($CAFA,38) face-class seed | 05:DA9C |
+| $1558 / $155C / $155A / $155E / $1546 | bytes/words | $F06A ($E117,40/48) scroll prep | 05:F06A |
+| $14C7 / $14D4 / $05F3A2,X | word/table | $F386 m16 A adjust | 05:F386 |
+
 | DP+$00 | byte | $95C9 saves incoming A before $B6B2 | 05:95C9 |
 | $0022,Y / DP+$04/$05 | bytes | $DA45 face nibble merge via $DA64/$DA6D | 05:DA45 |
 | $0031,Y | byte | $DA7C stores DP+$04 operand | 05:DA7C |

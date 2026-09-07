@@ -491,6 +491,8 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = actor_seed_b124_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xbddc && c->pc <= 0xbe11) {
       done = actor_probe_bddc_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xd485 && c->pc <= 0xd520) {
+      done = actor_op_d48f_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xd521 && c->pc <= 0xd571) {
       done = actor_op_d521_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xf3aa && c->pc <= 0xf40f) {
@@ -557,12 +559,18 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = actor_op_da7c_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xda8d && c->pc <= 0xda9b) {
       done = actor_op_da8d_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xda9c && c->pc <= 0xdb2a) {
+      done = actor_op_da9c_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xe089 && c->pc <= 0xe0b0) {
       done = stream_ptr_e089_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xf480 && c->pc <= 0xf547) {
       done = actor_hdl_f480_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xf000 && c->pc <= 0xf069) {
       done = actor_setup_f000_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xf06a && c->pc <= 0xf0e9) {
+      done = actor_setup_f06a_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xf386 && c->pc <= 0xf3a1) {
+      done = actor_adj_f386_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xf82b && c->pc <= 0xf85d) {
       done = actor_setup_f82b_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xf85e && c->pc <= 0xf885) {
