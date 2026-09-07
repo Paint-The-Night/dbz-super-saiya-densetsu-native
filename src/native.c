@@ -377,7 +377,13 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
   }
 
   if(bank == 5) {
-    if(c->pc >= 0x96f3 && c->pc <= 0x9700) {
+    if(c->pc >= 0x9626 && c->pc <= 0x96d6) {
+      done = oam_place_9626_step(c, c->pc); x->sprite_steps += done;
+    } else if(c->pc >= 0x96d7 && c->pc <= 0x96e1) {
+      done = index_add20_96d7_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0x96e2 && c->pc <= 0x96ec) {
+      done = index_add20_96e2_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0x96ed && c->pc <= 0x9700) {
       done = gfx_vmain_96f3_step(c, c->pc); x->upload_steps += done;
     } else if(c->pc >= 0xbe54 && c->pc <= 0xbeca) {
       done = actor_pack_be54_step(c, c->pc); x->display_control_steps += done;
@@ -393,10 +399,14 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = actor_prep_9b37_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0x9b91 && c->pc <= 0x9c0a) {
       done = actor_adjust_9b91_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xb572 && c->pc <= 0xb581) {
+      done = type_lookup_b572_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xc0ed && c->pc <= 0xc115) {
       done = palette_push_c0ed_step(c, c->pc); x->palette_steps += done;
     } else if(c->pc >= 0xc116 && c->pc <= 0xc1bb) {
       done = palette_slot_c116_step(c, c->pc); x->palette_steps += done;
+    } else if(c->pc >= 0xc1c8 && c->pc <= 0xc1ed) {
+      done = actor_flag_c1c8_step(c, c->pc); x->display_control_steps += done;
     }
     return done;
   }

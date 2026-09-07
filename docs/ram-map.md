@@ -397,3 +397,10 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $05C1B8/BA,X | words | $C116 blend addends (epilogue bytes double as table) | 05:C116 |
 | DP+$00/$02/$04/$06/$10 | words | $C116 blend scratch (index, loop, channels) | 05:C116 |
 | 0715 | byte | $C116 increments after copy/blend | 05:C116 |
+
+| DP+$00 long / DP+$55 | ptr / word | $9626 sprite stream + OAM cursor; records flags,Y,tile,attr,X | 05:9626 |
+| DP+$03/$09/$0A/$0C/$0E | bytes | $9626 facing/or-attr / screen Y,X / Y-threshold (often #$A8) | 05:9626 |
+| $0400,X / $0600,Y | OAM | $9626 low table + high-table nibble via $0085A9,X masks | 05:9626 |
+| DP+$86/$88 | word/byte | $96ED seeds stream ptr bank #$7F before $96F3 | 05:96ED |
+| $0D8200,X | byte | $B572 type table after A&$7F | 05:B572 |
+| DP+$20,X / DP+$00,X / $01EE | bytes | $C1C8 type → $B572; flag bits → #$80–#$83 | 05:C1C8 |

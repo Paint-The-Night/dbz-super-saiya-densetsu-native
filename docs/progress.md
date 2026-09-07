@@ -155,7 +155,6 @@ compiled replacements run alongside an interpreter for unrecovered code.
 | 00:A99B–AAD8 | Post-$AB00 Mode-7 epilogue: gate/compare + WRAM fill/HDMA/$AE38/VRAM poke RTS | 318 | 140 |
 | 01:FA86–FAE8 | Gap leaf: clear $0300; copy $7F2800 slots via $01FADF into $0200; INC $0715 | 99 | 45 |
 | 00:AE38–AE69 | Mode-7 VRAM DMA helper (ch4 $7E9000); mid-entries $AE5A/$AE61 | 50 | 20 |
-| 05:96F3–9700 | VMAIN=#$80; JSL $00C5ED/$00C707 (now native); RTS (callee of $C029) | 14 | 5 |
 | 05:C029–C07A | Close $BE54: stream walk via $158060,X; $96F3 paths through RTS | 82 | 42 |
 | 05:BE54–BECA | Bank-5 enable: five-slot pack via $BE61 + scale helper $BEAB (to $C029) | 119 | 61 |
 | 00:C5ED–C68B | Bit-packed decompress + WMDATA stream (callee of $96F3) | 159 | 86 |
@@ -169,7 +168,13 @@ compiled replacements run alongside an interpreter for unrecovered code.
 | 05:9B91–9C0A | Adjust leaf: $0021,Y scale via $059C0B/$059C17 into DP+$0A/$0C; RTS | 122 | 59 |
 | 05:C0ED–C115 | Dual-slot palette push $153B/$153C → JSR $C116; RTL | 41 | 17 |
 | 05:C116–C1BB | Slot copy/blend $15E1,X→$0200,X (or $05C1B8 add); INC $0715; RTS | 166 | 74 |
-| **Total** | **One hundred sixty-three complete routines plus a reset prefix** | **12159** | **5507** |
+| 05:9626–96D6 | OAM/placement walker from [DP+$00] into $0400/$0600 via $0085A9; RTL | 177 | 102 |
+| 05:96D7–96E1 | X += $20 (16-bit) then RTS | 11 | 7 |
+| 05:96E2–96EC | Y += $20 (16-bit) then RTS | 11 | 7 |
+| 05:96ED–9700 | Extends $96F3: STY $86 / bank $7F then VMAIN+$C5ED/$C707; RTS | 20 | 8 |
+| 05:B572–B581 | Type&$7F → $0D8200,X table byte&$7F; RTS | 16 | 10 |
+| 05:C1C8–C1ED | Actor flag predicate via $B572 → #$80/#$81/#$82/#$83; RTS | 38 | 20 |
+| **Total** | **One hundred sixty-six complete routines plus a reset prefix** | **12418** | **5664** |
 
 These are original code-region sizes, not C source sizes. Unsupported CPU modes
 and interrupts fall back to the baseline. The program accepts only the pinned
@@ -210,8 +215,8 @@ independent hardware-fidelity comparison with another emulator is still needed.
 ## How far from complete?
 
 The project now has a reproducible scoped tracker. The pinned static-analysis
-worklist contains 13,237 instruction variants. Of those, 5507 instruction sites
-are covered by reviewed C replacements: **41.60% of the discovered worklist**.
+worklist contains 13,237 instruction variants. Of those, 5664 instruction sites
+are covered by reviewed C replacements: **42.79% of the discovered worklist**.
 Run `python3 tools/progress.py` to recalculate this figure. If the local
 SNESRecomp manifest exists, the script sums it directly; a public clone uses the
 same checked-in probe total.
@@ -280,7 +285,7 @@ Next work is a reproducible actual battle and larger game-logic translations.
 `src/native_video.inc` reconstructs the complete frame graphics upload routine,
 unused-sprite hiding, and palette-shadow clearing. The new `ram-map.md` records
 the verified shadow buffers, flags, and eight-byte VRAM queue entry layout.
-The current inventory is 12159 ROM bytes / 5507 instruction sites.
+The current inventory is 12418 ROM bytes / 5664 instruction sites.
 
 The isolated suite now also covers interrupt-enable, VRAM queue find/mark,
 PPU multiply, DMA1 setup, pointer resolve, palette-shadow copy, actor-table
