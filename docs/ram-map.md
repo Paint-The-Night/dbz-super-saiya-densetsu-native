@@ -385,3 +385,15 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | DP+$14 / $059B89,X | word | $9AFF slot index + Y table before $BECB | 05:9AFF |
 | DP+$B7/$B9 | bytes | $9AFF scene-id gates ($34/$35/$49 + sign) | 05:9AFF |
 | $0020,Y / $0021,Y | bytes | $9AFF type BMI / $BECB sign gate | 05:9AFF |
+
+| $0022–$0028,Y | bytes/words | $9B37 copies facing/attr/coords into DP+$03/$09/$0C/$0A | 05:9B37 |
+| DP+$14 / $05C021,X | word | $9B37 long pointer base (bank forced #$7F) before $9B91 | 05:9B37 |
+| DP+$0E | byte | $9B37 stores #$A8 before Y-bounds gate to $9626/$85B9 | 05:9B37 |
+| $0021,Y / DP+$20 | byte | $9B91 type→$059C0B flags after −6 clamp | 05:9B91 |
+| $0034,Y / $059C17,X | byte/words | $9B91 nibble index; ± adjust DP+$0A/$0C | 05:9B91 |
+| $153B / $153C | bytes | $C0ED slot enables ($80 clears); X=#$0120/#$0140 | 05:C0ED |
+| DP+$4F | byte | $C116 bit2 selects blend; bits1:0 abort blend to RTS | 05:C116 |
+| $15E1,X / $0200,X | bytes | $C116 simple 32-byte palette slot copy | 05:C116 |
+| $05C1B8/BA,X | words | $C116 blend addends (epilogue bytes double as table) | 05:C116 |
+| DP+$00/$02/$04/$06/$10 | words | $C116 blend scratch (index, loop, channels) | 05:C116 |
+| 0715 | byte | $C116 increments after copy/blend | 05:C116 |
