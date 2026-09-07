@@ -298,6 +298,8 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = type_gate_f660_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xf67b && c->pc <= 0xf691) {
       done = decompress_setup_f67b_step(c, c->pc); x->upload_steps += done;
+    } else if(c->pc >= 0xf692 && c->pc <= 0xf6db) {
+      done = actor_fill_f692_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xf802 && c->pc <= 0xf83c) {
       done = actor_prep_f802_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xf983 && c->pc <= 0xf99f) {
@@ -443,6 +445,22 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = early_exit_9488_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xca10 && c->pc <= 0xca88) {
       done = actor_ca10_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xb00a && c->pc <= 0xb044) {
+      done = actor_seed_b00a_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0x9883 && c->pc <= 0x98c7) {
+      done = scene_seed_9886_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xc41f && c->pc <= 0xc44f) {
+      done = scene_index_c41f_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0x90a5 && c->pc <= 0x90b2) {
+      done = carry_pred_90a5_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xda64 && c->pc <= 0xda7b) {
+      done = face_merge_da64_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xc9fa && c->pc <= 0xca06) {
+      done = clear_1502_c9fa_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xdfe3 && c->pc <= 0xdff2) {
+      done = gate_dfe3_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xc98f && c->pc <= 0xc9f9) {
+      done = actor_init_c98f_step(c, c->pc); x->display_control_steps += done;
     }
     return done;
   }
@@ -455,6 +473,10 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = timer_leaf_1d8906_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0x8a77 && c->pc <= 0x8a84) {
       done = slot_select_1d8a77_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0x8a85 && c->pc <= 0x8aa1) {
+      done = list_scan_1d8a85_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0x8aa2 && c->pc <= 0x8ab2) {
+      done = list_append_1d8aa2_step(c, c->pc); x->display_control_steps += done;
     }
     return done;
   }

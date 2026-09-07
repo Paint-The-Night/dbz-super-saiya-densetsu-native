@@ -196,7 +196,18 @@ compiled replacements run alongside an interpreter for unrecovered code.
 | 05:97C9–9882 | JSL $9768; mask $0B00 via $96D7 walk; scene gates → DP+$24/$0716; RTL | 186 | 78 |
 | 05:CA10–CA88 | Actor slot update via $CA90/$DEC3/$DA64; $1440 tail; RTL | 121 | 55 |
 | 05:9115–9200 | DP+$AC phase machine; JSL $9488/$CA10/$DFE3; multiple RTL / JMP $97C9 | 236 | 89 |
-| **Total** | **One hundred eighty-eight complete routines plus a reset prefix** | **14298** | **6457** |
+| 05:B00A–B044 | BMI-path callee of $B0BE: seed $17EA..$17F3; JSL $1C806C/$1C8136; RTS | 59 | 20 |
+| 05:9883–98C7 | JMP $C41F; seed $17DD/$17E1/$14FF/$17E5 + DP+$B0 from $01E7/$01D6/$17D2; RTS | 69 | 27 |
+| 05:C41F–C44F | Scene index from $14C1 via $05C450; optional INC $1220 / JSL $0485A1; RTL | 49 | 21 |
+| 05:90A5–90B2 | Carry predicate: SEC; $15FA==#$80 RTS else LSR $01E7×2; RTS | 14 | 8 |
+| 05:DA64–DA7B | Face-byte merge at $0022,Y via DP+$05/$04; RTS | 24 | 11 |
+| 05:C9FA–CA06 | Clear $1502..$1505; RTS (callee of $C98F/$DFE3) | 13 | 5 |
+| 05:DFE3–DFF2 | DP+$B8&$C0 gate: PLA×3 RTL or JSR $C9FA; RTL | 16 | 10 |
+| 05:C98F–C9F9 | Store A→DP+$B7; clear battle fields; optional JSL $05870B; JSR $C9FA; RTS | 107 | 43 |
+| 1D:8A85–8AA1 | Scan WRAM list $1D0100 for A; RTL #$FF if missing | 29 | 14 |
+| 1D:8AA2–8AB2 | Append A into list at $0100,$01B2; INC $01B2; RTL | 17 | 10 |
+| 01:F692–F6DB | Fill $0E00.. from $02BF0B[$0EA3×5]; stride +$20; JSL $01B8DE; RTL | 74 | 32 |
+| **Total** | **One hundred ninety-nine complete routines plus a reset prefix** | **14769** | **6658** |
 
 These are original code-region sizes, not C source sizes. Unsupported CPU modes
 and interrupts fall back to the baseline. The program accepts only the pinned
@@ -237,8 +248,8 @@ independent hardware-fidelity comparison with another emulator is still needed.
 ## How far from complete?
 
 The project now has a reproducible scoped tracker. The pinned static-analysis
-worklist contains 13,237 instruction variants. Of those, 6457 instruction sites
-are covered by reviewed C replacements: **48.78% of the discovered worklist**.
+worklist contains 13,237 instruction variants. Of those, 6658 instruction sites
+are covered by reviewed C replacements: **50.30% of the discovered worklist**.
 Run `python3 tools/progress.py` to recalculate this figure. If the local
 SNESRecomp manifest exists, the script sums it directly; a public clone uses the
 same checked-in probe total.
@@ -307,7 +318,7 @@ Next work is a reproducible actual battle and larger game-logic translations.
 `src/native_video.inc` reconstructs the complete frame graphics upload routine,
 unused-sprite hiding, and palette-shadow clearing. The new `ram-map.md` records
 the verified shadow buffers, flags, and eight-byte VRAM queue entry layout.
-The current inventory is 14298 ROM bytes / 6457 instruction sites.
+The current inventory is 14769 ROM bytes / 6658 instruction sites.
 
 The isolated suite now also covers interrupt-enable, VRAM queue find/mark,
 PPU multiply, DMA1 setup, pointer resolve, palette-shadow copy, actor-table

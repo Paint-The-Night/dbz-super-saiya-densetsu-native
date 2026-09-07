@@ -454,3 +454,13 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $1506 / DP+$51/$B8 | bytes | $CA10 ORA #$01; optional $B8==#$C0 → DP+$51 tweak | 05:CA10 |
 | DP+$AC / $0726 / $14E4 | bytes/words | $9115 phase + timer; $14E4 word gates $9488 early path | 05:9115 |
 | $14C2/$14FC / $0C40 | bytes | $9115 AC==1 special seeds after $AE81/$C07B | 05:9115 |
+
+| $17EA..$17F3 | bytes/words | $B00A seeds from #$0A / $0E03 / $0E0A around JSL $1C806C/$1C8136 | 05:B00A |
+| $17DD/$17E1/$14FF/$17E5 | words | $9886 clears/seeds from $01E7/$01D6/$17D2; DP+$B0 ← Y | 05:9886 |
+| DP+$24 / $14E8/$14C1 | bytes | $C41F indexes $05C450[$14C1−#$10]; optional $14E9→$14E8 | 05:C41F |
+| $15FA / $01E7 | bytes | $90A5 SEC predicate ($15FA==#$80 or LSR $01E7×2) | 05:90A5 |
+| $0022,Y / DP+$04/$05 | bytes | $DA64 face merge (slot bit from Y==$1400) | 05:DA64 |
+| $1502..$1505 | bytes | $C9FA clears; also via $DFE3/$C98F | 05:C9FA |
+| DP+$B7/$B8/$B9 | bytes | $C98F stores type and clears pair/attrs | 05:C98F |
+| $01B2 / $1D0100 list | byte / words | $1D:8A85 scan / $8AA2 append | 1D:8A85 |
+| $0EA0 / $0E00,Y | byte / records | $01:F692 fills actor slots from $02BF0B×$0EA3 | 01:F692 |
