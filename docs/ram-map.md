@@ -376,3 +376,12 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $7F6801/$6802,X | bytes | $BECB post-stream flag OR #$80 when DP+$14≥4 | 05:BECB |
 | $158063/$158065,X | long | $BECB secondary stream pointer after second $BEAB | 05:BECB |
 | DP+$00 (bank $01) | long | $F9A0 leaves $F983 pointer for $FB2A expand at X=0 | 01:F9A0 |
+
+| DP+$10 / $0020,Y | word/byte | $C07B saves Y; type for $1ECB06 scale | 05:C07B |
+| $1ECB06/08/09,X | long | $C07B palette ptr/bank + $0034,Y flag | 05:C07B |
+| $0300,X / $16E1,X | words | $C07B 16-word blit; mirror when $20≤X<$60 | 05:C07B |
+| 0715 | byte | $C07B increments after palette blit | 05:C07B |
+| $7F0000 / $0E01 | byte | $C232 seeds both to #$05 before $BE54 | 03:C232 |
+| DP+$14 / $059B89,X | word | $9AFF slot index + Y table before $BECB | 05:9AFF |
+| DP+$B7/$B9 | bytes | $9AFF scene-id gates ($34/$35/$49 + sign) | 05:9AFF |
+| $0020,Y / $0021,Y | bytes | $9AFF type BMI / $BECB sign gate | 05:9AFF |
