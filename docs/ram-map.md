@@ -586,3 +586,8 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $0021,Y / $155A/$155C / $1558 | words/bytes | $E5AA $B6B2±3 drift + phase clamp | 05:E5AA |
 | $1540 / $17DD/$17DB / $2108 / $7Fxxxx | bytes/words | $E6D6 phase #$80/#$81 stream and scroll | 05:E6D6 |
 | $155B/$155F / $155A | bytes | $E565 bit2 toggle and |#$60 phase | 05:E565 |
+
+| $1546 / $1558/$1559 / $155A/$155C / $1560..$156E | bytes/words | $E24F/$E253 clear; $E260 seed via $1D8807; $E2BD/$E2F8/$E31F phase | 05:E260 |
+| $05E2F4,X pair ($72/$A0 or $58/$70) | bytes | $E2BD DP+$B7==#$28 gate table | 05:E2BD |
+| DP+$00/$01 (Y=#$8004/#$8406) / $1560/$1561 | bytes/words | $E342/$E347 seed threshold and phase bump | 05:E342 |
+| $1558/$1560 dual + $155C/$1564 m16 ±4 | bytes/words | $E446 multi-phase scroll oscillator | 05:E446 |
