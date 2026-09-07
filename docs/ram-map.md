@@ -81,9 +81,11 @@ Names describe observed use and are not recovered original source identifiers.
 | DP+$12 / $14 | words | Camera-relative Y / X (world − scroll) | 00:849C |
 | DP+$0E | byte | On-screen Y clip threshold (often $F0) | 00:849C |
 | DP+$04 / $06 / $08 / $09 / $10 | bytes | OAM size/xhigh scratch / temp X / attr / clipped Y | 00:849C |
-| DP+$55 | word | Next free OAM shadow index ($0400) | 00:849C, 86A0 |
+| DP+$55 | word | Next free OAM shadow index ($0400) | 00:849C, 00:85E9, 86A0 |
 | 0400–061F | (see above) | OAM shadow written by actor walk | 00:849C |
-| 8589 / 8599 | ROM | OAM high-table set/clear nibble masks | 00:849C |
+| 8589 / 8599 | ROM | OAM high-table set/clear nibble masks | 00:849C, 00:85E9 |
+| DP+$0A / $0C | bytes (low) | Screen-space Y / X bases for parallel OAM | 00:85E9 |
+| DP+$10 / $12 | bytes | Attr OR-mask / tile addend (entries $85E9/$85EF) | 00:85E9 |
 
 VRAM entry layout:
 

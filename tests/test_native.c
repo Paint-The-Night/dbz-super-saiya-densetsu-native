@@ -1013,6 +1013,68 @@ int main(int argc,char **argv) {
     require(ca.pc==0x9000 && ca.sp==0x202,"85b9/85cf rtl");
   }
 
+  /* $0085E9: early RTL when record list immediately ends ($80) */
+  for(unsigned av=0;av<8;av++) {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0x85e9,av), cb=make_cpu(b,0x85e9,av);
+    ca.db=cb.db=0; ca.xf=cb.xf=false; ca.x=cb.x=0x20+av;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+    word(a,0x0a,0x0040); word(b,0x0a,0x0040);
+    word(a,0x0c,0x0030); word(b,0x0c,0x0030);
+    word(a,0x55,0x0004); word(b,0x55,0x0004);
+    a->ram[0]=b->ram[0]=0x00; a->ram[1]=b->ram[1]=0x05; a->ram[2]=b->ram[2]=0x00;
+    a->ram[0x500]=b->ram[0x500]=0x00; a->ram[0x501]=b->ram[0x501]=0x80;
+    unsigned steps=0;
+    while(ca.pc!=0x9000 && steps++<80) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected 85e9 early rtl");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0x9000 && ca.sp==0x202,"85e9 early rtl");
+    require(getword(a,0x55)==0x0004,"85e9 preserved OAM cursor");
+  }
+  /* $0085EF: alt entry early RTL */
+  for(unsigned av=0;av<4;av++) {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0x85ef,av), cb=make_cpu(b,0x85ef,av);
+    ca.db=cb.db=0; ca.xf=cb.xf=false;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+    word(a,0x55,0x0008); word(b,0x55,0x0008);
+    a->ram[0]=b->ram[0]=0x00; a->ram[1]=b->ram[1]=0x05; a->ram[2]=b->ram[2]=0x00;
+    a->ram[0x500]=b->ram[0x500]=0x00; a->ram[0x501]=b->ram[0x501]=0x80;
+    unsigned steps=0;
+    while(ca.pc!=0x9000 && steps++<80) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected 85ef early rtl");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0x9000 && ca.sp==0x202,"85ef early rtl");
+    require(a->ram[0x10]==0x01,"85ef set DP+$10");
+  }
+  /* $0085E9: one on-screen sprite write into $0400 and $0600 */
+  for(unsigned av=0;av<4;av++) {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0x85e9,av), cb=make_cpu(b,0x85e9,av);
+    ca.db=cb.db=0; ca.xf=cb.xf=false;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+    word(a,0x0a,0x0030); word(b,0x0a,0x0030); /* base Y */
+    word(a,0x0c,0x0040); word(b,0x0c,0x0040); /* base X */
+    word(a,0x55,0x0000); word(b,0x55,0x0000);
+    a->ram[0]=b->ram[0]=0x00; a->ram[1]=b->ram[1]=0x05; a->ram[2]=b->ram[2]=0x00;
+    /* record: flags, y-off, tile, attr, x-off, then end */
+    a->ram[0x500]=b->ram[0x500]=0x00;
+    a->ram[0x501]=b->ram[0x501]=0x10; /* y offset */
+    a->ram[0x502]=b->ram[0x502]=0x22; /* tile */
+    a->ram[0x503]=b->ram[0x503]=0x00; /* attr */
+    a->ram[0x504]=b->ram[0x504]=0x20; /* x offset */
+    a->ram[0x505]=b->ram[0x505]=0x80; /* end */
+    unsigned steps=0;
+    while(ca.pc!=0x9000 && steps++<400) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected 85e9 sprite");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0x9000 && ca.sp==0x202,"85e9 sprite rtl");
+    require(a->ram[0x400]==0x60 && a->ram[0x401]==0x40 && a->ram[0x402]==0x22,"85e9 OAM bytes");
+  }
+
   /* $03FB8D: early RTL when $1648>=0 and $01A0 not in {5,$18} */
   for(unsigned av=0;av<8;av++) {
     memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
@@ -1110,6 +1172,6 @@ int main(int argc,char **argv) {
   require(!dbz_native_step(&guard,stats)&&a->count==0,"controller emulation guard");
   guard=make_cpu(a,0x82fb,0);guard.mf=false;
   require(!dbz_native_step(&guard,stats)&&a->count==0,"scroll accumulator width guard");
-  printf("PASS: native equivalence suites including 849C/FB8D/EF11/F089/F14D/89B8/D812/9BBF/8D2B/85B6/C559/C68C/90E6/946F and 8DFE-to-F14D; CPU state and bus sequences match.\n");
+  printf("PASS: native equivalence suites including 849C/85E9/FB8D/EF11/F089/F14D/89B8/D812/9BBF/8D2B/85B6/C559/C68C/90E6/946F and 8DFE-to-F14D; CPU state and bus sequences match.\n");
   free(stats);free(a);free(b);free(rom);return 0;
 }
