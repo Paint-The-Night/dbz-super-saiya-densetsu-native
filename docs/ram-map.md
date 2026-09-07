@@ -141,3 +141,14 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | 10C1 / 10C2 / 0726 / 0727 / 0EA1 / 01EE | bytes | Cleared by scene wipe $E837 | E837 |
 | 0EA3 / 0EA0 | bytes | Seeded $15 / $01 by $E340 continue path | E340 |
 | 1000,Y | bytes | Cleared stride-6 by $9255 via $8B07 | 9255 |
+
+| 1648 / 01D8 | byte / byte | $EF29 early-exit when $1648 bit7 set and $01D8==$04 | EF29 |
+| 0B00,Y bit7/6 | bits | Occupied / sticky; weak clear when bit7 set and bit6 clear | EF29, E42A |
+| 0B12/13/18/19,Y | bytes | Cleared on weak occupied actors before $E42A | EF29 |
+| 0B1C,Y | byte | Actor type index; scales MVN dest/src by <<5 | E42A, E461, E4D1 |
+| 7E2800+type<<5 | 32 bytes | Per-type actor backup slot written by $E42A / read by $E461 | E42A, E461 |
+| 7E4D00–7E4E1F | 288 bytes | Full actor-table backup; cleared by $EFC4, restored by $EF29 MVN | EF29, EFC4 |
+| DP+$10 | byte | Occupied-slot count ($EF29) / restore count ($E4F4) | EF29, E4F4 |
+| 0190,X | bytes | Collected high-actor types ($0B00>=$C0), $FF terminated | E4D1, E4F4 |
+| 0D9B bit6 | bit | Enables wipe-gate $E942 body; cleared when taken | E942 |
+| 0170 bit3 | bit | Wipe-gate predicate with $01A0==$09 and $01BB>=$08 | E942 |
