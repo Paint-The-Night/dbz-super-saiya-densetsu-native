@@ -1,0 +1,12 @@
+# One-based host frame, duration in frames, hexadecimal SNES button mask.
+# Bits: B Y Select Start Up Down Left Right A X L R.
+# Press Start to skip the intro, then choose the initial menu entry.
+300 2 008
+600 2 008
+900 2 100
+1200 2 100
+1500 2 100
+1800 2 100
+2100 2 100
+2400 2 100
+2700 2 100

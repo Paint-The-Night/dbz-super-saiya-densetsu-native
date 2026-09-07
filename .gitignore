@@ -1,0 +1,12 @@
+.DS_Store
+Backup/
+.local/
+build/
+__pycache__/
+*.sfc
+*.smc
+*.srm
+*.state
+artifacts/
+build-*/
+dist/

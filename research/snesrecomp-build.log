@@ -1,0 +1,25 @@
+-- The C compiler identification is AppleClang 21.0.0.21000101
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Configuring done (0.5s)
+-- Generating done (0.0s)
+-- Build files have been written to: /Users/garyperrigo/Code/Dragon Ball Z Super Saiya Densetsu/.local/probes/dbz-recomp-reproduction/build
+[0/2] Re-checking globbed directories...
+[1/13] Building C object CMakeFiles/snesrecomp_game.dir/generated/dispatch_v2.c.o
+[2/13] Building C object CMakeFiles/snesrecomp_game.dir/generated/unresolved_stubs_v2.c.o
+[3/13] Building C object CMakeFiles/snesrecomp_game.dir/generated/bank13_v2.c.o
+[4/13] Building C object CMakeFiles/snesrecomp_game.dir/generated/bank1c_v2.c.o
+[5/13] Building C object CMakeFiles/snesrecomp_game.dir/generated/bank05_v2.c.o
+[6/13] Building C object CMakeFiles/snesrecomp_game.dir/generated/bank02_v2.c.o
+[7/13] Building C object CMakeFiles/snesrecomp_game.dir/generated/bank06_v2.c.o
+[8/13] Building C object CMakeFiles/snesrecomp_game.dir/generated/bank04_v2.c.o
+[9/13] Building C object CMakeFiles/snesrecomp_game.dir/generated/bank03_v2.c.o
+[10/13] Building C object CMakeFiles/snesrecomp_game.dir/generated/bank01_v2.c.o
+[11/13] Building C object CMakeFiles/snesrecomp_game.dir/generated/bank00_v2.c.o
+[12/13] Linking C static library libsnesrecomp_game.a
+
+Built the generated-code static library.
+No playable executable was produced; see README.md under "Continue the port".

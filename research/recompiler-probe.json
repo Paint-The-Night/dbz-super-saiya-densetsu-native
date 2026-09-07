@@ -1,0 +1,32 @@
+{
+  "framework_revision": "555322683a5dadba2d118e147af887f3d5c8188d",
+  "host_architecture": "arm64",
+  "rom_sha256": "962aa7a09765a97164af67098877a8fe5b7f1ea9db738561eb466b7600fd241c",
+  "root_count": 9,
+  "discovered_function_variants": 388,
+  "distinct_discovered_entry_addresses": 375,
+  "classification": {
+    "lle_only": 77,
+    "aot_eligible": 311
+  },
+  "reset_variant": {
+    "disposition": "lle_only",
+    "reasons": [
+      "truncated_call_continuation"
+    ]
+  },
+  "emitted_bank_files": 9,
+  "static_library_exists": true,
+  "object_format": "Mach-O 64-bit object arm64",
+  "playable_executable_built": false,
+  "behavioral_equivalence_tested": false,
+  "decompilation_completion_percentage": null,
+  "limitations": [
+    "Static discovery with default auto_vectors configuration; no execution traces supplied.",
+    "Variants distinguish CPU register-width states, not necessarily different functions.",
+    "AOT eligibility is an analyzer classification, not independently verified correctness.",
+    "Unknown and undiscovered code prevent any whole-game coverage percentage.",
+    "Generated default build disables warnings and permits implicit function declarations.",
+    "A static archive does not establish complete linking or successful execution."
+  ]
+}

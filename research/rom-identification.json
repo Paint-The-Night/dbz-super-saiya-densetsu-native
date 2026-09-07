@@ -1,0 +1,33 @@
+{
+  "file": "Backup/Dragon Ball Z - Super Saiya Densetsu (Japan) (Rev 1).sfc",
+  "file_size_bytes": 1048576,
+  "copier_header_bytes": 0,
+  "rom_size_bytes": 1048576,
+  "sha256": "962aa7a09765a97164af67098877a8fe5b7f1ea9db738561eb466b7600fd241c",
+  "sha1": "6b5725765ddde078350ec61221ddb9bb252066a7",
+  "crc32": "ade7b968",
+  "internal_title": "SFX DRAGONBALLZ1",
+  "map_mode": "0x20",
+  "mapping": "LoROM",
+  "chipset": "0x02",
+  "cartridge_type": "ROM + RAM + battery",
+  "enhancement_chip_indicated": false,
+  "declared_rom_bytes": 1048576,
+  "declared_sram_bytes": 8192,
+  "region_byte": 0,
+  "revision_byte": 1,
+  "checksum_stored": "33fd",
+  "checksum_calculated": "33fd",
+  "checksum_matches": true,
+  "checksum_complement_matches": true,
+  "lorom_32k_banks": 32,
+  "vectors": {
+    "native_cop": "00:FFFF",
+    "native_brk": "00:FFFF",
+    "native_abort": "00:FFFF",
+    "native_nmi": "00:80EB",
+    "native_irq": "00:8154",
+    "emulation_reset": "00:8000"
+  },
+  "limitations": "Header and identity inspection only; no execution or decompilation coverage measured."
+}
