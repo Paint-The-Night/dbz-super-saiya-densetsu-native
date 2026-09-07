@@ -247,3 +247,20 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $02A3B4 / $02A552 | long | Stream pointer tables (word+bank) by type×3 | 01:C9F9 |
 | $02A57C / $02A595 | bytes | Bit fields vs $039B9B[type&7] | 01:C9F9 |
 | $0800,X queue | bytes | Filled by $CAAB (occ/src/dest/bank/len) | 01:CAAB |
+
+| DP+$0E | word | Saved X bound for $B65D zero-fill after $B647 | 01:B65D |
+| $7E3000,X | words | Zeroed by $B65D down to DP+$0E | 01:B65D |
+| 0D66 | byte | ==$1D → early RTL for $B67A (same gate as $B61E) | 01:B67A |
+| $0800,X queue | bytes | $B67A seeds occ/$2C00/$3000/$7E/#$0800 | 01:B67A |
+| $7E4000,X | words | Filled #$00FF by $B6AC | 01:B6AC |
+| $0800,X queue | bytes | $B6BF seeds occ/$6800/$4000/$7E/#$0800 | 01:B6BF |
+| 0D74 | byte | Cleared by $B6BF after queue seed | 01:B6BF |
+| 0EA1 | byte | Set #$80 in $9083 path | 00:9083 |
+| 0C41 | byte | Negative → $8996 + STA #$2137 at $7E4800 in $9083 | 00:9083 |
+| 0D67 / 0D7D | bytes | Wait flag / cleared word beside $7E4800 seed | 00:9083 |
+| 0171 / 0173 | bytes | Bit3 set / OR #$30 during $FD64 continue | 03:FD64 |
+| 0EA3 / 15FA / 15F1 | bytes | Type seed / gate / $4F–$50 vs $68–$69 select | 03:FD64 |
+| 01AA/01A6/01AC/01A8 | words | Scroll seeds #$07B8/#$0738/#$0358/#$02E0 | 03:FD64 |
+| 0190,X / 01BB | bytes | Compacted type list / recount after shift | 03:FD64 |
+| 0C40 | byte | Cleared by $FD64 continue path | 03:FD64 |
+| $4212 | STAT78 | BIT bit7 wait in $A95B | 00:A95B |

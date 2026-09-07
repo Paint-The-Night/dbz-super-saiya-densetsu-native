@@ -274,6 +274,14 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
   if(bank == 1) {
     if(c->pc >= 0xb61e && c->pc <= 0xb65c) {
       done = wram_fill_b61e_step(c, c->pc); x->upload_steps += done;
+    } else if(c->pc >= 0xb65d && c->pc <= 0xb674) {
+      done = wram_tail_b65d_step(c, c->pc); x->upload_steps += done;
+    } else if(c->pc >= 0xb675 && c->pc <= 0xb6ab) {
+      done = vram_seed_b67a_step(c, c->pc); x->upload_steps += done;
+    } else if(c->pc >= 0xb6ac && c->pc <= 0xb6be) {
+      done = wram_fill_b6ac_step(c, c->pc); x->upload_steps += done;
+    } else if(c->pc >= 0xb6bf && c->pc <= 0xb6ec) {
+      done = vram_seed_b6bf_step(c, c->pc); x->upload_steps += done;
     } else if(c->pc >= 0xc535 && c->pc <= 0xc583) {
       done = flag_rewrite_c535_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xc9f9 && c->pc <= 0xcaca) {
@@ -316,6 +324,8 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = actor_scan_f021_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xf06f && c->pc <= 0xf08c) {
       done = actor_type_f06f_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xfd64 && c->pc <= 0xfe0d) {
+      done = scene_gate_fd64_step(c, c->pc); x->display_control_steps += done;
     }
     return done;
   }
@@ -467,8 +477,12 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
     done = scene_body_8f46_step(c, c->pc); x->palette_steps += done;
   } else if(c->pc >= 0x8fb2 && c->pc <= 0x9082) {
     done = scene_cont_8fb2_step(c, c->pc); x->palette_steps += done;
+  } else if(c->pc >= 0x9083 && c->pc <= 0x90c0) {
+    done = scene_cont_9083_step(c, c->pc); x->palette_steps += done;
   } else if(c->pc >= 0x8e96 && c->pc <= 0x8f45) {
     done = scene_mode2_8e96_step(c, c->pc); x->palette_steps += done;
+  } else if(c->pc >= 0xa95b && c->pc <= 0xa960) {
+    done = hblank_wait_a95b_step(c, c->pc); x->display_control_steps += done;
   } else if(c->pc >= 0x90c1 && c->pc <= 0x90e5) {
     done = scene_gfx_90c1_step(c, c->pc); x->upload_steps += done;
   } else if(c->pc >= 0x90e6 && c->pc <= 0x9101) {
