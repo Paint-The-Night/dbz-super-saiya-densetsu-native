@@ -484,3 +484,9 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $1700 / $14CF/$14D1 | bytes | $BDDC gate and coordinate subtract | 05:BDDC |
 | $0C35 / $14D8/$14DA | bytes | $8B46 flight event list seeds | 1D:8B46 |
 | face class at $0021,Y | byte | $95F6 → APU #$1C/#$1D via $0485B6 | 05:95F6 |
+| $002B,Y / DP+$04 | byte/byte | $D566 script counter INC + wrap CMP | 05:D566 |
+| $0021,Y / DP+$05 | bytes | $D531 face rewrite (optional #$25/#$27) | 05:D531 |
+| $7F0000/$7F0800,X | words | $F998 dual clear; $F952 mirror-XOR #$4000 | 05:F998, 05:F952 |
+| $0800 queue | bytes | $F91E seeds occ/$6000/$0000/$7F/#$0580; $F93D length pick | 05:F91E |
+| $14D8/$14DA/$1414/$1416/$1418 | bytes/words | $8B7C flight event copy/seed before $8AB3 | 1D:8B7C |
+| $1D8BDC,X → $1400,X | 32 bytes | $8B7C template blit | 1D:8B7C |

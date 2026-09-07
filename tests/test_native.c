@@ -6379,7 +6379,173 @@ int main(int argc,char **argv) {
     require(ca.pc==0x9000 && ca.k==0,"8b46 RTL");
     require(a->ram[0x14d8]==0x00,"8b46 cleared 14D8");
   }
+  /* $05D566: INC $002B,Y then CMP DP+$04; C clear when below limit */
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xd566,0), cb=make_cpu(b,0xd566,0);
+    ca.k=cb.k=5; ca.db=cb.db=0; ca.xf=cb.xf=false;
+    word(a,0x1fe,0x8fff); word(b,0x1fe,0x8fff);
+    ca.sp=cb.sp=0x1fd;
+    word(a,0x20,0x1400); word(b,0x20,0x1400);
+    a->ram[0x142b]=b->ram[0x142b]=0x02;
+    a->ram[0x04]=b->ram[0x04]=0x05;
+    unsigned steps=0;
+    while(!(ca.pc==0x9000) && steps++<20) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected d566");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0x9000 && !ca.c,"d566 RTS C clear");
+    require(a->ram[0x142b]==0x03,"d566 INC");
+  }
+  /* $05D55B: D566 no-wrap → RTS (C clear) */
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xd55b,0), cb=make_cpu(b,0xd55b,0);
+    ca.k=cb.k=5; ca.db=cb.db=0; ca.xf=cb.xf=false;
+    word(a,0x1fe,0x8fff); word(b,0x1fe,0x8fff);
+    ca.sp=cb.sp=0x1fd;
+    word(a,0x20,0x1400); word(b,0x20,0x1400);
+    a->ram[0x142b]=b->ram[0x142b]=0x01;
+    a->ram[0x04]=b->ram[0x04]=0x05;
+    unsigned steps=0;
+    while(!(ca.pc==0x9000) && steps++<30) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected d55b");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0x9000,"d55b RTS");
+    require(a->ram[0x142b]==0x02,"d55b counter");
+  }
+  /* $05D531: DP+$05!=$25; face differs → ORA #$80 into $21,Y; D566 no-wrap RTS */
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xd531,0), cb=make_cpu(b,0xd531,0);
+    ca.k=cb.k=5; ca.db=cb.db=0; ca.xf=cb.xf=false;
+    word(a,0x1fe,0x8fff); word(b,0x1fe,0x8fff);
+    ca.sp=cb.sp=0x1fd;
+    word(a,0x20,0x1400); word(b,0x20,0x1400);
+    a->ram[0x05]=b->ram[0x05]=0x10;
+    a->ram[0x1421]=b->ram[0x1421]=0x00;
+    a->ram[0x142b]=b->ram[0x142b]=0x00;
+    a->ram[0x04]=b->ram[0x04]=0x03;
+    unsigned steps=0;
+    while(!(ca.pc==0x9000) && steps++<40) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected d531");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0x9000,"d531 RTS");
+    require(a->ram[0x1421]==0x90,"d531 ORA 80 into face");
+  }
+  /* $05F998: clear loop — stop at X==$0040 (test bus aliases $7F onto low RAM,
+   * so a full run through RTS would wipe the return frame at $01FE). */
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xf998,0), cb=make_cpu(b,0xf998,0);
+    ca.k=cb.k=5; ca.db=cb.db=0; ca.xf=cb.xf=false;
+    word(a,0x1fe,0x8fff); word(b,0x1fe,0x8fff);
+    ca.sp=cb.sp=0x1fd;
+    for(unsigned i=0;i<0x100;i++) a->ram[i]=b->ram[i]=0xa5;
+    for(unsigned i=0x800;i<0x900;i++) a->ram[i]=b->ram[i]=0xa5;
+    word(a,0x1fe,0x8fff); word(b,0x1fe,0x8fff); /* restore after fill */
+    unsigned steps=0;
+    while(!(ca.x==0x0040 && ca.pc==0xf99e) && steps++<400) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected f998");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.x==0x0040 && ca.pc==0xf99e,"f998 reached X=40");
+    require(a->ram[0x0000]==0 && a->ram[0x003e]==0,"f998 cleared low");
+    require(a->ram[0x0800]==0 && a->ram[0x083e]==0,"f998 cleared mid");
+  }
+  /* $05F91E: seed $0800 queue entry through RTS */
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xf91e,0), cb=make_cpu(b,0xf91e,0);
+    ca.k=cb.k=5; ca.db=cb.db=0; ca.xf=cb.xf=false;
+    word(a,0x1fe,0x8fff); word(b,0x1fe,0x8fff);
+    ca.sp=cb.sp=0x1fd;
+    unsigned steps=0;
+    while(!(ca.pc==0x9000) && steps++<30) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected f91e");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0x9000,"f91e RTS");
+    require(a->ram[0x0800]==0x80,"f91e occ");
+    require(getword(a,0x0801)==0x6000,"f91e dest");
+    require(a->ram[0x0805]==0x7f,"f91e bank");
+    require(getword(a,0x0806)==0x0580,"f91e len");
+  }
+  /* $05F93D: $1541==2 → early RTS without rewrite */
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xf93d,0), cb=make_cpu(b,0xf93d,0);
+    ca.k=cb.k=5; ca.db=cb.db=0; ca.xf=cb.xf=false;
+    word(a,0x1fe,0x8fff); word(b,0x1fe,0x8fff);
+    ca.sp=cb.sp=0x1fd;
+    a->ram[0x1541]=b->ram[0x1541]=0x02;
+    word(a,0x0801,0x1111); word(b,0x0801,0x1111);
+    unsigned steps=0;
+    while(!(ca.pc==0x9000) && steps++<20) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected f93d");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0x9000,"f93d RTS");
+    require(getword(a,0x0801)==0x1111,"f93d untouched");
+  }
+  /* $05F952: stop at first JSR $96D7 after one inner row.
+   * DP=$0100 so STX DP+$00 scratch does not alias over $7F0000 on the test bus. */
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xf952,0), cb=make_cpu(b,0xf952,0);
+    ca.k=cb.k=5; ca.db=cb.db=0; ca.xf=cb.xf=false; ca.dp=cb.dp=0x0100;
+    word(a,0x1fe,0xf996); word(b,0x1fe,0xf996);
+    ca.sp=cb.sp=0x1fd;
+    for(unsigned i=0;i<0x80;i++) a->ram[i]=b->ram[i]=(uint8_t)(0x10+i);
+    unsigned steps=0;
+    while(!(ca.pc==0x96d7 && ca.k==5) && steps++<800) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected f952");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0x96d7 && ca.k==5,"f952 reached 96D7");
+    require(ca.x==0x0020 && ca.y==0x007e,"f952 post-row X/Y");
+    require(getword(a,0x0000)==0x0f4e,"f952 XOR low");
+    require(getword(a,0x003e)==0x5110,"f952 XOR pair");
+  }
+  /* $1D8B7C: $14D8==0 → immediate RTL */
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0x8b7c,0), cb=make_cpu(b,0x8b7c,0);
+    ca.k=cb.k=0x1d; ca.db=cb.db=0; ca.xf=cb.xf=false;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff); a->ram[0x202]=b->ram[0x202]=0;
+    a->ram[0x14d8]=b->ram[0x14d8]=0x00;
+    unsigned steps=0;
+    while(!(ca.pc==0x9000 && ca.k==0) && steps++<10) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected 8b7c");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0x9000 && ca.k==0,"8b7c RTL");
+  }
+  /* $1D8B7C: $14D8 set, DP+$04==0 → copy table; stop at JSL $8AB3 */
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0x8b7c,0), cb=make_cpu(b,0x8b7c,0);
+    ca.k=cb.k=0x1d; ca.db=cb.db=0; ca.xf=cb.xf=false;
+    word(a,0x200,0x8bbb); word(b,0x200,0x8bbb); a->ram[0x202]=b->ram[0x202]=0x1d;
+    a->ram[0x14d8]=b->ram[0x14d8]=0x53;
+    a->ram[0x14da]=b->ram[0x14da]=0x05;
+    a->ram[0x04]=b->ram[0x04]=0x00;
+    a->ram[0x0c73]=b->ram[0x0c73]=0xa0;
+    a->ram[0x1418]=b->ram[0x1418]=0x01;
+    a->ram[0x01b2]=b->ram[0x01b2]=0x02;
+    unsigned steps=0;
+    while(!(ca.pc==0x8ab3 && ca.k==0x1d) && steps++<250) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected 8b7c body");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0x8ab3 && ca.k==0x1d,"8b7c reached 8AB3");
+    require(a->ram[0x1400]==0xc0,"8b7c copied table[0]");
+    require(getword(a,0x1414)==0x0053,"8b7c 1414");
+    require(a->ram[0x1416]==0x05,"8b7c 1416");
+  }
 
-  printf("PASS: native equivalence suites including B124/BDDC/95F6/9491/A9F4/D521/F3AA/A52E/1D8B46/B6B2/B6C0/DF60/E102/93A9/A435/1D8AB3/1D8ABD/CA90/DEC3/DF51/F719/B00A/9886/C41F/90A5/DA64/DFE3/C98F/C9FA/1D8A85/1D8AA2/F692/97C9/B0BE/B0F9/B582/9488/CA10/9115/1D8A77/E38E/E3CC/86DE/8857/B0B1/1D8843/9768/B110/B045/90CC/8116/1D8906/86F5/1D8807/C1EE/C20D/9626/96D7/96E2/96ED/B572/C1C8/9B37/9B91/C0ED/C116/C07B/C232/9AFF/AA70/BECB/C00A/F9A0/C5ED/C707/A9E9/AE38/C029/96F3/A99B/FA86/BE54/8282/83B2/8411/889E/C987/FBBC/FAE9/FC00/871E/FA1A/C8C8/C885/F53B/F660/F67B/8974/B55A/F4B2/F983/FB2A/B960/AB00/8938/89E2/B72B/B6ED/B700/F802/F375/FE0E/A956/A961/8674/9083/FD64/B65D/B67A/B6AC/B6BF/A95B/8FB2/F021/F06F/8514/C9F9/CA98/CAAB/CA34/C535/B61E/B647/8490/84B9/84E2/85F1/EBC1/85A1/844A/87E9/87F9/877E/8D4E/8DFA/8DAC/EAD4/EB52/8F46/8C84/E8EE/BB46/EFD7/EFEA/EFFD/F00F/E36B/E32E/EF29/E419/E42A/E461/E4D1/E4F4/E942/8B7A/8E96/A6CB/9255/E837/FC33/E340/9485/94E7/FC47/FC74/FBDA/849C/85E9/FB8D/EF11/F089/F14D/89B8/D812/9BBF/8D2B/85B6/C559/C68C/90E6/946F and 8DFE-to-F14D; CPU state and bus sequences match.\n");
+  printf("PASS: native equivalence suites including B124/BDDC/95F6/9491/A9F4/D521/D55B/D566/F998/F91E/F952/A52E/1D8B46/1D8B7C/B6B2/B6C0/DF60/E102/93A9/A435/1D8AB3/1D8ABD/CA90/DEC3/DF51/F719/B00A/9886/C41F/90A5/DA64/DFE3/C98F/C9FA/1D8A85/1D8AA2/F692/97C9/B0BE/B0F9/B582/9488/CA10/9115/1D8A77/E38E/E3CC/86DE/8857/B0B1/1D8843/9768/B110/B045/90CC/8116/1D8906/86F5/1D8807/C1EE/C20D/9626/96D7/96E2/96ED/B572/C1C8/9B37/9B91/C0ED/C116/C07B/C232/9AFF/AA70/BECB/C00A/F9A0/C5ED/C707/A9E9/AE38/C029/96F3/A99B/FA86/BE54/8282/83B2/8411/889E/C987/FBBC/FAE9/FC00/871E/FA1A/C8C8/C885/F53B/F660/F67B/8974/B55A/F4B2/F983/FB2A/B960/AB00/8938/89E2/B72B/B6ED/B700/F802/F375/FE0E/A956/A961/8674/9083/FD64/B65D/B67A/B6AC/B6BF/A95B/8FB2/F021/F06F/8514/C9F9/CA98/CAAB/CA34/C535/B61E/B647/8490/84B9/84E2/85F1/EBC1/85A1/844A/87E9/87F9/877E/8D4E/8DFA/8DAC/EAD4/EB52/8F46/8C84/E8EE/BB46/EFD7/EFEA/EFFD/F00F/E36B/E32E/EF29/E419/E42A/E461/E4D1/E4F4/E942/8B7A/8E96/A6CB/9255/E837/FC33/E340/9485/94E7/FC47/FC74/FBDA/849C/85E9/FB8D/EF11/F089/F14D/89B8/D812/9BBF/8D2B/85B6/C559/C68C/90E6/946F and 8DFE-to-F14D; CPU state and bus sequences match.\n");
   free(stats);free(a);free(b);free(rom);return 0;
 }
