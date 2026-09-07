@@ -170,6 +170,54 @@ static bool display_transition_dispatch_step(Cpu *c, uint16_t pc) {
   }
   return true;
 }
+static void inc_a8(Cpu *c) { implied(c); set_a8(c,(uint8_t)c->a+1); }
+static void ora_dp8(Cpu *c, uint8_t offset) {
+  uint16_t address=dp_address(c,offset); sample_interrupt(c);
+  set_a8(c,(uint8_t)c->a|c->read(c->mem,address));
+}
+static void sbc8_value(Cpu *c, uint8_t value) {
+  uint8_t old=(uint8_t)c->a;unsigned borrow=c->c?0:1;unsigned result=(unsigned)old-value-borrow;
+  uint8_t out=(uint8_t)result;c->v=((old^out)&(old^value)&0x80u)!=0;c->c=result<0x100u;
+  set_a8(c,out);
+}
+static void sbc_dp8(Cpu *c, uint8_t offset) {
+  uint16_t address=dp_address(c,offset);sample_interrupt(c);sbc8_value(c,c->read(c->mem,address));
+}
+static bool mosaic_step(Cpu *c, uint16_t pc) {
+  if(c->e || c->d || !c->mf) return false;
+  switch(pc) {
+    case 0x8471: case 0x8474: case 0x8476: case 0x8478: case 0x847b:
+    case 0x847c: case 0x847e: case 0x8481: case 0x8483: case 0x8485:
+    case 0x8487: case 0x8489: case 0x848b: case 0x848d: case 0x848e:
+    case 0x8490: case 0x8492: case 0x8493: case 0x8494: case 0x8495:
+    case 0x8496: case 0x8498: case 0x849b: break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0x8471: video_load(c,0x0716,false); break;
+    case 0x8474: and_constant8(c,0x20); break;
+    case 0x8476: branch_to(c,c->z,0x849b); break;
+    case 0x8478: video_load(c,0x0718,false); break;
+    case 0x847b: inc_a8(c); break;
+    case 0x847c: store_dp(c,0x00,true); break;
+    case 0x847e: video_load(c,0x0d8c,false); break;
+    case 0x8481: branch_to(c,!c->n,0x8487); break;
+    case 0x8483: and_constant8(c,0x0f); break;
+    case 0x8485: branch_to(c,true,0x8489); break;
+    case 0x8487: byte_constant(c,0x0f); break;
+    case 0x8489: store_dp(c,0x10,true); break;
+    case 0x848b: byte_constant(c,0); break;
+    case 0x848d: implied(c); c->c=true; break;
+    case 0x848e: sbc_dp8(c,0x00); break;
+    case 0x8490: and_constant8(c,0x0f); break;
+    case 0x8492: case 0x8493: case 0x8494: case 0x8495: asl_a8(c); break;
+    case 0x8496: ora_dp8(c,0x10); break;
+    case 0x8498: store_register8(c,0x2106); break;
+    case 0x849b: return_long(c); break;
+  }
+  return true;
+}
 /* Hide every unused OAM sprite by setting its Y coordinate to F0. DP+$55 is
  * the byte offset immediately following the last used 4-byte sprite record. */
 static bool sprite_tail_step(Cpu *c, uint16_t pc) {

@@ -235,6 +235,22 @@ int main(int argc,char **argv) {
     }
     require(ca.pc==0x9000 || ca.pc==0x8402 || ca.pc==0x8417,"transition-dispatch target");
   }
+  for(unsigned value=0;value<256;value++) for(unsigned flags=0;flags<2;flags++) {
+    memset(a->ram,0,sizeof(a->ram));memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0x8471,value),cb=make_cpu(b,0x8471,value);
+    ca.db=cb.db=0;word(a,0x200,0x8fff);word(b,0x200,0x8fff);
+    a->ram[0x716]=b->ram[0x716]=(uint8_t)(flags?0x20:0);
+    a->ram[0x718]=b->ram[0x718]=(uint8_t)value;
+    a->ram[0xd8c]=b->ram[0xd8c]=(uint8_t)(flags?0x80|value:value);
+    a->ram[0x24]=b->ram[0x24]=(uint8_t)(value^0x31);
+    a->ram[0x27]=b->ram[0x27]=(uint8_t)(value^0x62);
+    unsigned steps=0;
+    while(ca.pc!=0x9000 && steps++<30) {
+      a->count=b->count=0;require(dbz_native_step(&ca,stats),"expected mosaic instruction");
+      lakesnes_cpu_runOpcode(&cb);compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0x9000 && ca.sp==0x202,"mosaic return");
+  }
   Cpu guard=make_cpu(a,0x82a3,0);guard.d=true;
   a->count=0;require(!dbz_native_step(&guard,stats)&&a->count==0,"decimal mode falls back without effects");
   guard.d=false;guard.intWanted=true;
@@ -245,6 +261,6 @@ int main(int argc,char **argv) {
   require(!dbz_native_step(&guard,stats)&&a->count==0,"controller emulation guard");
   guard=make_cpu(a,0x82fb,0);guard.mf=false;
   require(!dbz_native_step(&guard,stats)&&a->count==0,"scroll accumulator width guard");
-  printf("PASS: 131072 RNG, 1024 display, 32 reset, 262144 controller, 512 scroll, 1024 upload, 513 sprite, 513 palette, 512 control, 512 init, 512 finish, 32 dispatch cases; CPU state and bus sequences match.\n");
+  printf("PASS: 131072 RNG, 1024 display, 32 reset, 262144 controller, 512 scroll, 1024 upload, 513 sprite, 513 palette, 512 control, 512 init, 512 finish, 32 dispatch, 512 mosaic cases; CPU state and bus sequences match.\n");
   free(stats);free(a);free(b);free(rom);return 0;
 }

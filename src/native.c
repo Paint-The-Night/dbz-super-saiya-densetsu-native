@@ -292,6 +292,8 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
     done = display_transition_finish_step(c, c->pc); x->display_control_steps += done;
   } else if(c->pc >= 0x83cc && c->pc <= 0x83d9) {
     done = display_transition_dispatch_step(c, c->pc); x->display_control_steps += done;
+  } else if(c->pc >= 0x8471 && c->pc <= 0x849b) {
+    done = mosaic_step(c, c->pc); x->display_control_steps += done;
   }
   return done;
 }

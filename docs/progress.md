@@ -21,7 +21,8 @@ compiled replacements run alongside an interpreter for unrecovered code.
 | 00:83E4–8401 | Initialize display-transition state | 30 | 13 |
 | 00:8433–845F | Finalize display transition state | 45 | 19 |
 | 00:83CC–83DB | Dispatch display-transition states | 16 | 8 |
-| **Total** | **Fourteen complete routines plus a reset prefix** | **479** | **220** |
+| 00:8471–849B | Update mosaic/window register state | 43 | 22 |
+| **Total** | **Fifteen complete routines plus a reset prefix** | **522** | **242** |
 
 These are original code-region sizes, not C source sizes. Unsupported CPU modes
 and interrupts fall back to the baseline. The program accepts only the pinned
@@ -132,11 +133,11 @@ Next work is a reproducible actual battle and larger game-logic translations.
 `src/native_video.inc` reconstructs the complete frame graphics upload routine,
 unused-sprite hiding, and palette-shadow clearing. The new `ram-map.md` records
 the verified shadow buffers, flags, and eight-byte VRAM queue entry layout.
-The current inventory is 479 ROM bytes / 220 instruction sites.
+The current inventory is 522 ROM bytes / 242 instruction sites.
 
-The isolated suite now covers 398,402 cases, including 1,024 graphics-upload
+The isolated suite now covers 398,914 cases, including 1,024 graphics-upload
 variants and 513 cases each for sprite cleanup and palette clearing, plus 512
-display-control, 512 transition-initializer, 512 transition-finalizer, and 32 dispatch cases. The upload
+display-control, 512 transition-initializer, 512 transition-finalizer, 32 dispatch, and 512 mosaic cases. The upload
 tests vary queue lengths, palette dirtiness, HDMA control, direct-page alignment,
 and ROM/data-bank mirrors, comparing every CPU field and ordered bus transaction.
 Release and ASan/UBSan suites pass, including checkpoint equivalence.
