@@ -727,6 +727,18 @@ static void jsl_to(Cpu *c, uint16_t dest) {
   c->pc = dest; c->k = bank;
 }
 
+static void jsr_abs_native(Cpu *c, uint16_t dest) {
+  uint16_t low = c->pc++, high = c->pc++;
+  (void)c->read(c->mem, ((uint32_t)c->k << 16) | low); sample_interrupt(c);
+  (void)c->read(c->mem, ((uint32_t)c->k << 16) | high);
+  idle(c);
+  push_byte_native(c, (uint8_t)((c->pc - 1) >> 8)); sample_interrupt(c);
+  push_byte_native(c, (uint8_t)(c->pc - 1));
+  c->pc = dest;
+}
+
+
+
 /* $0088D8: set long pointer $06F945 at DP+$06 and resolve via $0088EA. */
 static bool pointer_preset_88d8_step(Cpu *c, uint16_t pc) {
   if(c->e || c->xf || c->d) return false;
@@ -2550,6 +2562,171 @@ static bool early_exit_fb8d_step(Cpu *c, uint16_t pc) {
     case 0xfbd2: cmp_constant8(c, 0x07); break;
     case 0xfbd4: branch_to(c, !c->z, 0xfbd9); break;
     case 0xfbd6: jmp_abs_native(c, 0xfced); break;
+  }
+  return true;
+}
+
+
+/* $008B7A: scene-mode[0] prefix — first JSLs, VRAM wipe setup, scroll snap to
+ * DP+$33/$35 and $01A2/$01A4, palette clear, then STZ $0D00/DP+$61. Leaves at
+ * unrecovered JSR $94E7. Continues from scene-mode[1] JMP $8B7A. */
+static bool scene_mode0_8b7a_step(Cpu *c, uint16_t pc) {
+  if(c->e || c->xf || c->d) return false;
+  if((pc == 0x8ba5 || pc == 0x8ba8 || pc == 0x8bab ||
+      pc == 0x8bad || pc == 0x8bb0 || pc == 0x8bb3 || pc == 0x8bb5 ||
+      pc == 0x8bb8 || pc == 0x8bbb || pc == 0x8bbe || pc == 0x8bc1 ||
+      pc == 0x8bc4) && c->mf) return false;
+  if((pc == 0x8b7a || pc == 0x8b7e || pc == 0x8b80 || pc == 0x8b82 ||
+      pc == 0x8b85 || pc == 0x8b87 || pc == 0x8b8a || pc == 0x8b8d ||
+      pc == 0x8b91 || pc == 0x8b94 || pc == 0x8b97 || pc == 0x8b9b ||
+      pc == 0x8b9f || pc == 0x8bc9 || pc == 0x8bcd ||
+      pc == 0x8bd0) && !c->mf) return false;
+  switch(pc) {
+    case 0x8b7a: case 0x8b7e: case 0x8b80: case 0x8b82: case 0x8b85: case 0x8b87:
+    case 0x8b8a: case 0x8b8d: case 0x8b91: case 0x8b94: case 0x8b97: case 0x8b9b:
+    case 0x8b9f: case 0x8ba3: case 0x8ba5: case 0x8ba8: case 0x8bab: case 0x8bad:
+    case 0x8bb0: case 0x8bb3: case 0x8bb5: case 0x8bb8: case 0x8bbb: case 0x8bbe:
+    case 0x8bc1: case 0x8bc4: case 0x8bc7: case 0x8bc9: case 0x8bcd: case 0x8bd0:
+      break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0x8b7a: jsl_to(c, 0xa6cb); break;
+    case 0x8b7e: stz_dp8(c, 0x00); break;
+    case 0x8b80: stz_dp8(c, 0x01); break;
+    case 0x8b82: index_constant(c, true, 0x2000); break;
+    case 0x8b85: store_dp_y16(c, 0x02); break;
+    case 0x8b87: index_constant(c, true, 0x5000); break;
+    case 0x8b8a: store_y_abs16(c, 0x2116); break;
+    case 0x8b8d: jsl_to(c, 0x8887); break;
+    case 0x8b91: stz_abs8(c, 0x0d66); break;
+    case 0x8b94: stz_abs8(c, 0x0725); break;
+    case 0x8b97: jsl_to(c, 0xe837); break;
+    case 0x8b9b: jsl_to(c, 0x8b15); break;
+    case 0x8b9f: jsl_to(c, 0x9255); break;
+    case 0x8ba3: set_m(c, false); break;
+    case 0x8ba5: video_load(c, 0x01a6, false); break;
+    case 0x8ba8: and_constant16(c, 0xfff8); break;
+    case 0x8bab: store_dp(c, 0x33, false); break;
+    case 0x8bad: video_load(c, 0x01a8, false); break;
+    case 0x8bb0: and_constant16(c, 0xfff8); break;
+    case 0x8bb3: store_dp(c, 0x35, false); break;
+    case 0x8bb5: video_load(c, 0x01aa, false); break;
+    case 0x8bb8: and_constant16(c, 0xfff8); break;
+    case 0x8bbb: store_a_abs16(c, 0x01a2); break;
+    case 0x8bbe: video_load(c, 0x01ac, false); break;
+    case 0x8bc1: and_constant16(c, 0xfff8); break;
+    case 0x8bc4: store_a_abs16(c, 0x01a4); break;
+    case 0x8bc7: set_m(c, true); break;
+    case 0x8bc9: jsl_to(c, 0x86b6); break;
+    case 0x8bcd: stz_abs8(c, 0x0d00); break;
+    case 0x8bd0: stz_dp8(c, 0x61); break;
+  }
+  return true;
+}
+
+/* $008E96: scene-mode[2] prefix — sibling of $8E76. Clears HDMA high bits via
+ * $03EF29 / $94B2, snapshots scrolls when $0C40==0, then SEP. */
+static bool scene_mode2_8e96_step(Cpu *c, uint16_t pc) {
+  if(c->e || c->xf || c->d) return false;
+  if((pc == 0x8ebc || pc == 0x8ebe || pc == 0x8ec1 ||
+      pc == 0x8ec3 || pc == 0x8ec6 || pc == 0x8ec9 || pc == 0x8ecc ||
+      pc == 0x8ecf) && c->mf) return false;
+  if((pc == 0x8e96 || pc == 0x8e9a || pc == 0x8e9c || pc == 0x8e9e ||
+      pc == 0x8ea0 || pc == 0x8ea3 || pc == 0x8ea6 || pc == 0x8ea8 ||
+      pc == 0x8eaa || pc == 0x8eac || pc == 0x8eaf || pc == 0x8eb2 ||
+      pc == 0x8eb5 || pc == 0x8eb8) && !c->mf) return false;
+  switch(pc) {
+    case 0x8e96: case 0x8e9a: case 0x8e9c: case 0x8e9e: case 0x8ea0: case 0x8ea3:
+    case 0x8ea6: case 0x8ea8: case 0x8eaa: case 0x8eac: case 0x8eaf: case 0x8eb2:
+    case 0x8eb5: case 0x8eb8: case 0x8eba: case 0x8ebc: case 0x8ebe: case 0x8ec1:
+    case 0x8ec3: case 0x8ec6: case 0x8ec9: case 0x8ecc: case 0x8ecf: case 0x8ed2:
+      break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0x8e96: jsl_to(c, 0xef29); break;
+    case 0x8e9a: load_dp8(c, 0x62); break;
+    case 0x8e9c: and_constant8(c, 0xe7); break;
+    case 0x8e9e: store_dp(c, 0x62, true); break;
+    case 0x8ea0: store_register8(c, 0x420c); break;
+    case 0x8ea3: jsr_abs_native(c, 0x94b2); break;
+    case 0x8ea6: load_dp8(c, 0x62); break;
+    case 0x8ea8: and_constant8(c, 0x07); break;
+    case 0x8eaa: store_dp(c, 0x62, true); break;
+    case 0x8eac: stz_abs8(c, 0x0d00); break;
+    case 0x8eaf: stz_abs8(c, 0x0d04); break;
+    case 0x8eb2: stz_abs8(c, 0x0ea1); break;
+    case 0x8eb5: video_load(c, 0x0c40, false); break;
+    case 0x8eb8: branch_to(c, !c->z, 0x8ed4); break;
+    case 0x8eba: set_m(c, false); break;
+    case 0x8ebc: load_dp16_to_a(c, 0x33); break;
+    case 0x8ebe: store_a_abs16(c, 0x01a6); break;
+    case 0x8ec1: load_dp16_to_a(c, 0x35); break;
+    case 0x8ec3: store_a_abs16(c, 0x01a8); break;
+    case 0x8ec6: video_load(c, 0x01a2, false); break;
+    case 0x8ec9: store_a_abs16(c, 0x01aa); break;
+    case 0x8ecc: video_load(c, 0x01a4, false); break;
+    case 0x8ecf: store_a_abs16(c, 0x01ac); break;
+    case 0x8ed2: set_m(c, true); break;
+  }
+  return true;
+}
+
+/* $03FBDA: deeper scene-entry handlers past FB8D early-exit.
+ * Mode-0 path ($FBDA) and mode-2 path ($FC1E) through RTL at $FC1D/$FC32.
+ * Specialty JMP $FC47 and nested JSLs leave native range for the interpreter. */
+static bool scene_entry_fbda_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7fu) != 0x03 || c->e || c->d || !c->mf) return false;
+  switch(pc) {
+    case 0xfbda: case 0xfbdd: case 0xfbdf: case 0xfbe1: case 0xfbe3: case 0xfbe6:
+    case 0xfbe8: case 0xfbeb: case 0xfbed: case 0xfbef: case 0xfbf1: case 0xfbf4:
+    case 0xfbf6: case 0xfbf8: case 0xfbfb: case 0xfbfd: case 0xfc00: case 0xfc02:
+    case 0xfc04: case 0xfc06: case 0xfc09: case 0xfc0d: case 0xfc0f: case 0xfc13:
+    case 0xfc15: case 0xfc17: case 0xfc19: case 0xfc1d: case 0xfc1e: case 0xfc21:
+    case 0xfc23: case 0xfc27: case 0xfc29: case 0xfc2d: case 0xfc2f: case 0xfc32:
+      break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0xfbda: video_load(c, 0x01d7, false); break;
+    case 0xfbdd: branch_to(c, !c->n, 0xfbf1); break;
+    case 0xfbdf: and_constant8(c, 0x40); break;
+    case 0xfbe1: branch_to(c, !c->z, 0xfbf8); break;
+    case 0xfbe3: video_load(c, 0x1648, false); break;
+    case 0xfbe6: branch_to(c, !c->n, 0xfc1d); break;
+    case 0xfbe8: video_load(c, 0x15fa, false); break;
+    case 0xfbeb: cmp_constant8(c, 0x80); break;
+    case 0xfbed: branch_to(c, !c->z, 0xfc1d); break;
+    case 0xfbef: branch_to(c, true, 0xfc04); break;
+    case 0xfbf1: video_load(c, 0x1661, false); break;
+    case 0xfbf4: cmp_constant8(c, 0x0b); break;
+    case 0xfbf6: branch_to(c, !c->z, 0xfc1d); break;
+    case 0xfbf8: video_load(c, 0x1648, false); break;
+    case 0xfbfb: branch_to(c, !c->n, 0xfc09); break;
+    case 0xfbfd: video_load(c, 0x15fa, false); break;
+    case 0xfc00: cmp_constant8(c, 0x80); break;
+    case 0xfc02: branch_to(c, !c->z, 0xfc09); break;
+    case 0xfc04: byte_constant(c, 0x07); break;
+    case 0xfc06: jmp_abs_native(c, 0xfc47); break;
+    case 0xfc09: jsl_to(c, 0xe340); break;
+    case 0xfc0d: branch_to(c, !c->c, 0xfc1d); break;
+    case 0xfc0f: jsl_to(c, 0x8996); break;
+    case 0xfc13: byte_constant(c, 0x02); break;
+    case 0xfc15: store_dp(c, 0x24, true); break;
+    case 0xfc17: byte_constant(c, 0x01); break;
+    case 0xfc19: jsl_to(c, 0x85a1); break;
+    case 0xfc1d: case 0xfc32: return_long(c); break;
+    case 0xfc1e: video_load(c, 0x01d7, false); break;
+    case 0xfc21: branch_to(c, !c->n, 0xfc1d); break;
+    case 0xfc23: jsl_to(c, 0xfc74); break;
+    case 0xfc27: branch_to(c, c->c, 0xfc2f); break;
+    case 0xfc29: jsl_to(c, 0xe25c); break;
+    case 0xfc2d: branch_to(c, !c->c, 0xfc1d); break;
+    case 0xfc2f: stz_abs8(c, 0x0024); break;
   }
   return true;
 }

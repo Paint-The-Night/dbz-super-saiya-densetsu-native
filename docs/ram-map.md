@@ -77,6 +77,16 @@ Names describe observed use and are not recovered original source identifiers.
 | 01D6 bit6 | bit | When set, JMP $FD3D from scene-entry dispatch | 03:FB8D |
 | 01A0 | byte | Scene-entry selector ($05 mode dispatch / $18 JMP $FC93 / else RTL) | 03:FB8D |
 
+| 01A6 / 01A8 | words | Camera scroll snapshot of DP+$33/$35 (mode0/2) | 8B7A, 8E96 |
+| 01AA / 01AC | words | Camera scroll snapshot of $01A2/$01A4 (mode0/2) | 8B7A, 8E96 |
+| 0D66 / 0725 | bytes | Cleared during scene-mode[0] VRAM wipe prefix | 8B7A |
+| DP+$61 | byte | Cleared after palette wipe in mode[0] prefix | 8B7A |
+| DP+$62 | byte | HDMA enable mirror; mode[2] clears bits 3–4 | 8E96 |
+| 0C40 | byte | Non-zero skips mode[2] scroll snapshot | 8E96 |
+| 01D7 | byte | Scene-entry deep-path gate (bit7/bit6 specialty) | 03:FBDA |
+| 1661 | byte | Compared to $0B / $0A in scene-entry deep path | 03:FBDA |
+| 15FA | byte | Specialty compare $80 selects JMP $FC47 | 03:FBDA |
+
 | DP+$0A / $0C | words | Actor world Y / X for OAM writeback | 00:849C |
 | DP+$12 / $14 | words | Camera-relative Y / X (world − scroll) | 00:849C |
 | DP+$0E | byte | On-screen Y clip threshold (often $F0) | 00:849C |
