@@ -530,6 +530,14 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $0001,X / $0034,X | bytes | $D4D2 after $B6B2→TYX CMP paths | 05:D4D2 |
 | $14CD / $121B / $15E8 / $1425/$1465 | bytes | $DA9C ($CAFA,38) face-class seed | 05:DA9C |
 | $1558 / $155C / $155A / $155E / $1546 | bytes/words | $F06A ($E117,40/48) scroll prep | 05:F06A |
+| $1558 / $155A / $155C | bytes/words | $F0EA ($E117,E8/EA) scroll prep sibling of $F06A | 05:F0EA |
+| $7F0280..$7F037F | words | $F119 fill with #$0001 before queue helpers | 05:F119 |
+| DP+$00 / $7F0000,X | long/tiles | $EAA4 stream expand until #$FFFF/#$FEFF | 05:EAA4 |
+| DP+$10/$12/$14/$15/$18/$1A | words | $F167 scratch — index, stream ptr, bank, scale temps | 05:F167 |
+| DP+$B9 / Y | byte/index | $F353 slot gate (#$81→$1400 else $1440) | 05:F353 |
+| $1548 / $4202/$4203/$4216 | byte/regs | $F364 multiply scale + wrap | 05:F364 |
+| $17DB/$17DC/$17DD / $0800 queue | words/bytes | $F167 DMA/phase temps and dual queue entries | 05:F167 |
+
 | $14C7 / $14D4 / $05F3A2,X | word/table | $F386 m16 A adjust | 05:F386 |
 
 | DP+$00 | byte | $95C9 saves incoming A before $B6B2 | 05:95C9 |
