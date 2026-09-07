@@ -5,6 +5,7 @@
   "root_count": 9,
   "discovered_function_variants": 388,
   "distinct_discovered_entry_addresses": 375,
+  "discovered_instruction_variants": 13237,
   "classification": {
     "lle_only": 77,
     "aot_eligible": 311

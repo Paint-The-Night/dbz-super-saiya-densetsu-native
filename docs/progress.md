@@ -56,13 +56,24 @@ independent hardware-fidelity comparison with another emulator is still needed.
 
 ## How far from complete?
 
-There is no defensible measured overall percentage yet: the full code/data map,
-routine inventory, and behavior coverage are unknown. **Under 1% remains a rough
-planning estimate for the complete reconstruction**, despite a working hybrid
-application. About 40.24% of instruction executions in this replay are native,
-mostly because a tiny RNG routine runs frequently. This is workload coverage,
-not source completion. Neither the 1 MiB ROM size nor observed instruction
-addresses provide a valid denominator for total engineering work.
+The project now has a reproducible scoped tracker. The pinned static-analysis
+worklist contains 13,237 instruction variants. Of those, 166 instruction sites
+are covered by reviewed C replacements: **1.25% of the discovered worklist**.
+Run `python3 tools/progress.py` to recalculate this figure. If the local
+SNESRecomp manifest exists, the script sums it directly; a public clone uses the
+same checked-in probe total.
+
+This is deliberately not whole-game completion: static discovery found 388
+function variants and 375 distinct entry addresses, but it did not prove that
+the ROM's complete code/data map was found. The missing code is therefore absent
+from the denominator. About 40.24% of instruction executions in the long replay
+are native, mostly because the RNG routine runs frequently; that is workload
+coverage, not source completion.
+
+The tracker is a better project gauge than the former “under 1%” planning guess,
+while still keeping the denominator limitation visible. A whole-game percentage
+will become defensible only after a complete code/data map and coverage inventory
+exist.
 
 Completion means all game logic reconstructed, complete-game behavioral
 verification (including battles, progression, menus, saves and endings), no

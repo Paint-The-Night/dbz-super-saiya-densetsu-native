@@ -31,6 +31,15 @@ differential verification against a second interpreter instance.
 The verified route reaches the Kame House overworld, takeoff, flight, and an
 event dialogue. Battles and most game logic still require reconstruction.
 
+### Progress tracker
+
+**1.25% — 166 / 13,237 discovered instruction sites reconstructed and verified**
+
+This percentage uses the pinned static-analysis worklist as its denominator.
+That worklist is incomplete, so it is a useful progress gauge for this project,
+not a claim that 1.25% of the entire game has been decompiled. Recalculate it
+with `python3 tools/progress.py`; use `--json` for automation.
+
 See [the progress record](docs/progress.md) for measured coverage and evidence,
 [the prototype guide](docs/prototype.md) for commands and controls, and [the
 RAM map](docs/ram-map.md) for recovered buffers and graphics queues.
