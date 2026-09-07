@@ -571,3 +571,9 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $4204..06 / $4216 / DP+$00 | div/rem | $ED46/$ED4A ÷3 remainder + seed → $1558 | 05:ED4A |
 | $05EDFB,X / $05EE56,X | byte pairs | $EDB4/$EE01 class → $155A/$155C | 05:EDB4 |
 | $1560..$1566 / $1558..$155C | bytes/words | $E921 dual scroll bank seed + drift | 05:E921 |
+
+| $1558/$155A/$155C/$1546/$155E | bytes/words | $EE5E/$EE99 shared $EEBD drift + seeds | 05:EE5E |
+| $1560/$1562/$1564 | bytes/words | $E97B/#$84-phase and $ED88/#$81-phase bank | 05:E97B |
+| $1558/$155A/$155C/$155E / DP+$51 | bytes/words | $E9A2 face seed + controller gate | 05:E9A2 |
+| DP+$00 / $1558/$155A/$155C | words | $E9D4/$EA0E shared $EA2D m16 drift threshold | 05:E9D4 |
+| $1558/$155A/$155C/$155E | bytes/words | $E8DC/$E87F/$E845 phase seeds + drift | 05:E8DC |
