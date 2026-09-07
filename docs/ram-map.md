@@ -522,5 +522,9 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $10:8CF0,X / [DP+$00],Y | stream | $F6B9 tile+attr expand with DP+$03 | 05:F6B9 |
 | $10:8ADD,X | words | $F708 tile-list pointers until $0000 | 05:F708 |
 | $05:F886,X | long | $F82B builds DP+$83/$85 then JSR $E0AB | 05:F82B |
+| $7F1760,X | bytes | $F782 clear loop (16 bytes) when $1546!=#$82 after $F000 | 05:F782 |
+| $0801/$0803/$0806 | words | $F000 queue seed from $1540/$1541 + PHY'd Y | 05:F000 |
+| $121B/$121C/$121E / $15E8 / DP+$24 | bytes | $95C9 face-table write; $DA8D forces $15E8=#$02 | 05:95C9 |
+| DP+$00 | byte | $95C9 saves incoming A before $B6B2 | 05:95C9 |
 | $0022,Y / DP+$04/$05 | bytes | $DA45 face nibble merge via $DA64/$DA6D | 05:DA45 |
 | $0031,Y | byte | $DA7C stores DP+$04 operand | 05:DA7C |
