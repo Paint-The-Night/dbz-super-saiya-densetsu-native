@@ -192,3 +192,19 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | 01D4 | byte | If bit7 set, low 3 bits override $01D2/$01E2 | 00:877E |
 | $028484 | bytes | Pair table indexed by $01A0<<1 | 00:877E |
 | $0284E4 | bytes | Alt table indexed by $01BD when $01A1 bit7 set | 00:877E |
+
+| DP+$4F | byte | Scroll blit index; low3 must be 0; (>>2)&6 indexes $06EC0A | 06:EBC1 |
+| $06EC0A | words | Four base offsets ($D140/$D1C0/$D1E0/$D1C0) + bank #$0C | 06:EBC1 |
+| $0280 | bytes | Destination of $20-byte long-pointer blit | 06:EBC1 |
+| 0715 | byte | Set to #$01 after successful EBC1 blit | 06:EBC1 |
+| 1306 | byte | Specialty command id from A at $85A1 entry | 04:85A1 |
+| 1308 | byte | Cleared by $85A1 | 04:85A1 |
+| 1318 | byte | High A (after XBA) when command == $88 | 04:85A1 |
+| 1304 / 1305 | bytes | Cleared during $844A bit7 sync | 04:844A |
+| 1302 | byte | Selects $85A1 arg #$86 (zero) vs #$87 (nonzero) | 04:844A |
+| DP+$1E / $1F | bytes | Stream index / specialty id during $87F9 | 00:87F9 |
+| DP+$22 | word | Saved Y cursor across decompress/DMA in $87F9 | 00:87F9 |
+| DP+$20 | word | VRAM dest from $0283C4+2 for $87F9 | 00:87F9 |
+| $028302 | words | Specialty-id → stream pointer table (bank 2) | 00:87F9 |
+| $0283C4 | long pairs | Per-index source word + VRAM dest word | 00:87F9 |
+| $028470 | long pairs | Alt DMA length/source when stream idx ≥ $26 | 00:87F9 |

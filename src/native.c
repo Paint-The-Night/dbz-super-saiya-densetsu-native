@@ -322,11 +322,17 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = palette_select_ead4_step(c, c->pc); x->palette_steps += done;
     } else if(c->pc >= 0xeb52 && c->pc <= 0xebc0) {
       done = gfx_select_eb52_step(c, c->pc); x->upload_steps += done;
+    } else if(c->pc >= 0xebc1 && c->pc <= 0xec09) {
+      done = scroll_blit_ebc1_step(c, c->pc); x->upload_steps += done;
     }
     return done;
   }
   if(bank == 4) {
-    if(c->pc >= 0x85b6 && c->pc <= 0x85f0) {
+    if(c->pc >= 0x844a && c->pc <= 0x848f) {
+      done = specialty_sync_844a_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0x85a1 && c->pc <= 0x85b5) {
+      done = specialty_cmd_85a1_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0x85b6 && c->pc <= 0x85f0) {
       done = slot_alloc_85b6_step(c, c->pc); x->display_control_steps += done;
     }
     return done;
@@ -384,6 +390,10 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
     done = vram_cpu_copy_step(c, c->pc); x->upload_steps += done;
   } else if(c->pc >= 0x877e && c->pc <= 0x87e8) {
     done = specialty_table_877e_step(c, c->pc); x->display_control_steps += done;
+  } else if(c->pc >= 0x87e9 && c->pc <= 0x87f8) {
+    done = specialty_wrap_87e9_step(c, c->pc); x->display_control_steps += done;
+  } else if(c->pc >= 0x87f9 && c->pc <= 0x8885) {
+    done = specialty_gfx_87f9_step(c, c->pc); x->upload_steps += done;
   } else if(c->pc >= 0x88ae && c->pc <= 0x88c4) {
     done = pointer_preset_88ae_step(c, c->pc); x->palette_steps += done;
   } else if(c->pc >= 0x88c5 && c->pc <= 0x88d7) {
