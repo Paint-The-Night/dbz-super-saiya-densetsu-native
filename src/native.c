@@ -267,12 +267,19 @@ static bool reset_step(Cpu *c, uint16_t pc) {
 
 bool dbz_native_step(Cpu *c, DbzExecution *x) {
   uint8_t bank = (uint8_t)(c->k & 0x7fu);
-  if(c->resetWanted || c->waiting || c->stopped || c->intWanted || (bank != 0 && bank != 4))
+  if(c->resetWanted || c->waiting || c->stopped || c->intWanted ||
+     (bank != 0 && bank != 2 && bank != 4))
     return false;
   bool done = false;
   if(bank == 4) {
     if(c->pc >= 0x85b6 && c->pc <= 0x85f0) {
       done = slot_alloc_85b6_step(c, c->pc); x->display_control_steps += done;
+    }
+    return done;
+  }
+  if(bank == 2) {
+    if(c->pc >= 0xd812 && c->pc <= 0xd843) {
+      done = scroll_snapshot_d812_step(c, c->pc); x->scroll_steps += done;
     }
     return done;
   }
@@ -340,6 +347,8 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
     done = vram_queue_enqueue_desc_step(c, c->pc); x->upload_steps += done;
   } else if(c->pc >= 0x9b79 && c->pc <= 0x9bbe) {
     done = vram_queue_enqueue_dp_step(c, c->pc); x->upload_steps += done;
+  } else if(c->pc >= 0x9bbf && c->pc <= 0x9c4a) {
+    done = vram_queue_enqueue_tiled_step(c, c->pc); x->upload_steps += done;
   } else if(c->pc >= 0x8954 && c->pc <= 0x8995) {
     done = palette_index_load_step(c, c->pc); x->palette_steps += done;
   } else if(c->pc >= 0x8e26 && c->pc <= 0x8e75) {

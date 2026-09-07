@@ -56,6 +56,14 @@ Names describe observed use and are not recovered original source identifiers.
 | 1309–1310 | 8 bytes | Slot ID table; $80 clears / sentinel at $1309 | 04:85B6 |
 | 01DE / 01E0 | words | Scroll snapshot copy of $01A2 / $01A4 | 8E76 |
 | 01A1 | byte | Scene flag set to $80 in mode[1] path | 8E76 |
+| 01C0 / 01C4 | words | Dual copies of $01A2 when A∈{$33,$35,$37} | 02:D812 |
+| 01C2 / 01C6 | words | Dual copies of $01A4 | 02:D812 |
+| 01C8 / 01CC | words | Dual copies of DP+$33 (BG2 H scroll) | 02:D812 |
+| 01CA / 01CE | words | Dual copies of DP+$35 (BG2 V scroll) | 02:D812 |
+| DP+$05 / $06 / $08 | bytes | Tiled enqueue width / height scratch | 9BBF |
+| DP+$03 / $04 | word | Tiled enqueue VRAM dest ( += $20 per row ) | 9BBF |
+| DP+$09 / $0A | word | Tiled enqueue source cursor (starts $0A00) | 9BBF |
+| 0A00 onward / 0711 | bytes / word | Word-pair scratch / write cursor for tiled enqueue | 9BBF |
 
 VRAM entry layout:
 

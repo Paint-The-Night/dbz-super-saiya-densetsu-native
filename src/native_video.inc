@@ -1901,3 +1901,134 @@ static bool slot_alloc_85b6_step(Cpu *c, uint16_t pc) {
   }
   return true;
 }
+
+/* $02D812: if A is $33/$35/$37, snapshot scroll words into $01C0..$01CE pairs; else RTL. */
+static bool scroll_snapshot_d812_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7fu) != 0x02 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) {
+    case 0xd812: case 0xd814: case 0xd816: case 0xd818: case 0xd81a: case 0xd81c:
+    case 0xd81e: case 0xd81f: case 0xd822: case 0xd825: case 0xd828: case 0xd82b:
+    case 0xd82e: case 0xd831: case 0xd834: case 0xd837: case 0xd83a: case 0xd83d:
+    case 0xd840: case 0xd843: break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0xd812: cmp_constant8(c, 0x35); break;
+    case 0xd814: branch_to(c, c->z, 0xd81f); break;
+    case 0xd816: cmp_constant8(c, 0x37); break;
+    case 0xd818: branch_to(c, c->z, 0xd81f); break;
+    case 0xd81a: cmp_constant8(c, 0x33); break;
+    case 0xd81c: branch_to(c, c->z, 0xd81f); break;
+    case 0xd81e: case 0xd843: return_long(c); break;
+    case 0xd81f: load_y_abs16(c, 0x01a2); break;
+    case 0xd822: store_y_abs16(c, 0x01c0); break;
+    case 0xd825: store_y_abs16(c, 0x01c4); break;
+    case 0xd828: load_y_abs16(c, 0x01a4); break;
+    case 0xd82b: store_y_abs16(c, 0x01c2); break;
+    case 0xd82e: store_y_abs16(c, 0x01c6); break;
+    case 0xd831: load_y_abs16(c, 0x0033); break;
+    case 0xd834: store_y_abs16(c, 0x01c8); break;
+    case 0xd837: store_y_abs16(c, 0x01cc); break;
+    case 0xd83a: load_y_abs16(c, 0x0035); break;
+    case 0xd83d: store_y_abs16(c, 0x01ca); break;
+    case 0xd840: store_y_abs16(c, 0x01ce); break;
+  }
+  return true;
+}
+
+/* $009BBF: enqueue tiled VRAM transfers from [DP+$00] descriptor into $0800,
+ * copying word pairs through $0A00 via $0711; advances dest DP+$03 by $20/row. */
+static bool vram_queue_enqueue_tiled_step(Cpu *c, uint16_t pc) {
+  if(c->e || c->xf || c->d) return false;
+  if((pc == 0x9be9 || pc == 0x9beb || pc == 0x9bee || pc == 0x9bf0) && c->mf) return false;
+  /* REP/SEP sites (9be7/9bf3/9c24) accept either M width, matching 9B79 style. */
+  if((pc == 0x9bbf || pc == 0x9bc2 || pc == 0x9bc4 || pc == 0x9bc6 || pc == 0x9bc7 ||
+      pc == 0x9bc9 || pc == 0x9bcb || pc == 0x9bcd || pc == 0x9bce || pc == 0x9bd0 ||
+      pc == 0x9bd2 || pc == 0x9bd4 || pc == 0x9bd6 || pc == 0x9bd8 || pc == 0x9bda ||
+      pc == 0x9bde || pc == 0x9be2 || pc == 0x9be4 ||
+      pc == 0x9bf5 || pc == 0x9bf8 || pc == 0x9bfa || pc == 0x9bfb || pc == 0x9bfc ||
+      pc == 0x9bff || pc == 0x9c02 || pc == 0x9c04 || pc == 0x9c06 || pc == 0x9c07 ||
+      pc == 0x9c09 || pc == 0x9c0b || pc == 0x9c0c || pc == 0x9c0d || pc == 0x9c10 ||
+      pc == 0x9c12 || pc == 0x9c15 || pc == 0x9c16 || pc == 0x9c18 || pc == 0x9c1b ||
+      pc == 0x9c1c || pc == 0x9c1f || pc == 0x9c20 || pc == 0x9c22 ||
+      pc == 0x9c26 || pc == 0x9c28 || pc == 0x9c2a || pc == 0x9c2c || pc == 0x9c2d ||
+      pc == 0x9c2f || pc == 0x9c31 || pc == 0x9c33 || pc == 0x9c35 || pc == 0x9c37 ||
+      pc == 0x9c39 || pc == 0x9c3a || pc == 0x9c3b || pc == 0x9c3c || pc == 0x9c3e ||
+      pc == 0x9c40 || pc == 0x9c42 || pc == 0x9c44 || pc == 0x9c46 || pc == 0x9c48 ||
+      pc == 0x9c4a) && !c->mf) return false;
+  switch(pc) {
+    case 0x9bbf: case 0x9bc2: case 0x9bc4: case 0x9bc6: case 0x9bc7: case 0x9bc9:
+    case 0x9bcb: case 0x9bcd: case 0x9bce: case 0x9bd0: case 0x9bd2: case 0x9bd4:
+    case 0x9bd6: case 0x9bd8: case 0x9bda: case 0x9bde: case 0x9be2: case 0x9be4:
+    case 0x9be7: case 0x9be9: case 0x9beb: case 0x9bee: case 0x9bf0: case 0x9bf3:
+    case 0x9bf5: case 0x9bf8: case 0x9bfa: case 0x9bfb: case 0x9bfc: case 0x9bff:
+    case 0x9c02: case 0x9c04: case 0x9c06: case 0x9c07: case 0x9c09: case 0x9c0b:
+    case 0x9c0c: case 0x9c0d: case 0x9c10: case 0x9c12: case 0x9c15: case 0x9c16:
+    case 0x9c18: case 0x9c1b: case 0x9c1c: case 0x9c1f: case 0x9c20: case 0x9c22:
+    case 0x9c24: case 0x9c26: case 0x9c28: case 0x9c2a: case 0x9c2c: case 0x9c2d:
+    case 0x9c2f: case 0x9c31: case 0x9c33: case 0x9c35: case 0x9c37: case 0x9c39:
+    case 0x9c3a: case 0x9c3b: case 0x9c3c: case 0x9c3e: case 0x9c40: case 0x9c42:
+    case 0x9c44: case 0x9c46: case 0x9c48: case 0x9c4a: break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0x9bbf: index_constant(c, true, 0); break;
+    case 0x9bc2: case 0x9bc7: case 0x9c02: case 0x9c07: lda_indirect_long_y8(c, 0x00); break;
+    case 0x9bc4: store_dp(c, 0x05, true); break;
+    case 0x9bc6: case 0x9bcd: case 0x9c06: case 0x9c0b: case 0x9c15: case 0x9c1b:
+      implied(c); c->y++; zn(c, c->y, false); break;
+    case 0x9bc9: store_dp(c, 0x06, true); break;
+    case 0x9bcb: store_dp(c, 0x08, true); break;
+    case 0x9bce: case 0x9c26: load_dp8(c, 0x05); break;
+    case 0x9bd0: case 0x9c28: store_dp(c, 0x07, true); break;
+    case 0x9bd2: byte_constant(c, 0x00); break;
+    case 0x9bd4: store_dp(c, 0x09, true); break;
+    case 0x9bd6: byte_constant(c, 0x0a); break;
+    case 0x9bd8: store_dp(c, 0x0a, true); break;
+    case 0x9bda: jsl_to(c, 0x8711); break;
+    case 0x9bde: jsl_to(c, 0x8724); break;
+    case 0x9be2: byte_constant(c, 0x80); break;
+    case 0x9be4: store_a_abs_x8(c, 0x0800); break;
+    case 0x9be7: set_m(c, false); break;
+    case 0x9be9: load_dp16_to_a(c, 0x03); break;
+    case 0x9beb: store_a_abs_x16(c, 0x0801); break;
+    case 0x9bee: load_dp16_to_a(c, 0x09); break;
+    case 0x9bf0: store_a_abs_x16(c, 0x0803); break;
+    case 0x9bf3: case 0x9c24: set_m(c, true); break;
+    case 0x9bf5: stz_abs_x8(c, 0x0805); break;
+    case 0x9bf8: load_dp8(c, 0x05); break;
+    case 0x9bfa: case 0x9c39: inc_a8(c); break;
+    case 0x9bfb: case 0x9c3a: asl_a8(c); break;
+    case 0x9bfc: store_a_abs_x8(c, 0x0806); break;
+    case 0x9bff: stz_abs_x8(c, 0x0807); break;
+    case 0x9c04: store_dp(c, 0x0b, true); break;
+    case 0x9c09: store_dp(c, 0x0c, true); break;
+    case 0x9c0c: phy16(c); break;
+    case 0x9c0d: load_y_abs16(c, 0x0711); break;
+    case 0x9c10: load_dp8(c, 0x0b); break;
+    case 0x9c12: case 0x9c18: store_a_abs_y8(c, 0x0a00); break;
+    case 0x9c16: load_dp8(c, 0x0c); break;
+    case 0x9c1c: store_y_abs16(c, 0x0711); break;
+    case 0x9c1f: ply16(c); break;
+    case 0x9c20: dec_dp8(c, 0x07); break;
+    case 0x9c22: branch_to(c, !c->n, 0x9c02); break;
+    case 0x9c2a: load_dp8(c, 0x03); break;
+    case 0x9c2c: case 0x9c3b: implied(c); c->c = false; break;
+    case 0x9c2d: adc8_constant(c, 0x20); break;
+    case 0x9c2f: store_dp(c, 0x03, true); break;
+    case 0x9c31: load_dp8(c, 0x04); break;
+    case 0x9c33: case 0x9c42: adc8_constant(c, 0x00); break;
+    case 0x9c35: store_dp(c, 0x04, true); break;
+    case 0x9c37: load_dp8(c, 0x05); break;
+    case 0x9c3c: adc8_dp(c, 0x09); break;
+    case 0x9c3e: store_dp(c, 0x09, true); break;
+    case 0x9c40: load_dp8(c, 0x0a); break;
+    case 0x9c44: store_dp(c, 0x0a, true); break;
+    case 0x9c46: dec_dp8(c, 0x08); break;
+    case 0x9c48: branch_to(c, !c->n, 0x9bda); break;
+    case 0x9c4a: return_long(c); break;
+  }
+  return true;
+}
