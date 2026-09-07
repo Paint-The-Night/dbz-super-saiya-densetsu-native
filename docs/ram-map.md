@@ -363,3 +363,7 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $158060,X | long | $C029 source pointer table | 05:C029 |
 | DP+$00/$04/$83/$86/$89 | long/words | $C029 stream pointers + $96F3 length | 05:C029 |
 | $2115 | VMAIN | Set to #$80 by $96F3 before decompress JSLs | 05:96F3 |
+
+| $2181/$2183 / $2180 | WMADD / WMDATA | $C5ED seeds from DP+$86/$88; streams decompressed bytes | 00:C5ED |
+| $7E9000,X | bytes | $C5ED working buffer (same as $C559) alongside WMDATA | 00:C5ED |
+| MVN dest bank $7F | bank | $C707 tile rearrange target (vs $C68C → $7E) | 00:C707 |

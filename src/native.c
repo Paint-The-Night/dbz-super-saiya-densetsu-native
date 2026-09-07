@@ -576,8 +576,12 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
     done = actor_clear_94e7_step(c, c->pc); x->palette_steps += done;
   } else if(c->pc >= 0xc559 && c->pc <= 0xc5ec) {
     done = decompress_c559_step(c, c->pc); x->upload_steps += done;
+  } else if(c->pc >= 0xc5ed && c->pc <= 0xc68b) {
+    done = decompress_c5ed_step(c, c->pc); x->upload_steps += done;
   } else if(c->pc >= 0xc68c && c->pc <= 0xc706) {
     done = tile_rearrange_c68c_step(c, c->pc); x->upload_steps += done;
+  } else if(c->pc >= 0xc707 && c->pc <= 0xc781) {
+    done = tile_rearrange_c707_step(c, c->pc); x->upload_steps += done;
   }
   return done;
 }
