@@ -515,3 +515,12 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $7F0000,Y via [$04] | tiles | $F8B2 expand from [DP+$00] | 05:F8B2 |
 | $17DB..$17E5 | words | $F85E clear pair selected by $1541 | 05:F85E |
 | $1570,X | bytes | $1D89D1/$89DF timer table seed | 1D:89D1 |
+
+| DP+$B7 | byte | $F6A8/$F6B9 Y-adjust gate (< #$12) and $F761 type compare | 05:F6A8 |
+| $17DB/$17DC/$17DD | words | $F54F DMA/scroll temps; $F609 seeds #$0100/#$FFF8 | 05:F54F |
+| $0800..$0810 queue | bytes | $F54F/#$82 path and $F685 DMA queue seeds | 05:F54F |
+| $10:8CF0,X / [DP+$00],Y | stream | $F6B9 tile+attr expand with DP+$03 | 05:F6B9 |
+| $10:8ADD,X | words | $F708 tile-list pointers until $0000 | 05:F708 |
+| $05:F886,X | long | $F82B builds DP+$83/$85 then JSR $E0AB | 05:F82B |
+| $0022,Y / DP+$04/$05 | bytes | $DA45 face nibble merge via $DA64/$DA6D | 05:DA45 |
+| $0031,Y | byte | $DA7C stores DP+$04 operand | 05:DA7C |
