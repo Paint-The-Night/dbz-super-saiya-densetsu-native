@@ -719,6 +719,27 @@ int main(int argc,char **argv) {
     }
     require(ca.pc==0x9000 && ca.sp==0x202 && a->ram[0x700]==0x20,"8e18 tail return");
   }
+  /* $008E76: scroll snapshot through native 8D2B until unrecovered $02D812 */
+  for(unsigned av=0;av<4;av++) {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0x8e76,av), cb=make_cpu(b,0x8e76,av); ca.db=cb.db=0; ca.xf=cb.xf=false;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+    word(a,0x1a2,0x1234); word(b,0x1a2,0x1234); word(a,0x1a4,0x5678); word(b,0x1a4,0x5678);
+    a->ram[0x1bd]=b->ram[0x1bd]=(uint8_t)(av+1);
+    word(a,0x4216,(av+1)*5); word(b,0x4216,(av+1)*5);
+    for(unsigned i=0;i<0x100;i++) {
+      a->ram[0xe629+i]=b->ram[0xe629+i]=(uint8_t)i;
+      a->ram[0xe3fb+i]=b->ram[0xe3fb+i]=(uint8_t)(0x10+i);
+    }
+    unsigned steps=0;
+    while(!(ca.pc==0xd812 && ca.k==2) && steps++<80) {
+      a->count=b->count=0;
+      if(!dbz_native_step(&ca,stats)) lakesnes_cpu_runOpcode(&ca);
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0xd812 && ca.k==2 && a->ram[0x1a1]==0x80,"8e76 reached unrecovered 02:D812");
+    require(getword(a,0x1de)==0x1234 && getword(a,0x1e0)==0x5678,"8e76 scroll snapshot");
+  }
     Cpu guard=make_cpu(a,0x82a3,0);guard.d=true;
   a->count=0;require(!dbz_native_step(&guard,stats)&&a->count==0,"decimal mode falls back without effects");
   guard.d=false;guard.intWanted=true;
