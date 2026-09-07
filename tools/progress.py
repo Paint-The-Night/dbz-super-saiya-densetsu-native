@@ -18,9 +18,9 @@ MANIFEST = ROOT / ".local/probes/dbz-recomp-reproduction/generated/program_manif
 
 # These are the fixed, reviewed regions listed in docs/progress.md. Keeping the
 # inventory here makes the percentage auditable without parsing generated C.
-NATIVE_SITES = 1128
-NATIVE_BYTES = 2353
-NATIVE_ENTRIES = 56
+NATIVE_SITES = 1301
+NATIVE_BYTES = 2694
+NATIVE_ENTRIES = 58
 
 
 def discovered_instruction_variants() -> tuple[int, str]:

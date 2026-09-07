@@ -20,7 +20,7 @@ static void record(Bus *b,uint32_t a,uint8_t v,uint8_t kind) {
 static uint8_t read_bus(void *mem,uint32_t address) {
   Bus *b=mem;uint8_t v;
   uint8_t bank=(uint8_t)(address>>16 & 0x7fu);
-  /* Bank 0: real ROM. Banks 2/4/6: real ROM for $02D812 / $0485B6 / $06F14D.
+  /* Bank 0: real ROM. Banks 2/4/6: real ROM for $02D812 / $0485B6 / $06EF11+F14D.
    * Other banks keep the RAM overlay so fixtures can plant stubs/tables. */
   if((address & 0xffffu)>=0x8000 && (bank == 0 || bank == 2 || bank == 4 || bank == 6)) {
     size_t off = (size_t)bank * 0x8000u + (address & 0x7fffu);
@@ -829,6 +829,97 @@ int main(int argc,char **argv) {
     require(a->ram[0x33]==0 && a->ram[0x34]==0 && a->ram[0x35]==0 && a->ram[0x36]==0,
             "f14d underflow cleared scrolls");
   }
+  /* $06F089 early-exit: negative/out-of-range coords clear DP+$04/$05 via $F082 */
+  for(unsigned path=0;path<4;path++) {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xf089,path), cb=make_cpu(b,0xf089,path);
+    ca.k=cb.k=6; ca.db=cb.db=0; ca.xf=cb.xf=false;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+    a->ram[0x702]=b->ram[0x702]=0x10; a->ram[0x703]=b->ram[0x703]=0x10;
+    if(path==0) { a->ram[1]=b->ram[1]=0x80; } /* BMI $01 */
+    else if(path==1) { a->ram[1]=b->ram[1]=0x10; } /* CMP $0703 BEQ */
+    else if(path==2) { a->ram[1]=b->ram[1]=0x05; a->ram[3]=b->ram[3]=0x80; }
+    else { a->ram[1]=b->ram[1]=0x05; a->ram[3]=b->ram[3]=0x10; }
+    a->ram[4]=b->ram[4]=0xaa; a->ram[5]=b->ram[5]=0xbb;
+    unsigned steps=0;
+    while(ca.pc!=0x9000 && steps++<40) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected f089 early-exit");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0x9000 && ca.sp==0x202,"f089 early-exit return");
+    require(a->ram[4]==0 && a->ram[5]==0,"f089 early-exit cleared DP+04/05");
+  }
+  /* $06F089 success path: planted multiply product + map bytes */
+  for(unsigned av=0;av<4;av++) {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xf089,av), cb=make_cpu(b,0xf089,av);
+    ca.k=cb.k=6; ca.db=cb.db=0; ca.xf=cb.xf=false; ca.y=cb.y=0x1234;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+    a->ram[0]=b->ram[0]=(uint8_t)(0x10+av);
+    a->ram[1]=b->ram[1]=0x02;
+    a->ram[2]=b->ram[2]=(uint8_t)(0x20+av);
+    a->ram[3]=b->ram[3]=0x03;
+    a->ram[0x702]=b->ram[0x702]=0x20; a->ram[0x703]=b->ram[0x703]=0x20;
+    word(a,0x704,0x0400); word(b,0x704,0x0400);
+    a->ram[0x706]=b->ram[0x706]=0x00; /* bank 0 long pointer */
+    word(a,0x707,0x0500); word(b,0x707,0x0500);
+    a->ram[0x709]=b->ram[0x709]=0x00;
+    word(a,0x4216,0x0011*(av+1)); word(b,0x4216,0x0011*(av+1));
+    /* tile index byte at [$04] after reloc = base $0400 + product + row */
+    for(unsigned i=0;i<0x200;i++) a->ram[0x400+i]=b->ram[0x400+i]=(uint8_t)(i&0x3f);
+    for(unsigned i=0;i<0x200;i++) a->ram[0x500+i]=b->ram[0x500+i]=(uint8_t)(0x80+i);
+    /* $06F1EE table comes from real bank-6 ROM via read_bus */
+    unsigned steps=0;
+    while(ca.pc!=0x9000 && steps++<300) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected f089 success");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0x9000 && ca.sp==0x202,"f089 success return");
+    require(ca.y==0x1234,"f089 restored Y");
+  }
+  /* $06EF11: build queue entry until first JSL $06F089 */
+  for(unsigned av=0;av<4;av++) {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xef11,av), cb=make_cpu(b,0xef11,av);
+    ca.k=cb.k=6; ca.db=cb.db=0; ca.xf=cb.xf=false;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+    a->ram[0x700]=b->ram[0x700]=(av&1)?0x10:0x00;
+    a->ram[0]=b->ram[0]=0x40; a->ram[1]=b->ram[1]=0x01;
+    a->ram[2]=b->ram[2]=0x80; a->ram[3]=b->ram[3]=0x02;
+    unsigned steps=0;
+    while(!(ca.pc==0xf089 && ca.k==6) && steps++<80) {
+      a->count=b->count=0;
+      if(!dbz_native_step(&ca,stats)) lakesnes_cpu_runOpcode(&ca);
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0xf089 && ca.k==6,"ef11 reached F089");
+    require(a->ram[0x800]==0x81,"ef11 VMAIN/occupied");
+    require(a->ram[0x803]==0x80 && a->ram[0x804]==0x08,"ef11 source 7E:0880");
+    require(a->ram[0x806]==0x40 && a->ram[0x807]==0x00,"ef11 length $40");
+  }
+  /* $06EF11 full: F089 early-exits each iteration (coords out of range) */
+  for(unsigned av=0;av<2;av++) {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xef11,av), cb=make_cpu(b,0xef11,av);
+    ca.k=cb.k=6; ca.db=cb.db=0; ca.xf=cb.xf=false;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+    a->ram[0x700]=b->ram[0x700]=0x00;
+    a->ram[0]=b->ram[0]=0x20; a->ram[1]=b->ram[1]=0x80; /* negative row -> F089 early */
+    a->ram[2]=b->ram[2]=0x00; a->ram[3]=b->ram[3]=0x00;
+    a->ram[0x702]=b->ram[0x702]=0x10; a->ram[0x703]=b->ram[0x703]=0x10;
+    unsigned steps=0;
+    while(ca.pc!=0x9000 && steps++<5000) {
+      a->count=b->count=0;
+      if(!dbz_native_step(&ca,stats)) lakesnes_cpu_runOpcode(&ca);
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0x9000 && ca.sp==0x202,"ef11 full return");
+    require(a->ram[0x800]==0x81,"ef11 kept queue head");
+    /* 32 early-exit words of zero written to $0880 */
+    require(a->ram[0x880]==0 && a->ram[0x881]==0 && a->ram[0x8be]==0 && a->ram[0x8bf]==0,
+            "ef11 wrote zero tile words");
+  }
+
   /* $0089B8: accumulate through stubs — plant RTL at unrecovered callees via
    * executing until first JSL then verifying native body with interpreted 8A28/8A69
    * early path: provide actor tables so 8A28 can complete. */
@@ -863,6 +954,6 @@ int main(int argc,char **argv) {
   require(!dbz_native_step(&guard,stats)&&a->count==0,"controller emulation guard");
   guard=make_cpu(a,0x82fb,0);guard.mf=false;
   require(!dbz_native_step(&guard,stats)&&a->count==0,"scroll accumulator width guard");
-  printf("PASS: native equivalence suites including F14D/89B8/D812/9BBF/8D2B/85B6/C559/C68C/90E6/946F and 8DFE-to-F14D; CPU state and bus sequences match.\n");
+  printf("PASS: native equivalence suites including EF11/F089/F14D/89B8/D812/9BBF/8D2B/85B6/C559/C68C/90E6/946F and 8DFE-to-F14D; CPU state and bus sequences match.\n");
   free(stats);free(a);free(b);free(rom);return 0;
 }

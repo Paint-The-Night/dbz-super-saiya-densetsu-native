@@ -87,3 +87,12 @@ queued VRAM transfers. Tests verify register writes against original code;
 the differential replay also exercises actual DMA side effects in the core.
 Queue capacity remains to be recovered; producers at 9B36/9B79 are now mapped. Do not infer a
 capacity from the test queue lengths or apply new bounds that change game logic.
+
+| DP+$0A/$0B | word (split) | Queue fill: DP+$00/$01 ±8 when $0700 bit4 | 06:EF11 |
+| DP+$04/$05 | word | Tile-fetch result / scratch (cleared on F082 exit) | 06:F089 |
+| DP+$07/$08/$09 | long | Map-data long pointer built during tile fetch | 06:F089 |
+| DP+$71 | byte | Raw map tile index from [DP+$04] | 06:F089 |
+| 0736 | word | Masked map word ($3FDE) staging | 06:F089 |
+| 0704 / 0706 | word / byte | Map base offset / bank for tile pointer | 06:F089 |
+| 0707 / 0709 | word / byte | Secondary map base / bank after ×2 index | 06:F089 |
+| $06F1EE,X | word table | Bank-6 tile→pointer table (X = tile×2) | 06:F089 |

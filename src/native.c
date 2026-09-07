@@ -272,7 +272,11 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
     return false;
   bool done = false;
   if(bank == 6) {
-    if(c->pc >= 0xf14d && c->pc <= 0xf1eb) {
+    if(c->pc >= 0xef11 && c->pc <= 0xef9a) {
+      done = queue_fill_ef11_step(c, c->pc); x->upload_steps += done;
+    } else if(c->pc >= 0xf082 && c->pc <= 0xf14c) {
+      done = tile_fetch_f089_step(c, c->pc); x->upload_steps += done;
+    } else if(c->pc >= 0xf14d && c->pc <= 0xf1eb) {
       done = scroll_clamp_f14d_step(c, c->pc); x->scroll_steps += done;
     }
     return done;
