@@ -305,3 +305,14 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | DP+$00/$01/$02 | bytes/word | Width / height / $7E3000 index for $B55A | 01:B55A |
 | $7E3000,X | words | Pattern tiles #$2832-2836 / #$2801 / #$283B-283D | 01:B55A |
 | 07B4 | byte | Optional mid-tile gate; cleared by $B55A epilogue | 01:B55A |
+
+| 121B | byte | Frame-gfx index for $871E (bit7 picks $90FD vs $8FEF table) | 04:871E |
+| DP+$00/$02 | long | $871E table/stream pointers (bank $04) | 04:871E |
+| $0083/$0085 | long | $871E decompress stream seeds before $C559 | 04:871E |
+| DP+$73/$75/$78 | long/byte | $871E APU/stream + palette-source pointer; copy to $0200 | 04:871E |
+| $0200,Y | words | $871E palette-word blit from [DP+$73] | 04:871E |
+| $0E0F,Y | words | $FA1A adjusts via $01FD79 then fills from $01FC87 | 01:FA1A |
+| $01FD79,X / $01FCA7,X / $01FC87,X | tables | $FA1A adjust/fill sources | 01:FA1A |
+| DP+$00/$02 | long | $C8C8 builds bank-$02 then $C885 forces bank $09 | 01:C8C8 |
+| DP+$03 | byte | $C885 palette-slot index (×16 into $0300) | 01:C885 |
+| $0300,X | words | $C885 16-word palette copy destination | 01:C885 |
