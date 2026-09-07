@@ -506,4 +506,12 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $1484 / $1486 | words | $D69C/$D711 mirror of $0024/$0026,Y after scale | 05:D69C |
 
 | $1527 / DP+$B6 / $152C | word/bytes | $A581 type-alt seeds | 05:A581 |
-
+| $152D,X / $0019,Y | bytes | $A90D mask + ORA #$80 face nudge via $B6C0 | 05:A90D |
+| $14C3/$14C5 / DP+$10 | words/byte | $A93D face index → X | 05:A93D |
+| $17E6 / $14FF | bytes | $D8DB toggle / $D9A6/$DA03 face flags | 05:D8DB |
+| $0024/$0026/$002E/$002F,Y | words/bytes | $D955/$D970/$D90D/$D91F move seeds | 05:D955 |
+| $1547 / $1546 | bytes | $F480 ($E117,4/6) phase counter / wrap | 05:F480 |
+| DP+$83/$85 | words/byte | $E089 stream ptr from $05E0B1 then $96ED | 05:E089 |
+| $7F0000,Y via [$04] | tiles | $F8B2 expand from [DP+$00] | 05:F8B2 |
+| $17DB..$17E5 | words | $F85E clear pair selected by $1541 | 05:F85E |
+| $1570,X | bytes | $1D89D1/$89DF timer table seed | 1D:89D1 |

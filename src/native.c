@@ -525,6 +525,30 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = actor_hdl_f410_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xa581 && c->pc <= 0xa5f6) {
       done = actor_probe_a581_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xa5f7 && c->pc <= 0xa8e8) {
+      done = actor_probe_a5f7_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xa8e9 && c->pc <= 0xa90c) {
+      done = actor_exit_a8e9_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xa90d && c->pc <= 0xa93c) {
+      done = actor_mask_a90d_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xa93d && c->pc <= 0xa960) {
+      done = actor_index_a93d_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xb11d && c->pc <= 0xb123) {
+      done = actor_seed_b11d_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xd8db && c->pc <= 0xda40) {
+      done = actor_op_d8db_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xe089 && c->pc <= 0xe0b0) {
+      done = stream_ptr_e089_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xf480 && c->pc <= 0xf547) {
+      done = actor_hdl_f480_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xf85e && c->pc <= 0xf885) {
+      done = actor_clear_f85e_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xf8a1 && c->pc <= 0xf8b1) {
+      done = actor_type_f8a1_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xf8b2 && c->pc <= 0xf90f) {
+      done = tile_expand_f8b2_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xf910 && c->pc <= 0xf91d) {
+      done = queue_len_f910_step(c, c->pc); x->display_control_steps += done;
     }
     return done;
   }
@@ -549,6 +573,8 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = flight_cont_1d8b46_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0x8b7c && c->pc <= 0x8bdb) {
       done = flight_post_1d8b7c_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0x89d1 && c->pc <= 0x89f7) {
+      done = timer_seed_1d89d1_step(c, c->pc); x->display_control_steps += done;
     }
     return done;
   }
