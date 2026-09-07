@@ -352,3 +352,14 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | DP+$86/$88 / DP+$12 | long/word | $BE61/$BEAB pointer + scaled index | 05:BE54 |
 | $1ECB06/$08/$09,X | tables | $BE61 pack words + $BEAB scale source | 05:BE54 |
 | $7F2800,Y | bytes | $BE61 writes packed triple after DB=$7F | 05:BE54 |
+
+| $7E9000..$7E97FF | WRAM | Cleared then DMA-sourced by $A9E9/$AE38 | 00:A9E9 |
+| $7E9640 / $7E9688 / $7E96C8 | WRAM | Mode-7 epilogue pattern + $AAE1 expand | 00:A9E9 |
+| $7E6000.. | WRAM | HDMA table copy target from $AAF7 via MVN | 00:A9E9 |
+| $4300–$4304 / $420C | DMA/HDMA | Ch0 CGADSUB HDMA during $A9E9 wait loop | 00:A9E9 |
+| $4340–$4345 / $420B | DMA | Ch4 VRAM upload programmed by $AE38 | 00:AE38 |
+| DP+$3D | word | $A9E9 must equal #$0008 to continue body | 00:A9E9 |
+| DP+$82 / DP+$73 / DP+$48 | bytes | Epilogue toggle / frame counter / exit bits | 00:A9E9 |
+| $158060,X | long | $C029 source pointer table | 05:C029 |
+| DP+$00/$04/$83/$86/$89 | long/words | $C029 stream pointers + $96F3 length | 05:C029 |
+| $2115 | VMAIN | Set to #$80 by $96F3 before decompress JSLs | 05:96F3 |
