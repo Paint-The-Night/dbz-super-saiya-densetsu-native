@@ -33,11 +33,11 @@ event dialogue. Battles and most game logic still require reconstruction.
 
 ### Progress tracker
 
-**1.60% — 212 / 13,237 discovered instruction sites reconstructed and verified**
+**1.66% — 220 / 13,237 discovered instruction sites reconstructed and verified**
 
 This percentage uses the pinned static-analysis worklist as its denominator.
 That worklist is incomplete, so it is a useful progress gauge for this project,
-not a claim that 1.60% of the entire game has been decompiled. Recalculate it
+not a claim that 1.66% of the entire game has been decompiled. Recalculate it
 with `python3 tools/progress.py`; use `--json` for automation.
 
 See [the progress record](docs/progress.md) for measured coverage and evidence,

@@ -144,6 +144,32 @@ static bool display_transition_finish_step(Cpu *c, uint16_t pc) {
   }
   return true;
 }
+static void asl_a8(Cpu *c) {
+  implied(c); c->c=((uint8_t)c->a&0x80u)!=0; set_a8(c,(uint8_t)c->a<<1);
+}
+static void tax8(Cpu *c) { implied(c); c->x=(uint8_t)c->a; zn(c,c->x,true); }
+static bool display_transition_dispatch_step(Cpu *c, uint16_t pc) {
+  if(c->e || !c->mf || (pc != 0x83cc && pc != 0x83cf && pc != 0x83d1 &&
+      pc != 0x83d3 && pc != 0x83d4 && pc != 0x83d7 && pc != 0x83d8 && pc != 0x83d9)) return false;
+  (void)fetch(c);
+  switch(pc) {
+    case 0x83cc: video_load(c,0x0716,false); break;
+    case 0x83cf: branch_to(c,c->z,0x8401); break;
+    case 0x83d1: byte_constant(c,0); break;
+    case 0x83d3: xba_native(c); break;
+    case 0x83d4: video_load(c,0x071a,false); break;
+    case 0x83d7: asl_a8(c); break;
+    case 0x83d8: tax8(c); break;
+    case 0x83d9: {
+      (void)fetch(c); (void)fetch(c); idle(c);
+      uint16_t table=(uint16_t)(0x83dc+c->x);
+      uint16_t low=c->read(c->mem,((uint32_t)c->k<<16)|table); sample_interrupt(c);
+      c->pc=(uint16_t)(low|((uint16_t)c->read(c->mem,((uint32_t)c->k<<16)|((table+1)&0xffff))<<8));
+      break;
+    }
+  }
+  return true;
+}
 /* Hide every unused OAM sprite by setting its Y coordinate to F0. DP+$55 is
  * the byte offset immediately following the last used 4-byte sprite record. */
 static bool sprite_tail_step(Cpu *c, uint16_t pc) {
