@@ -12,6 +12,7 @@ typedef struct {
   uint64_t controller_steps, scroll_steps;
   uint64_t upload_steps;
   uint64_t sprite_steps, palette_steps;
+  uint64_t display_control_steps;
   uint64_t cycles_native, cycles_interpreted;
   uint64_t rng_entries[2];
   uint32_t visited[0x100000];

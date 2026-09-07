@@ -39,6 +39,68 @@ static void index_constant(Cpu *c, bool y, uint16_t value) {
 static void byte_constant(Cpu *c, uint8_t value) {
   sample_interrupt(c); (void)fetch(c); set_a8(c, value);
 }
+static void xba_native(Cpu *c) {
+  uint8_t low = (uint8_t)c->a, high = (uint8_t)(c->a >> 8);
+  c->a = (uint16_t)((low << 8) | high); zn(c, high, true);
+  idle(c); sample_interrupt(c); idle(c);
+}
+static void and_constant8(Cpu *c, uint8_t value) {
+  sample_interrupt(c); (void)fetch(c); set_a8(c, (uint8_t)c->a & value);
+}
+static bool display_control_step(Cpu *c, uint16_t pc) {
+  if(c->e || !c->mf) return false;
+  bool enable = pc >= 0x8460;
+  if((enable && pc > 0x8470) || (!enable && pc > 0x828e)) return false;
+  static const uint16_t off_enable[] = {0x8460,0x8463,0x8465,0x8468,0x846b,0x846d,0x8470};
+  static const uint16_t off_disable[] = {0x8282,0x8284,0x8285,0x8287,0x8289,0x828b,0x828e};
+  const uint16_t *list = enable ? off_enable : off_disable;
+  unsigned count = 7;
+  bool valid = false; for(unsigned i=0;i<count;i++) valid |= pc == list[i];
+  if(!valid) return false;
+  (void)fetch(c);
+  switch(pc) {
+    case 0x8282: byte_constant(c, 0); break;
+    case 0x8460: video_load(c, 0x0716, false); break;
+    case 0x8284: xba_native(c); break;
+    case 0x8285: load_dp8(c, 0x28); break;
+    case 0x8287: and_constant8(c, 0x0e); break;
+    case 0x8289: store_dp(c, 0x28, true); break;
+    case 0x828b: store_register8(c, 0x4200); break;
+    case 0x8463: and_constant8(c, 0x1f); break;
+    case 0x8465: store_register8(c, 0x0719); break;
+    case 0x8468: video_load(c, 0x0718, false); break;
+    case 0x846b: store_dp(c, 0x29, true); break;
+    case 0x846d: store_register8(c, 0x2100); break;
+    case 0x828e: case 0x8470: return_long(c); break;
+  }
+  return true;
+}
+static bool display_transition_init_step(Cpu *c, uint16_t pc) {
+  if(c->e || !c->mf) return false;
+  switch(pc) {
+    case 0x83e4: case 0x83e7: case 0x83e9: case 0x83ec: case 0x83ee:
+    case 0x83f0: case 0x83f3: case 0x83f6: case 0x83f8: case 0x83fa:
+    case 0x83fc: case 0x83fe: case 0x8401: break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0x83e4: video_load(c, 0x0716, false); break;
+    case 0x83e7: and_constant8(c, 0x1f); break;
+    case 0x83e9: store_register8(c, 0x0719); break;
+    case 0x83ec: load_dp8(c, 0x29); break;
+    case 0x83ee: and_constant8(c, 0x0f); break;
+    case 0x83f0: store_register8(c, 0x0718); break;
+    case 0x83f3: video_load(c, 0x0716, false); break;
+    case 0x83f6: branch_to(c, c->n, 0x83fc); break;
+    case 0x83f8: byte_constant(c, 1); break;
+    case 0x83fa: branch_to(c, true, 0x83fe); break;
+    case 0x83fc: byte_constant(c, 2); break;
+    case 0x83fe: store_register8(c, 0x071a); break;
+    case 0x8401: return_long(c); break;
+  }
+  return true;
+}
 /* Hide every unused OAM sprite by setting its Y coordinate to F0. DP+$55 is
  * the byte offset immediately following the last used 4-byte sprite record. */
 static bool sprite_tail_step(Cpu *c, uint16_t pc) {

@@ -284,6 +284,10 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
     done = sprite_tail_step(c, c->pc); x->sprite_steps += done;
   } else if(c->pc >= 0x86b6 && c->pc <= 0x86c7) {
     done = palette_clear_step(c, c->pc); x->palette_steps += done;
+  } else if((c->pc >= 0x8282 && c->pc <= 0x828e) || (c->pc >= 0x8460 && c->pc <= 0x8470)) {
+    done = display_control_step(c, c->pc); x->display_control_steps += done;
+  } else if(c->pc >= 0x83e4 && c->pc <= 0x8401) {
+    done = display_transition_init_step(c, c->pc); x->display_control_steps += done;
   }
   return done;
 }
@@ -318,4 +322,5 @@ void dbz_write_execution(FILE *f, const DbzExecution *x) {
     x->controller_steps, x->scroll_steps);
   fprintf(f, ",\"upload_steps\":%" PRIu64, x->upload_steps);
   fprintf(f, ",\"sprite_steps\":%" PRIu64 ",\"palette_steps\":%" PRIu64, x->sprite_steps, x->palette_steps);
+  fprintf(f, ",\"display_control_steps\":%" PRIu64, x->display_control_steps);
 }

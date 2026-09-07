@@ -176,6 +176,35 @@ int main(int argc,char **argv) {
     if(palette) for(unsigned i=0x200;i<0x400;i++) require(a->ram[i]==0,"palette shadow cleared");
     else if(!(variant&3)) for(unsigned i=variant;i<512;i+=4) require(a->ram[0x401+i]==0xf0,"unused sprite hidden");
   }
+  for(unsigned routine=0;routine<2;routine++) for(unsigned value=0;value<256;value++) {
+    unsigned start=routine?0x8460:0x8282;
+    memset(a->ram,0,sizeof(a->ram));memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,start,value),cb=make_cpu(b,start,value);
+    ca.db=cb.db=0;word(a,0x200,0x8fff);word(b,0x200,0x8fff);
+    a->ram[0x28]=b->ram[0x28]=(uint8_t)(value^0xa5);
+    a->ram[0x716]=b->ram[0x716]=(uint8_t)(value^0x5a);
+    a->ram[0x718]=b->ram[0x718]=(uint8_t)(value^0x3c);
+    unsigned steps=0;
+    while(ca.pc!=0x9000 && steps++<10) {
+      a->count=b->count=0;require(dbz_native_step(&ca,stats),"expected display-control instruction");
+      lakesnes_cpu_runOpcode(&cb);compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0x9000 && ca.sp==0x202,"display-control return");
+  }
+  for(unsigned value=0;value<256;value++) for(unsigned mode=0;mode<2;mode++) {
+    memset(a->ram,0,sizeof(a->ram));memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0x83e4,value),cb=make_cpu(b,0x83e4,value);
+    ca.db=cb.db=0;word(a,0x200,0x8fff);word(b,0x200,0x8fff);
+    a->ram[0x716]=b->ram[0x716]=(uint8_t)(mode?0x80|value:value);
+    a->ram[0x718]=b->ram[0x718]=(uint8_t)(value^0x4d);
+    a->ram[0x29]=b->ram[0x29]=(uint8_t)(value^0xa7);
+    unsigned steps=0;
+    while(ca.pc!=0x9000 && steps++<20) {
+      a->count=b->count=0;require(dbz_native_step(&ca,stats),"expected transition-init instruction");
+      lakesnes_cpu_runOpcode(&cb);compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0x9000 && ca.sp==0x202,"transition-init return");
+  }
   Cpu guard=make_cpu(a,0x82a3,0);guard.d=true;
   a->count=0;require(!dbz_native_step(&guard,stats)&&a->count==0,"decimal mode falls back without effects");
   guard.d=false;guard.intWanted=true;
@@ -186,6 +215,6 @@ int main(int argc,char **argv) {
   require(!dbz_native_step(&guard,stats)&&a->count==0,"controller emulation guard");
   guard=make_cpu(a,0x82fb,0);guard.mf=false;
   require(!dbz_native_step(&guard,stats)&&a->count==0,"scroll accumulator width guard");
-  printf("PASS: 131072 RNG, 1024 display, 32 reset, 262144 controller, 512 scroll, 1024 upload, 513 sprite, 513 palette cases; CPU state and bus sequences match.\n");
+  printf("PASS: 131072 RNG, 1024 display, 32 reset, 262144 controller, 512 scroll, 1024 upload, 513 sprite, 513 palette, 512 control, 512 transition cases; CPU state and bus sequences match.\n");
   free(stats);free(a);free(b);free(rom);return 0;
 }
