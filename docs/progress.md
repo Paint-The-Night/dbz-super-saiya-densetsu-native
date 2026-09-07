@@ -135,7 +135,12 @@ compiled replacements run alongside an interpreter for unrecovered code.
 | 04:8938–8973 | Queue seed $0000→$0000/#$8000/$7F; INC $0715; $8324/$049EF2 | 60 | 21 |
 | 04:89E2–8A4E | Mode-7 PPU/window preset + $12xx seeds; JSR ($8A4F,X) | 109 | 40 |
 | 01:B72B–B7B9 | $0D66 table dispatch via $02E0F2 into $B55A / typed seeds | 143 | 70 |
-| **Total** | **One hundred twenty-nine complete routines plus a reset prefix** | **8618** | **3852** |
+| 01:F660–F67A | Type gate: SEC if $0E01,Y in {$10,$11,$4C,$4D,$4F} else CLC | 27 | 15 |
+| 01:F67B–F691 | Decompress setup DP+$83=#$EB84; VMAIN; JSL $C559/$C68C | 23 | 9 |
+| 01:F53B–F65F | First JSL from $F4B2: dual $F67B DMA, $F660 path / bulk+$0E0F fill | 293 | 115 |
+| 04:8974–89E1 | VRAM-queue sibling after $8938 gated on $122A; optional $B67A | 110 | 46 |
+| 01:B55A–B61D | WRAM $7E3000 pattern fill from DP+$00/$01/$02; clear $07B4 | 196 | 92 |
+| **Total** | **One hundred thirty-four complete routines plus a reset prefix** | **9267** | **4129** |
 
 These are original code-region sizes, not C source sizes. Unsupported CPU modes
 and interrupts fall back to the baseline. The program accepts only the pinned
@@ -176,8 +181,8 @@ independent hardware-fidelity comparison with another emulator is still needed.
 ## How far from complete?
 
 The project now has a reproducible scoped tracker. The pinned static-analysis
-worklist contains 13,237 instruction variants. Of those, 3852 instruction sites
-are covered by reviewed C replacements: **29.10% of the discovered worklist**.
+worklist contains 13,237 instruction variants. Of those, 4129 instruction sites
+are covered by reviewed C replacements: **31.19% of the discovered worklist**.
 Run `python3 tools/progress.py` to recalculate this figure. If the local
 SNESRecomp manifest exists, the script sums it directly; a public clone uses the
 same checked-in probe total.
@@ -246,7 +251,7 @@ Next work is a reproducible actual battle and larger game-logic translations.
 `src/native_video.inc` reconstructs the complete frame graphics upload routine,
 unused-sprite hiding, and palette-shadow clearing. The new `ram-map.md` records
 the verified shadow buffers, flags, and eight-byte VRAM queue entry layout.
-The current inventory is 8618 ROM bytes / 3852 instruction sites.
+The current inventory is 9267 ROM bytes / 4129 instruction sites.
 
 The isolated suite now also covers interrupt-enable, VRAM queue find/mark,
 PPU multiply, DMA1 setup, pointer resolve, palette-shadow copy, actor-table

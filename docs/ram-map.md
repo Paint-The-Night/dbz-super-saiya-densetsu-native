@@ -292,3 +292,16 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | 0D66 | byte | $B72B dispatch index (==$29 early RTL) | 01:B72B |
 | $02E0F2,X | long words | Table pairs for $B72B → DP+$00/$02 | 01:B72B |
 | 01B3 | byte | Typed seed written on $0D66=$0B path | 01:B72B |
+
+| $0E01,Y | byte | Type tested by $F660 gate ({$10,$11,$4C,$4D,$4F} -> SEC) | 01:F660 |
+| DP+$83/$85 | long | $F67B seeds #$EB84 / #$08 before $C559 | 01:F67B |
+| $2115 | VMAIN | Set #$80 by $F67B | 01:F67B |
+| $0D01 / $0D7A / $0D75 | byte/word/byte | $F53B SEC-path seeds before $C987 | 01:F53B |
+| $7F0000,X | bytes | $F53B bulk copy of $0E01,Y (or 0) then DMA bursts | 01:F53B |
+| $0E0F,Y | words | $F53B multiply-table fill from $01FC2D | 01:F53B |
+| 122A | byte | $8974 gate/counter (<$10 queue; ==$10 -> $B67A; >$10 -> #$80) | 04:8974 |
+| $0800,X queue | bytes | $8974 seeds occ / ($122A&$1F)<<10/<<11 / $7F / #$0800 | 04:8974 |
+| 0715 / $212C | byte/reg | Inc when $122A hits 2; TM=#$11 when hits 4 | 04:8974 |
+| DP+$00/$01/$02 | bytes/word | Width / height / $7E3000 index for $B55A | 01:B55A |
+| $7E3000,X | words | Pattern tiles #$2832-2836 / #$2801 / #$283B-283D | 01:B55A |
+| 07B4 | byte | Optional mid-tile gate; cleared by $B55A epilogue | 01:B55A |
