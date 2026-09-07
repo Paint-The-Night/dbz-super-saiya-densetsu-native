@@ -185,3 +185,10 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | 0716 / 0D66 / DP+$61 | bytes | Written #$61 / #$23 / #$01 in scene body | 00:8F46 |
 | 0B12,X | bytes | Cleared for X=0..$100 step $20 | 00:8F46 |
 | 07BC / 07BB / 0C40 | bytes | If $07BC bit7 set: clear it and copy $07BB→$0C40 | 00:8F46 |
+
+| 1303 | byte | Specialty mode; bit7 set when $01E7 bit3 forces resync via $04844A | 00:8D4E |
+| 01D2 / 01E2 | bytes | Specialty table low from $028484 or $01D4&7 override | 00:877E |
+| 01D3 | byte | Specialty table high from $028484+1 or $0284E4[$01BD] | 00:877E |
+| 01D4 | byte | If bit7 set, low 3 bits override $01D2/$01E2 | 00:877E |
+| $028484 | bytes | Pair table indexed by $01A0<<1 | 00:877E |
+| $0284E4 | bytes | Alt table indexed by $01BD when $01A1 bit7 set | 00:877E |
