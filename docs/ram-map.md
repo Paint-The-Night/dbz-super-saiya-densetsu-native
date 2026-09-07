@@ -441,3 +441,16 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | DP+$03/$09/$0E / $0C | bytes | $1D:8906 ORA-seeded facing; optional negate of DP+$0C | 1D:8906 |
 | $0033 / $17DB | words | $1D:8906 temp swap around JSL $0085B9 | 1D:8906 |
 | $1570 | byte | $1D:8906 STZ when DP+$0D==#$80 | 1D:8906 |
+
+| $1420/$1422/$1432/$1424 | bytes/words | $B0BE copies $1401 (or $14D5 when $B7==#$44); seeds attr/face/X | 05:B0BE |
+| $1460/$1462/$1472/$1464 | bytes/words | $B0F9 copies $1441; seeds #$0145/#$00C0 partner slot | 05:B0F9 |
+| $0D8200,X | byte | $B582 type table bit7 → EOR #$80 (predicate sibling of $B572) | 05:B582 |
+| $071B | byte | $9488 nonzero → PLA×3 discard JSL frame then RTL | 05:9488 |
+| $14C2 bit0 | flag | $1D:8A77 selects Y=#$1400 vs #$1440 | 1D:8A77 |
+| $0B00,X | byte | $97C9 keeps only #$C0 bits via $96D7 walk to #$0120 | 05:97C9 |
+| $14F3/$14F4 | byte/word | $97C9 clears after actor mask walk | 05:97C9 |
+| DP+$24 / $0716 | bytes | $97C9 scene result &#$7F; always STA #$81 to $0716 | 05:97C9 |
+| DP+$20 / $0031,Y / $0021,Y | words/bytes | $CA10 slot scratch; timer tick + #$84/#$83 face | 05:CA10 |
+| $1506 / DP+$51/$B8 | bytes | $CA10 ORA #$01; optional $B8==#$C0 → DP+$51 tweak | 05:CA10 |
+| DP+$AC / $0726 / $14E4 | bytes/words | $9115 phase + timer; $14E4 word gates $9488 early path | 05:9115 |
+| $14C2/$14FC / $0C40 | bytes | $9115 AC==1 special seeds after $AE81/$C07B | 05:9115 |
