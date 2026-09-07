@@ -427,3 +427,17 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $0B19,Y / $0E19,Y | bytes | $9768 clears #$80 markers via $96E2 walk | 05:9768 |
 | $17C6,Y → $0140,Y | bytes | $9768 12-byte copy before scroll seed | 05:9768 |
 | $0738/$073A / $071B | word/bytes | $9768 scroll pointer bank #$07; clear $071B | 05:9768 |
+
+| $0020,Y .. +$1F | bytes | $B110 clears 32-byte actor header window | 05:B110 |
+| $1421/$1461 | bytes | $B045 seeds #$85/#$97/#$80 via $B0BE/$B0F9/$B582 | 05:B045 |
+| $1426/$1466 | words | $B045 #$0100/#$0070 from $B582 Z | 05:B045 |
+| $142E–36 / $146E–76 | bytes | $B045 clears paired velocity/scroll temps | 05:B045 |
+| $14E4 / DP+$AC/$B7/$AB | bytes | $90CC $E8/$EA gates; INC $AC; STZ $B7; AB=#$82/#$01 | 05:90CC |
+| $0020–26,Y | words | $90CC REP seeds #$A40F/#$0042/#$0040/#$0070 before $C07B | 05:90CC |
+| $7F0000,X / $0D00,X | bytes | $8116 optional wipe + $0D00 clear before bank-1D JSLs | 05:8116 |
+| $1541/$1502–05 / $0D66 | bytes | $8116 scene seeds after dual $C07B | 05:8116 |
+| $02C0→$0200 / $212C | words/byte | $8116 palette word copy + TM clear before RTL | 05:8116 |
+| DP+$00 long (bank #$10) | ptr | $1D:8906 from $1092B1,X | 1D:8906 |
+| DP+$03/$09/$0E / $0C | bytes | $1D:8906 ORA-seeded facing; optional negate of DP+$0C | 1D:8906 |
+| $0033 / $17DB | words | $1D:8906 temp swap around JSL $0085B9 | 1D:8906 |
+| $1570 | byte | $1D:8906 STZ when DP+$0D==#$80 | 1D:8906 |
