@@ -407,6 +407,8 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = type_lookup_b572_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xb582 && c->pc <= 0xb593) {
       done = type_lookup_b582_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xb594 && c->pc <= 0xb5c3) {
+      done = type_remap_b594_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xc0ed && c->pc <= 0xc115) {
       done = palette_push_c0ed_step(c, c->pc); x->palette_steps += done;
     } else if(c->pc >= 0xc116 && c->pc <= 0xc1bb) {
@@ -507,8 +509,12 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = actor_wrap_dd51_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xdd69 && c->pc <= 0xddd0) {
       done = actor_move_dd69_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xddd1 && c->pc <= 0xde25) {
+      done = actor_helper_ddd1_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xdff3 && c->pc <= 0xe017) {
       done = actor_scale_dff3_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xe018 && c->pc <= 0xe088) {
+      done = actor_helper_e018_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xf548 && c->pc <= 0xf54e) {
       done = actor_ora_f548_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xf54f && c->pc <= 0xf684) {
@@ -567,6 +573,12 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = actor_op_d306_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xd330 && c->pc <= 0xd3d5) {
       done = actor_op_d330_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xd3d6 && c->pc <= 0xd484) {
+      done = actor_op_d3d6_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xdb2b && c->pc <= 0xdc3a) {
+      done = actor_op_db2b_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xdc3b && c->pc <= 0xdd50) {
+      done = actor_op_dc3b_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xe089 && c->pc <= 0xe0b0) {
       done = stream_ptr_e089_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xf480 && c->pc <= 0xf547) {

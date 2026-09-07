@@ -546,4 +546,13 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 
 | $15F1..$15F9 / $1400↔$1440 | bytes | $D274 face-slot swap snapshot + reseed | 05:D274 |
 | DP+$05/$04 / $01EF / $1540 | bytes | $D306 tier from $DBF3 then $F85E/$E073→$DC48 | 05:D306 |
+| $1552/$1553/$1554/$1556 | bytes/words | $DB2B ($CAFA,42) face scroll seed before JMP $CA8D | 05:DB2B |
+| $1541 / $155E,$1559,$155F (+8) | bytes | $DBF3 face/slot seeds from DP+$05 bit4/bit7 | 05:DBF3 |
+| DP+$04 / $1540 / $1546/$1548 | bytes | $DC48 ($CAFA,50) phase after $DDF4/$DDD1; unblocks $D306 | 05:DC48 |
+| DP+$B0 / $1558/$1560/$1568 | bytes | $DC7C clear bit1 + scroll zeros | 05:DC7C |
+| $1502,X | byte | $E073 stores $1540 using ($1541-1) clamped index | 05:E073 |
+| $0000,Y bit1 / $0020,Y | bytes | $D3D6/$D3E9 set/clear via $B594/$B5AA before $1D8583/$859B | 05:D3D6 |
+| DP+$00/$04 / $0035,Y | words | $D45F ($CAFA,74) m16 score adjust → JMP $CA8D | 05:D45F |
+| DP+$B6 | byte | $DD29 ($CAFA,5A) face-class from $14C2 / DP+$04 | 05:DD29 |
+
 | $0B00,X / $003F,Y / DP+$00/$02/$10..$16 | actors/temps | $D330 bit6 scan + scale fold before $C07B | 05:D330 |
