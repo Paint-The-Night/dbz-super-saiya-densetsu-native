@@ -108,6 +108,62 @@ static void stz_abs8(Cpu *c, uint16_t address) {
   (void)fetch(c); (void)fetch(c); sample_interrupt(c);
   c->write(c->mem, ((uint32_t)c->db << 16) | address, 0);
 }
+static void store_y_abs16(Cpu *c, uint16_t address) {
+  (void)fetch(c); (void)fetch(c); sample_interrupt(c);
+  c->write(c->mem, ((uint32_t)c->db << 16) | address, (uint8_t)c->y);
+  sample_interrupt(c);
+  c->write(c->mem, ((uint32_t)c->db << 16) | ((address + 1) & 0xffffu), (uint8_t)(c->y >> 8));
+}
+static void adc16_constant(Cpu *c, uint16_t value) {
+  uint16_t old = c->a; unsigned carry = c->c ? 1u : 0u;
+  (void)fetch(c); sample_interrupt(c); (void)fetch(c);
+  unsigned result = (unsigned)old + value + carry; uint16_t out = (uint16_t)result;
+  c->c = result > 0xffffu;
+  c->v = (uint16_t)(~(old ^ value) & (old ^ out) & 0x8000u) != 0;
+  c->a = out; zn(c, out, false);
+}
+static bool small_helper_step(Cpu *c, uint16_t pc) {
+  if(c->e || c->xf) return false;
+  if((pc==0x8af1 || pc==0x8afc) && !c->mf) return false;
+  if((pc==0x8af9 || pc==0x8b04) && c->mf) return false;
+  if((pc==0x8af3 || pc==0x8af4 || pc==0x8af5 || pc==0x8af8 || pc==0x8aff || pc==0x8b00 || pc==0x8b03) && c->mf) return false;
+  switch(pc) {
+    case 0x89ac: case 0x89af: case 0x89b1: case 0x89b4: case 0x89b7:
+    case 0x8af1: case 0x8af3: case 0x8af4: case 0x8af5: case 0x8af8: case 0x8af9: case 0x8afb:
+    case 0x8afc: case 0x8afe: case 0x8aff: case 0x8b00: case 0x8b03: case 0x8b04: case 0x8b06:
+    case 0x8b07: case 0x8b08: case 0x8b09: case 0x8b0a: case 0x8b0b: case 0x8b0c: case 0x8b0d:
+    case 0x8b0e: case 0x8b0f: case 0x8b10: case 0x8b11: case 0x8b12: case 0x8b13: case 0x8b14: break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0x89ac: store_y_abs16(c, 0x072c); break;
+    case 0x89af: byte_constant(c, 0x80); break;
+    case 0x89b1: store_register8(c, 0x071b); break;
+    case 0x89b4: stz_abs8(c, 0x072a); break;
+    case 0x89b7: return_long(c); break;
+    case 0x8af1: set_m(c, false); break;
+    case 0x8af3: implied(c); c->a = c->y; zn(c, c->a, false); break;
+    case 0x8af4: implied(c); c->c = false; break;
+    case 0x8af5: adc16_constant(c, 0x0020); break;
+    case 0x8af8: implied(c); c->y = c->a; zn(c, c->y, false); break;
+    case 0x8af9: set_m(c, true); break;
+    case 0x8afb: return_long(c); break;
+    case 0x8afc: set_m(c, false); break;
+    case 0x8afe: implied(c); c->a = c->x; zn(c, c->a, false); break;
+    case 0x8aff: implied(c); c->c = false; break;
+    case 0x8b00: adc16_constant(c, 0x0020); break;
+    case 0x8b03: implied(c); c->x = c->a; zn(c, c->x, false); break;
+    case 0x8b04: set_m(c, true); break;
+    case 0x8b06: return_long(c); break;
+    case 0x8b07: case 0x8b08: case 0x8b09: case 0x8b0a: case 0x8b0b: case 0x8b0c:
+      implied(c); c->y++; zn(c,c->y,false); break;
+    case 0x8b0e: case 0x8b0f: case 0x8b10: case 0x8b11: case 0x8b12: case 0x8b13:
+      implied(c); c->x++; zn(c,c->x,false); break;
+    case 0x8b0d: case 0x8b14: return_long(c); break;
+  }
+  return true;
+}
 static bool display_transition_finish_step(Cpu *c, uint16_t pc) {
   if(c->e || !c->mf) return false;
   switch(pc) {
@@ -215,6 +271,54 @@ static bool mosaic_step(Cpu *c, uint16_t pc) {
     case 0x8496: ora_dp8(c,0x10); break;
     case 0x8498: store_register8(c,0x2106); break;
     case 0x849b: return_long(c); break;
+  }
+  return true;
+}
+static void push_byte_native(Cpu *c, uint8_t value) { c->write(c->mem,c->sp,value); c->sp--; }
+static void jsl_8460(Cpu *c) {
+  uint16_t low=c->pc++,high=c->pc++;
+  (void)c->read(c->mem,((uint32_t)c->k<<16)|low);sample_interrupt(c);
+  (void)c->read(c->mem,((uint32_t)c->k<<16)|high);
+  push_byte_native(c,c->k);idle(c);uint8_t bank=fetch(c);
+  push_byte_native(c,(uint8_t)((c->pc-1)>>8));sample_interrupt(c);
+  push_byte_native(c,(uint8_t)(c->pc-1));c->pc=0x8460;c->k=bank;
+}
+static void inc_abs8_native(Cpu *c,uint16_t address) {
+  uint32_t a=video_address(c,address,false);uint8_t value=c->read(c->mem,a);idle(c);sample_interrupt(c);
+  value++;c->write(c->mem,a,value);zn(c,value,true);
+}
+static void dec_abs8_native(Cpu *c,uint16_t address) {
+  uint32_t a=video_address(c,address,false);uint8_t value=c->read(c->mem,a);idle(c);sample_interrupt(c);
+  value--;c->write(c->mem,a,value);zn(c,value,true);
+}
+static void cmp_constant8(Cpu *c,uint8_t value) {
+  sample_interrupt(c);(void)fetch(c);uint8_t result=(uint8_t)c->a-value;c->c=(uint8_t)c->a>=value;zn(c,result,true);
+}
+static bool transition_timing_step(Cpu *c,uint16_t pc) {
+  if(c->e||c->d||!c->mf) return false;
+  switch(pc) {
+    case 0x8402:case 0x8405:case 0x8407:case 0x840a:case 0x840e:case 0x8411:case 0x8413:case 0x8415:
+    case 0x8417:case 0x841a:case 0x841c:case 0x841f:case 0x8423:case 0x8426:case 0x8428:case 0x842a:
+    case 0x842d:case 0x842f:case 0x8432: break;
+    default:return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0x8402:case 0x8417: dec_abs8_native(c,0x0719);break;
+    case 0x8405:case 0x841a: branch_to(c,!c->z,0x8432);break;
+    case 0x8407: inc_abs8_native(c,0x0718);break;
+    case 0x840a:case 0x841f: jsl_8460(c);break;
+    case 0x840e:case 0x8423: video_load(c,0x0718,false);break;
+    case 0x8411: cmp_constant8(c,0x0f);break;
+    case 0x8413: branch_to(c,!c->c,0x8432);break;
+    case 0x8415: branch_to(c,true,0x8428);break;
+    case 0x841c: dec_abs8_native(c,0x0718);break;
+    case 0x8426: branch_to(c,!c->z,0x8432);break;
+    case 0x8428: byte_constant(c,3);break;
+    case 0x842a: store_register8(c,0x071a);break;
+    case 0x842d: byte_constant(c,0x10);break;
+    case 0x842f: store_register8(c,0x0719);break;
+    case 0x8432: return_long(c);break;
   }
   return true;
 }

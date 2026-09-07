@@ -20,6 +20,8 @@ Reconstructed code currently covers:
   transfers, followed by HDMA and OAM-address restoration.
 - Unused sprite hiding at `$00:86A0–86B5` and palette-shadow clearing at
   `$00:86B6–86C7`. See `ram-map.md` for the recovered buffers and queue layout.
+- Display transition dispatch and timing state at `$00:83CC–845F`, including
+  nested calls into the verified brightness helper.
 
 These replacements execute compiled C at fixed game addresses. They retain
 individual instruction bus cycles, flags, and interrupt boundaries. They do

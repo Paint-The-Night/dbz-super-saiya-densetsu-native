@@ -294,6 +294,11 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
     done = display_transition_dispatch_step(c, c->pc); x->display_control_steps += done;
   } else if(c->pc >= 0x8471 && c->pc <= 0x849b) {
     done = mosaic_step(c, c->pc); x->display_control_steps += done;
+  } else if(c->pc >= 0x8402 && c->pc <= 0x8432) {
+    done = transition_timing_step(c, c->pc); x->display_control_steps += done;
+  } else if((c->pc >= 0x89ac && c->pc <= 0x89b7) ||
+            (c->pc >= 0x8af1 && c->pc <= 0x8b14)) {
+    done = small_helper_step(c, c->pc); x->display_control_steps += done;
   }
   return done;
 }
