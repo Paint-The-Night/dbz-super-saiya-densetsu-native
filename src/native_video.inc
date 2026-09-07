@@ -47,6 +47,9 @@ static void xba_native(Cpu *c) {
 static void and_constant8(Cpu *c, uint8_t value) {
   sample_interrupt(c); (void)fetch(c); set_a8(c, (uint8_t)c->a & value);
 }
+static void ora_constant8(Cpu *c, uint8_t value) {
+  sample_interrupt(c); (void)fetch(c); set_a8(c, (uint8_t)c->a | value);
+}
 static bool display_control_step(Cpu *c, uint16_t pc) {
   if(c->e || !c->mf) return false;
   bool enable = pc >= 0x8460;
@@ -98,6 +101,46 @@ static bool display_transition_init_step(Cpu *c, uint16_t pc) {
     case 0x83fc: byte_constant(c, 2); break;
     case 0x83fe: store_register8(c, 0x071a); break;
     case 0x8401: return_long(c); break;
+  }
+  return true;
+}
+static void stz_abs8(Cpu *c, uint16_t address) {
+  (void)fetch(c); (void)fetch(c); sample_interrupt(c);
+  c->write(c->mem, ((uint32_t)c->db << 16) | address, 0);
+}
+static bool display_transition_finish_step(Cpu *c, uint16_t pc) {
+  if(c->e || !c->mf) return false;
+  switch(pc) {
+    case 0x8433: case 0x8436: case 0x8438: case 0x843b: case 0x843d:
+    case 0x843f: case 0x8441: case 0x8443: case 0x8446: case 0x8448:
+    case 0x844a: case 0x844c: case 0x844e: case 0x8451: case 0x8453:
+    case 0x8456: case 0x8459: case 0x845c: case 0x845f: break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0x8433: {
+      uint32_t address=video_address(c,0x0719,false);uint8_t value=c->read(c->mem,address);
+      idle(c);sample_interrupt(c);value--;c->write(c->mem,address,value);zn(c,value,true);break;
+    }
+    case 0x8436: branch_to(c, !c->n, 0x845f); break;
+    case 0x8438: video_load(c,0x0716,false); break;
+    case 0x843b: branch_to(c,c->n,0x8443); break;
+    case 0x843d: load_dp8(c,0x27); break;
+    case 0x843f: store_dp(c,0x25,true); break;
+    case 0x8441: branch_to(c,true,0x8451); break;
+    case 0x8443: video_load(c,0x0717,false); break;
+    case 0x8446: branch_to(c,c->n,0x844e); break;
+    case 0x8448: load_dp8(c,0x24); break;
+    case 0x844a: ora_constant8(c,0x80); break;
+    case 0x844c: store_dp(c,0x24,true); break;
+    case 0x844e: stz_abs8(c,0x0717); break;
+    case 0x8451: byte_constant(c,0); break;
+    case 0x8453: store_register8(c,0x0d8c); break;
+    case 0x8456: store_register8(c,0x0719); break;
+    case 0x8459: store_register8(c,0x0716); break;
+    case 0x845c: store_register8(c,0x071a); break;
+    case 0x845f: return_long(c); break;
   }
   return true;
 }
