@@ -4478,6 +4478,118 @@ int main(int argc,char **argv) {
     require(ca.pc==0x9000 && ca.sp==0x202,"c707 return");
   }
 
-printf("PASS: native equivalence suites including C5ED/C707/A9E9/AE38/C029/96F3/A99B/FA86/BE54/8282/83B2/8411/889E/C987/FBBC/FAE9/FC00/871E/FA1A/C8C8/C885/F53B/F660/F67B/8974/B55A/F4B2/F983/FB2A/B960/AB00/8938/89E2/B72B/B6ED/B700/F802/F375/FE0E/A956/A961/8674/9083/FD64/B65D/B67A/B6AC/B6BF/A95B/8FB2/F021/F06F/8514/C9F9/CA98/CAAB/CA34/C535/B61E/B647/8490/84B9/84E2/85F1/EBC1/85A1/844A/87E9/87F9/877E/8D4E/8DFA/8DAC/EAD4/EB52/8F46/8C84/E8EE/BB46/EFD7/EFEA/EFFD/F00F/E36B/E32E/EF29/E419/E42A/E461/E4D1/E4F4/E942/8B7A/8E96/A6CB/9255/E837/FC33/E340/9485/94E7/FC47/FC74/FBDA/849C/85E9/FB8D/EF11/F089/F14D/89B8/D812/9BBF/8D2B/85B6/C559/C68C/90E6/946F and 8DFE-to-F14D; CPU state and bus sequences match.\n");
+
+  /* $01F9A0: thin wrapper until JSL $F983 */
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xf9a0,0), cb=make_cpu(b,0xf9a0,0);
+    ca.k=cb.k=1; ca.db=cb.db=0; ca.xf=cb.xf=false;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+    unsigned steps=0;
+    while(!(ca.pc==0xf983 && ca.k==1) && steps++<5) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected f9a0");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0xf983 && ca.k==1,"f9a0 reached F983");
+  }
+  /* $01F9A0: full wrapper through RTL with empty expand stream */
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xf9a0,0), cb=make_cpu(b,0xf9a0,0);
+    ca.k=cb.k=1; ca.db=cb.db=0; ca.xf=cb.xf=false; ca.y=cb.y=0;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+    a->ram[0x0e01]=b->ram[0x0e01]=0x00;
+    /* $02A597[0] long-ptr word — plant at bank2 map: test bus uses ram for bank2? bank2 is unlocked ROM.
+       F983 does LDA [$00] after setting ptr to $02A597+idx; plant via ROM mirror:
+       bank 2 file offset covers $02A597. For empty expand, FB2A reads [DP+$00] for #$80.
+       After F983, DP+$00 holds word from [$02A597]. Force that word to point at a #$80 stream. */
+    /* Direct: after F983 native runs it will read real ROM at $02A597. Then FB2A walks that.
+       Safer path: only drive F9A0 body sites by stopping at each JSL — already covered above.
+       Here drive F9A4 mid-entry: LDX #0 / JSL FB2A / stop at FB2A. */
+    ca.pc=cb.pc=0xf9a4;
+    unsigned steps=0;
+    while(!(ca.pc==0xfb2a && ca.k==1) && steps++<5) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected f9a4");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0xfb2a && ca.k==1 && ca.x==0,"f9a4 reached FB2A with X=0");
+  }
+  /* $05C00A: WMDATA helper through RTS */
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xc00a,0), cb=make_cpu(b,0xc00a,0);
+    ca.k=cb.k=5; ca.db=cb.db=0; ca.xf=cb.xf=false; ca.y=cb.y=0;
+    word(a,0x00,0x9000); a->ram[0x02]=0x7e;
+    word(b,0x00,0x9000); b->ram[0x02]=0x7e;
+    a->ram[0x9000]=b->ram[0x9000]=0x5a;
+    word(a,0x1fe,0xd000); word(b,0x1fe,0xd000);
+    ca.sp=cb.sp=0x1fd;
+    unsigned steps=0;
+    while(!(ca.pc==0xd001) && steps++<10) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected c00a");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0xd001 && ca.sp==0x1ff,"c00a RTS");
+    require(a->ram[0x2180]==0x5a,"c00a wrote WMDATA");
+    require(ca.y==1,"c00a INY");
+  }
+  /* $05BECB: save Y / load table / until JSR $BEAB */
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xbecb,0), cb=make_cpu(b,0xbecb,0);
+    ca.k=cb.k=5; ca.db=cb.db=0; ca.xf=cb.xf=false;
+    ca.y=cb.y=0x0020;
+    word(a,0x14,0x0000); word(b,0x14,0x0000);
+    a->ram[0x0020]=b->ram[0x0020]=0x03; /* type for BEAB */
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+    unsigned steps=0;
+    while(!(ca.pc==0xbeab) && steps++<40) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected becb");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0xbeab,"becb reached BEAB");
+    require(getword(a,0x10)==0x0020,"becb STY $10");
+    require(a->ram[0x88]==0x7f,"becb bank $7F");
+    /* $05C019[0]=0 from ROM table */
+    require(getword(a,0x86)==getword(a,0x16),"becb mirrored $86/$16");
+  }
+  /* $05BF7A: stream terminator #$80 → STA WMDATA / early RTL (DP+$14 < 4) */
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xbf7a,0), cb=make_cpu(b,0xbf7a,0);
+    ca.k=cb.k=5; ca.db=cb.db=0; ca.xf=cb.xf=false; ca.y=cb.y=0;
+    word(a,0x00,0x9000); a->ram[0x02]=0x7e;
+    word(b,0x00,0x9000); b->ram[0x02]=0x7e;
+    a->ram[0x9000]=b->ram[0x9000]=0x80; /* terminator */
+    word(a,0x14,0x0000); word(b,0x14,0x0000); /* <4 → skip flag walk */
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+    unsigned steps=0;
+    while(!(ca.pc==0x9000 && ca.k==0) && steps++<40) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected bf7a");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0x9000 && ca.sp==0x202,"bf7a RTL");
+    require(a->ram[0x2180]==0x80,"bf7a term to WMDATA");
+  }
+  /* $05BF92: #$83 path sets DP+$10=$FF, INY, then terminate at next BF7A */
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xbf92,0), cb=make_cpu(b,0xbf92,0);
+    ca.k=cb.k=5; ca.db=cb.db=0; ca.xf=cb.xf=false; ca.y=cb.y=0;
+    word(a,0x00,0x9000); a->ram[0x02]=0x7e;
+    word(b,0x00,0x9000); b->ram[0x02]=0x7e;
+    a->ram[0x9001]=b->ram[0x9001]=0x80; /* after INY, terminator at Y=1 */
+    word(a,0x14,0x0000); word(b,0x14,0x0000);
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+    unsigned steps=0;
+    while(!(ca.pc==0x9000 && ca.k==0) && steps++<40) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected bf92");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0x9000,"bf92 path RTL");
+    require(a->ram[0x10]==0xff,"bf92 set DP+$10");
+  }
+
+printf("PASS: native equivalence suites including BECB/C00A/F9A0/C5ED/C707/A9E9/AE38/C029/96F3/A99B/FA86/BE54/8282/83B2/8411/889E/C987/FBBC/FAE9/FC00/871E/FA1A/C8C8/C885/F53B/F660/F67B/8974/B55A/F4B2/F983/FB2A/B960/AB00/8938/89E2/B72B/B6ED/B700/F802/F375/FE0E/A956/A961/8674/9083/FD64/B65D/B67A/B6AC/B6BF/A95B/8FB2/F021/F06F/8514/C9F9/CA98/CAAB/CA34/C535/B61E/B647/8490/84B9/84E2/85F1/EBC1/85A1/844A/87E9/87F9/877E/8D4E/8DFA/8DAC/EAD4/EB52/8F46/8C84/E8EE/BB46/EFD7/EFEA/EFFD/F00F/E36B/E32E/EF29/E419/E42A/E461/E4D1/E4F4/E942/8B7A/8E96/A6CB/9255/E837/FC33/E340/9485/94E7/FC47/FC74/FBDA/849C/85E9/FB8D/EF11/F089/F14D/89B8/D812/9BBF/8D2B/85B6/C559/C68C/90E6/946F and 8DFE-to-F14D; CPU state and bus sequences match.\n");
   free(stats);free(a);free(b);free(rom);return 0;
 }

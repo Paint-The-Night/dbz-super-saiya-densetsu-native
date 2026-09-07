@@ -367,3 +367,12 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $2181/$2183 / $2180 | WMADD / WMDATA | $C5ED seeds from DP+$86/$88; streams decompressed bytes | 00:C5ED |
 | $7E9000,X | bytes | $C5ED working buffer (same as $C559) alongside WMDATA | 00:C5ED |
 | MVN dest bank $7F | bank | $C707 tile rearrange target (vs $C68C → $7E) | 00:C707 |
+
+| DP+$10/$14 | words | $BECB saves Y; slot index for $05C011/$C019/$C021 tables | 05:BECB |
+| DP+$86/$88/$16 | long/word | $BECB stream base (bank $7F) + length snapshot before $C029 | 05:BECB |
+| $0800,Y | VRAM queue | $BECB seeds occupied entry after $8711/$8724 | 05:BECB |
+| $15E9,X | word | $BECB stores queue Y index per slot | 05:BECB |
+| $2180/$2181/$2183 | WMDATA/WMADD | $BECB opcode walk + $C00A byte poke | 05:BECB |
+| $7F6801/$6802,X | bytes | $BECB post-stream flag OR #$80 when DP+$14≥4 | 05:BECB |
+| $158063/$158065,X | long | $BECB secondary stream pointer after second $BEAB | 05:BECB |
+| DP+$00 (bank $01) | long | $F9A0 leaves $F983 pointer for $FB2A expand at X=0 | 01:F9A0 |
