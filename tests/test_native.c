@@ -633,6 +633,10 @@ int main(int argc,char **argv) {
     }
   }
   {
+    const uint16_t sites[] = {0x9acd,0x9ad1,0x9ad3,0x9ad5,0x9ad7,0x9ad9,0x9adb,0x9add,0x9adf,0x9ae2};
+    for(unsigned n=0;n<10;n++) { memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram)); Cpu ca=make_cpu(a,sites[n],0), cb=make_cpu(b,sites[n],0); ca.k=cb.k=0; ca.xf=cb.xf=false; ca.mf=cb.mf=true; ca.sp=cb.sp=0x1ff; a->ram[0x62]=b->ram[0x62]=5; a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected 9acd scene status"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b); }
+  }
+  {
     const uint16_t sites[] = {0xd3c0,0xd3c3,0xd3c5,0xd3c7,0xd3ca,0xd3cb,0xd3cc,0xd3cf,
                               0xd3d1,0xd3d3,0xd3d5,0xd3d8,0xd3d9,0xd3da,0xd3dc};
     for(unsigned n=0;n<15;n++) {

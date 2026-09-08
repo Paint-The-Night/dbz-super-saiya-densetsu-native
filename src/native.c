@@ -900,6 +900,8 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
   }
   if(c->pc >= 0x8000 && c->pc <= 0x800d) {
     done = reset_step(c, c->pc); x->reset_steps += done;
+  } else if(c->pc >= 0x9acd && c->pc <= 0x9ae2) {
+    done = scene_status_9acd_step(c, c->pc); x->display_control_steps += done;
   } else if(c->pc >= 0xab2c && c->pc <= 0xab5e) {
     done = ppu_start_ab2c_step(c, c->pc); x->display_control_steps += done;
   } else if(c->pc >= 0xab96 && c->pc <= 0xabb4) {

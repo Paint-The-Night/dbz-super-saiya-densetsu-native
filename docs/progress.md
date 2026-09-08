@@ -682,6 +682,10 @@ The bank-0 `$AB2C–AB5E` PPU-start routine is native across all nineteen assign
 instructions, including register clearing, DMA setup, VRAM pointer initialization,
 worker dispatch, and return. Differential tests add 19 sites and 50 ROM bytes.
 
+The bank-0 `$9ACD–9AE2` scene-status prefix is native across all ten assigned
+instructions, including helper dispatch, status masking, DMA clear, branch, and RTL.
+Differential tests add 10 sites and 22 ROM bytes.
+
 The bank-1 `$863A–8650` actor-pointer prefix is native across all ten assigned
 instructions, including the M/X width transitions, 16-bit pointer arithmetic,
 WRAM stores, shared dispatch, and RTL. Differential tests add 10 sites and 23

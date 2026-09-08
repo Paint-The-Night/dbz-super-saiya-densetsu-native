@@ -11548,6 +11548,19 @@ static bool ppu_start_ab2c_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $00:9ACD–9AE2: dispatch the scene helper and publish its status byte. */
+static bool scene_status_9acd_step(Cpu *c, uint16_t pc) {
+  if(c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0x9acd: case 0x9ad1: case 0x9ad3: case 0x9ad5: case 0x9ad7: case 0x9ad9: case 0x9adb: case 0x9add: case 0x9adf: case 0x9ae2: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) {
+    case 0x9acd: jsl_to(c, 0xaea1); break; case 0x9ad1: cmp_constant8(c, 0xff); break; case 0x9ad3: branch_to(c, !c->z, 0x9ae2); break;
+    case 0x9ad5: byte_constant(c, 0x80); break; case 0x9ad7: store_dp(c, 0x24, true); break; case 0x9ad9: load_dp8(c, 0x62); break;
+    case 0x9adb: and_constant8(c, 0x03); break; case 0x9add: store_dp(c, 0x62, true); break; case 0x9adf: stz_abs8(c, 0x420c); break; case 0x9ae2: return_long(c); break;
+  }
+  return true;
+}
+
 static bool actor_copy_c236_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 1 || c->e || c->xf || c->d) return false;
   switch(pc) {
