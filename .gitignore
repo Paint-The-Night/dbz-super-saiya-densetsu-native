@@ -8,5 +8,6 @@ __pycache__/
 *.srm
 *.state
 artifacts/
+entry-snapshots.csv
 build-*/
 dist/
