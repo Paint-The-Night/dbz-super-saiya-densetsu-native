@@ -355,6 +355,8 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = actor_table_a4eb_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc == 0x8481) {
       done = actor_jump_8481_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0x8587 && c->pc <= 0x859b) {
+      done = scene_gate_8587_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc == 0xcd1e) {
       done = actor_call_cd1e_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc == 0xec4c) {

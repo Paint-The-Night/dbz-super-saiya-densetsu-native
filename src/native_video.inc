@@ -11302,6 +11302,24 @@ static bool actor_jump_8481_step(Cpu *c, uint16_t pc) {
   (void)fetch(c); jml_to(c,0x8627,0x01); return true;
 }
 
+/* $01:8587–859B: resolve the scene status nibble and return carry success or
+ * failure through the three local RTL exits. */
+static bool scene_gate_8587_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0x8587: case 0x858a: case 0x858c: case 0x858e: case 0x8590: case 0x8591: case 0x8592: case 0x8594: case 0x8596: case 0x8598: case 0x8599: case 0x859a: case 0x859b: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) {
+    case 0x8587: video_load(c,0x0d59,false); break; case 0x858a: branch_to(c,c->z,0x8598); break;
+    case 0x858c: cmp_constant8(c,0x01); break; case 0x858e: branch_to(c,c->z,0x8592); break;
+    case 0x8590: implied(c); c->c=true; break; case 0x8591: return_long(c); break;
+    case 0x8592: load_dp8(c,0x22); break; case 0x8594: cmp_constant8(c,0x04); break;
+    case 0x8596: branch_to(c,!c->c,0x859a); break; case 0x8598: implied(c); c->c=true; break;
+    case 0x8599: return_long(c); break; case 0x859a: implied(c); c->c=false; break;
+    case 0x859b: return_long(c); break;
+  }
+  return true;
+}
+
 /* $05:9390: actor leaf return (M/X variants). */
 static bool actor_return_9390_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 5 || c->e || c->d || !c->mf || pc != 0x9390) return false;
