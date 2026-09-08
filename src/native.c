@@ -272,7 +272,9 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
     return false;
   bool done = false;
   if(bank == 1) {
-    if(c->pc >= 0xb61e && c->pc <= 0xb65c) {
+    if(c->pc >= 0xc91f && c->pc <= 0xc959) {
+      done = actor_graphics_c91f_step(c,c->pc); x->upload_steps += done;
+    } else if(c->pc >= 0xb61e && c->pc <= 0xb65c) {
       done = wram_fill_b61e_step(c, c->pc); x->upload_steps += done;
     } else if(c->pc >= 0xb65d && c->pc <= 0xb674) {
       done = wram_tail_b65d_step(c, c->pc); x->upload_steps += done;

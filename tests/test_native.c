@@ -301,6 +301,41 @@ int main(int argc,char **argv) {
     unsigned steps=0; while(ca.pc!=0x9000 && steps++<10) { a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected increment helper instruction"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b); }
     require(ca.pc==0x9000 && ca.sp==0x202,"increment helper return");
   }
+  /* $01:C91F-C959: real nested JSR/RTS, all byte selectors and actor slots,
+   * both ROM mirrors and direct-page alignment. Stop at the upload boundary. */
+  for(unsigned slot=0;slot<8;slot++) for(unsigned value=0;value<256;value++)
+  for(unsigned variant=0;variant<4;variant++) {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xc91f,value),cb=make_cpu(b,0xc91f,value);
+    ca.k=cb.k=(variant&1)?0x81:1; ca.xf=cb.xf=false;
+    ca.dp=cb.dp=(variant&2)?0x301:0; ca.x=cb.x=(uint16_t)(slot*4);
+    ca.d=cb.d=(value&1)!=0;
+    a->ram[0xd40+slot]=b->ram[0xd40+slot]=(uint8_t)value;
+    a->ram[0xd00+slot*4]=b->ram[0xd00+slot*4]=(uint8_t)(value^0x81);
+    a->ram[0xd02+slot*4]=b->ram[0xd02+slot*4]=(uint8_t)value;
+    a->ram[0xd03+slot*4]=b->ram[0xd03+slot*4]=(uint8_t)(value^0x5a);
+    word(a,0x200,0x8fff);word(b,0x200,0x8fff);
+    unsigned steps=0;
+    while(ca.k!=0 && steps++<40) {
+      a->count=b->count=0;
+      require(dbz_native_step(&ca,stats),"C91F native instruction");
+      lakesnes_cpu_runOpcode(&cb);compare(&ca,&cb,a,b);
+    }
+    require(ca.k==0 && ca.pc==0x85f5 && ca.x==slot*4 && ca.sp==0x1fc,"C91F upload boundary");
+    require(a->ram[ca.dp+0xa]==(uint8_t)(value-1),"C91F size decrement");
+    require(a->ram[ca.dp+0xc]==(uint8_t)(value^0x5a),"C91F actor field");
+    require(a->ram[ca.dp+0x10]==((value^0x81)&1) && a->ram[ca.dp+0x12]==0,"C91F upload flags");
+    require(ca.y==((value*2)&255u),"C943 doubled byte selector");
+  }
+  for(unsigned variant=0;variant<2;variant++) {
+    memset(a->ram,0,sizeof(a->ram));memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xc942,0),cb=make_cpu(b,0xc942,0);
+    ca.k=cb.k=variant?0x81:1;ca.xf=cb.xf=false;
+    word(a,0x200,0x8fff);word(b,0x200,0x8fff);a->count=b->count=0;
+    require(dbz_native_step(&ca,stats),"C942 native return");
+    lakesnes_cpu_runOpcode(&cb);compare(&ca,&cb,a,b);
+    require(ca.pc==0x9000 && ca.k==0 && ca.sp==0x202,"C942 return frame");
+  }
   /* $00:98D5-$990E: eight actor-slot dispatch loop. Exercise the empty
    * loop, all selector branches, both JSL boundaries, and the final epilogue
    * without pretending to execute either callee in this unit test. */

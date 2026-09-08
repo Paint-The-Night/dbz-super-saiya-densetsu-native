@@ -28,12 +28,19 @@ completeness or the fidelity of untested game routes.
 ## Reconstructed and verified
 
 The `$00:98D5–990E` actor-slot loop adds 27 instruction sites and 58 bytes.
-Its bank-1 callees remain interpreter-backed; the native reconstruction covers
-the loop, selectors, counter update, and long-call boundaries. Differential cases
+Its `$01:C91F` graphics setup callee and `$01:C943` pointer helper are now native;
+`$01:C95A` still uses interpreter fallback. The loop reconstruction covers
+selectors, counter update, and long-call boundaries. Differential cases
 exercise all eight slot indices, all selector paths, both ROM mirrors, unaligned
 direct page, stack restoration, and palette-counter overflow. The extended
 `battle_equivalence` test recreates the opening checkpoint from reset and then
 checks the documented battle route, so it needs no archived checkpoint.
+
+Graphics setup adds 30 sites / 59 bytes, with 8,192 differential combinations
+covering all selector bytes and actor slots, both ROM mirrors and direct-page
+alignments, plus two long-return cases. Tests execute the real nested JSR/RTS
+and compare every instruction's CPU state and ordered bus transactions before
+the upload call at `$00:85F5`.
 
 | Original region | Behavior | ROM bytes | Instruction sites |
 |---|---|---:|---:|
@@ -351,7 +358,9 @@ checks the documented battle route, so it needs no archived checkpoint.
 | 05:E342–E38D | ($E117,102/104) Y=#$8004/#$8406 → DP; #$80 seed/$F000; else bump | 76 | 32 |
 | 05:E446–E564 | ($E117,FC) multi-phase dual-bank seed + m16 ±4 pinch/expand | 287 | 110 |
 | 00:98D5–990E | Scan eight actor slots, select palette data, dispatch bank-1 helpers | 58 | 27 |
-| **Total** | **Three hundred fourteen complete routines plus a reset prefix** | **26642** | **11880** |
+| 01:C91F–C942 | Resolve actor graphics pointer and prepare upload arguments | 36 | 16 |
+| 01:C943–C959 | Shared actor graphics table selector (JSR/RTS) | 23 | 14 |
+| **Total** | **Three hundred sixteen complete routines plus a reset prefix** | **26701** | **11910** |
 
 
 
@@ -394,7 +403,7 @@ independent hardware-fidelity comparison with another emulator is still needed.
 ## How far from complete?
 
 The project now has a reproducible scoped tracker. The pinned static-analysis
-worklist contains 13,237 instruction variants. Of those, 11880 instruction sites
+worklist contains 13,237 instruction variants. Of those, 11910 instruction sites
 are covered by reviewed C replacements: **89.54% of the discovered worklist**.
 Run `python3 tools/progress.py` to recalculate this figure. If the local
 SNESRecomp manifest exists, the script sums it directly; a public clone uses the
@@ -464,7 +473,7 @@ Next work is a reproducible actual battle and larger game-logic translations.
 `src/native_video.inc` reconstructs the complete frame graphics upload routine,
 unused-sprite hiding, and palette-shadow clearing. The new `ram-map.md` records
 the verified shadow buffers, flags, and eight-byte VRAM queue entry layout.
-The current inventory is 26642 ROM bytes / 11880 instruction sites.
+The current inventory is 26701 ROM bytes / 11910 instruction sites.
 
 The isolated suite now also covers interrupt-enable, VRAM queue find/mark,
 PPU multiply, DMA1 setup, pointer resolve, palette-shadow copy, actor-table

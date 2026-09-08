@@ -19343,3 +19343,51 @@ static bool actor_hdl_e446_step(Cpu *c, uint16_t pc) {
   }
   return true;
 }
+
+/* $01:C91F-C959: resolve the actor's graphics pointer and prepare the
+ * $00:85F5 upload call. C943 is the shared short-call pointer selector. */
+static bool actor_graphics_c91f_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 1 || c->e || c->xf) return false;
+  bool wide = pc==0xc924 || pc==0xc926 || pc==0xc928 ||
+    pc==0xc949 || pc==0xc94c || pc==0xc94e || pc==0xc94f ||
+    pc==0xc950 || pc==0xc951 || pc==0xc952;
+  if(c->mf == wide) return false;
+  switch(pc) {
+    case 0xc91f: case 0xc922: case 0xc924: case 0xc926: case 0xc928:
+    case 0xc92a: case 0xc92d: case 0xc92e: case 0xc930: case 0xc933:
+    case 0xc935: case 0xc938: case 0xc93a: case 0xc93c: case 0xc93e:
+    case 0xc942: case 0xc943: case 0xc945: case 0xc947: case 0xc949:
+    case 0xc94c: case 0xc94e: case 0xc94f: case 0xc950: case 0xc951:
+    case 0xc952: case 0xc954: case 0xc957: case 0xc958: case 0xc959: break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0xc91f: jsr_abs_native(c,0xc943); break;
+    case 0xc922: case 0xc947: set_m(c,false); break;
+    case 0xc924: lda_indirect_long_y16(c,0); break;
+    case 0xc926: case 0xc94c: store_dp(c,0,false); break;
+    case 0xc928: case 0xc952: set_m(c,true); break;
+    case 0xc92a: load_a_abs_x8(c,0x0d02); break;
+    case 0xc92d: dec_a8(c); break;
+    case 0xc92e: store_dp(c,0x0a,true); break;
+    case 0xc930: load_a_abs_x8(c,0x0d03); break;
+    case 0xc933: store_dp(c,0x0c,true); break;
+    case 0xc935: load_a_abs_x8(c,0x0d00); break;
+    case 0xc938: and_constant8(c,1); break;
+    case 0xc93a: store_dp(c,0x10,true); break;
+    case 0xc93c: stz_dp8(c,0x12); break;
+    case 0xc93e: jsl_to(c,0x85f5); break;
+    case 0xc942: return_long(c); break;
+    case 0xc943: byte_constant(c,2); break;
+    case 0xc945: store_dp(c,2,true); break;
+    case 0xc949: lda16_constant(c,0xa264); break;
+    case 0xc94e: txa16(c); break;
+    case 0xc94f: case 0xc950: lsr_a16(c); break;
+    case 0xc951: case 0xc958: tay16(c); break;
+    case 0xc954: load_a_abs_y8(c,0x0d40); break;
+    case 0xc957: asl_a8(c); break;
+    case 0xc959: return_short(c); break;
+  }
+  return true;
+}
