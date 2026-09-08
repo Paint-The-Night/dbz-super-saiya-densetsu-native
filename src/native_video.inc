@@ -11078,6 +11078,15 @@ static bool scene_thunk_91b6_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $00:943F-$9443: scene table leaf that delegates the PPU preset to bank 04. */
+static bool scene_thunk_943f_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf) return false;
+  if(pc != 0x943f && pc != 0x9443) return false;
+  (void)fetch(c);
+  if(pc == 0x943f) jsl_to(c,0xd85b); else return_long(c);
+  return true;
+}
+
 /* $05:B00A–$B044: BMI-path callee of $B0BE — seed $17EA..$17F3 from $0E03/$0E0A; JSL $1C806C/$1C8136; RTS. */
 static bool actor_seed_b00a_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7fu) != 0x05 || c->e || c->xf || c->d) return false;

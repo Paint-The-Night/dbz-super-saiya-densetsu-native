@@ -348,6 +348,17 @@ int main(int argc,char **argv) {
     require(ca.pc==0xfcd3 && a->ram[ca.dp+0x61]==2,"91b6 scene thunk result");
   }
   { Cpu guard=make_cpu(a,0x91b6,0); guard.k=7; a->count=0; require(!dbz_native_step(&guard,stats)&&a->count==0,"91b6 unsupported-bank guard"); }
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0x943f,0),cb=make_cpu(b,0x943f,0); ca.k=cb.k=0; ca.xf=cb.xf=false;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff); a->count=b->count=0;
+    require(dbz_native_step(&ca,stats),"expected 943f scene thunk"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    require(ca.k==4 && ca.pc==0xd85b && ca.sp==0x1fc,"943f JSL boundary");
+    ca=make_cpu(a,0x9443,0); cb=make_cpu(b,0x9443,0); ca.k=cb.k=0; ca.xf=cb.xf=false; ca.sp=cb.sp=0x1ff;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff); a->count=b->count=0;
+    require(dbz_native_step(&ca,stats),"expected 943f RTL"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    require(ca.pc==0x9000 && ca.k==0 && ca.sp==0x202,"943f return");
+  }
   /* $00:98D5-$990E: eight actor-slot dispatch loop. Exercise the empty
    * loop, all selector branches, both JSL boundaries, and the final epilogue
    * without pretending to execute either callee in this unit test. */
