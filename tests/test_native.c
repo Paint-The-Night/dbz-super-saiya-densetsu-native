@@ -490,6 +490,15 @@ int main(int argc,char **argv) {
     require(ca.pc==0x98d5 && ca.k==0 && ca.sp==0x1fc,"99ad JSL boundary");
   }
   {
+    for(unsigned variant=0; variant<2; variant++) {
+      memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+      Cpu ca=make_cpu(a,0xfce2,variant), cb=make_cpu(b,0xfce2,variant); ca.k=cb.k=0; ca.xf=cb.xf=(variant&1)!=0; ca.sp=cb.sp=0x1ff;
+      word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+      for(unsigned i=0;i<4;i++) { a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected fce2 wrapper"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b); if(ca.pc==0x9000) break; }
+      require(ca.pc==0x9000 && ca.k==0 && ca.sp==0x202,"fce2 return");
+    }
+  }
+  {
     const uint16_t sites[] = {0xf39e,0xf39f,0xf3a0,0xf4ad,0xf560,0xf582,0xf5a2};
     for(unsigned n=0;n<7;n++) {
       memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));

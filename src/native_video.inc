@@ -6472,6 +6472,15 @@ static bool actor_prep_f802_step(Cpu *c, uint16_t pc) {
 
 /* $03F375–$F39D: gate on $1648/$01D8/$0173; clear $0173 bit7, $1303=#$82,
  * JSL $04844A then $0485A1(#$01). */
+/* $00:FCE2/FCE6: scene call/return wrapper (M/X variants). */
+static bool scene_wrap_fce2_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 0 || c->e || c->d || !c->mf) return false;
+  if(pc != 0xfce2 && pc != 0xfce6) return false;
+  (void)fetch(c);
+  if(pc == 0xfce2) jsl_to(c,0x9390); else return_long(c);
+  return true;
+}
+
 /* $03:F39E/$F39F/$F3A0/$F4AD/$F560/$F582/$F5A2: leaf returns. */
 static bool scene_return_bank3_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 3 || c->e || c->xf || c->d || !c->mf) return false;

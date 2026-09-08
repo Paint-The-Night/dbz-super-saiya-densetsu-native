@@ -373,6 +373,7 @@ the upload call at `$00:85F5`.
 | 00:9AF5 | Scene call stub | 4 | 1 |
 | 00:9AFA | Scene call stub | 4 | 1 |
 | 00:FCD8 | Scene call stub | 4 | 1 |
+| 00:FCE2–FCE6 (M/X variants) | Scene call/return wrapper | 8 | 4 |
 | 03:F39E/F39F/F3A0/F4AD/F560/F582/F5A2 | Bank-3 leaf returns | 7 | 7 |
 | 00:99AD–99C1 | Scene post-processing continuation | 21 | 8 |
 | 00:991D–9926 | Scene continuation branch | 13 | 4 |
