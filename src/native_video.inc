@@ -11573,6 +11573,15 @@ static bool actor_gate_a3a8_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $03:F7DE–F7E6: mark the actor state and enter phase $80. */
+static bool actor_phase_f7de_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 3 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0xf7de: case 0xf7e1: case 0xf7e3: case 0xf7e6: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) { case 0xf7de: store_register8(c,0x01d8); break; case 0xf7e1: byte_constant(c,0x80); break; case 0xf7e3: store_register8(c,0x1648); break; case 0xf7e6: return_long(c); break; }
+  return true;
+}
+
 /* $01:EDF9: actor leaf return. */
 static bool actor_return_edf9_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf || pc != 0xedf9) return false;
