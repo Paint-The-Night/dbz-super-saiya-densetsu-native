@@ -552,3 +552,7 @@ natively, adding 1 site and 3 ROM bytes.
 Two small bank-1 helpers are native: `$A3DB–A3E2` initializes the actor upload
 slot, and `$D00B–D012` advances its timer pair. Differential tests cover both
 complete leaf paths, adding 8 sites and 17 ROM bytes.
+
+The bank-1 `$CEBA–CEC5` actor reset leaf is native, including both long-call
+boundaries, the `$0725` clear, and its RTL. Tests add 4 verified sites and 12
+ROM bytes.

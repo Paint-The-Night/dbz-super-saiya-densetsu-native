@@ -11359,6 +11359,15 @@ static bool actor_timer_d00b_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $01:CEBA–CEC5: reset the actor status helpers and return. */
+static bool actor_reset_ceba_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0xceba: case 0xcebe: case 0xcec2: case 0xcec5: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) { case 0xceba: jsl_to(c,0xcec6); break; case 0xcebe: jsl_to(c,0xb67a); break; case 0xcec2: stz_abs8(c,0x0725); break; case 0xcec5: return_long(c); break; }
+  return true;
+}
+
 /* $01:EDF9: actor leaf return. */
 static bool actor_return_edf9_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf || pc != 0xedf9) return false;

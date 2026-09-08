@@ -324,6 +324,8 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = actor_init_a3db_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xd00b && c->pc <= 0xd012) {
       done = actor_timer_d00b_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xceba && c->pc <= 0xcec5) {
+      done = actor_reset_ceba_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc == 0x8481) {
       done = actor_jump_8481_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc == 0xcd1e) {
