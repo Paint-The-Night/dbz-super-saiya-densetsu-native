@@ -98,7 +98,7 @@ build/dbz-port --rom "$DBZ_ROM" \
 
 To capture caller context for an unresolved routine, set `DBZ_ENTRY_TRACE`
 to its address (for example `03:99A6`). The native runner writes matching
-pre-instruction CPU register snapshots to `entry-snapshots.csv`; this local
+pre-instruction CPU register and cycle snapshots to `entry-snapshots.csv`; this local
 file is ignored by Git and never contains the ROM.
 Set `DBZ_TRACE_REFERENCE=1` alongside it to label snapshots from the reference
 interpreter as well as the native run.

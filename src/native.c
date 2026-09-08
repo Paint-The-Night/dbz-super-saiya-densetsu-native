@@ -37,14 +37,14 @@ static void trace_entry(const Cpu *c) {
       if(sscanf(spec, "%x:%x", &bank, &pc) == 2 && bank < 0x80 && pc >= 0x8000 && pc <= 0xffff) {
         entry_trace_pc = (bank << 16) | pc;
         entry_trace_file = fopen("entry-snapshots.csv", "w");
-        if(entry_trace_file) fputs("mode,bank,pc,a,x,y,sp,dp,k,db,c,z,v,n,i,d,xf,mf,e\n", entry_trace_file);
+        if(entry_trace_file) fputs("mode,cycles,bank,pc,a,x,y,sp,dp,k,db,c,z,v,n,i,d,xf,mf,e\n", entry_trace_file);
       }
     }
   }
   if(entry_trace_file && (((uint32_t)(c->k & 0x7f) << 16) | c->pc) == entry_trace_pc) {
     dump_entry_state(c, active->enabled ? 0u : 1u);
-    fprintf(entry_trace_file, "%s,%02x,%04x,%04x,%04x,%04x,%04x,%04x,%02x,%02x,%d,%d,%d,%d,%d,%d,%d,%d,%d\n",
-            active->enabled ? "native" : "reference", c->k & 0x7f, c->pc, c->a, c->x, c->y, c->sp, c->dp, c->k, c->db,
+    fprintf(entry_trace_file, "%s,%" PRIu64 ",%02x,%04x,%04x,%04x,%04x,%04x,%04x,%02x,%02x,%d,%d,%d,%d,%d,%d,%d,%d,%d\n",
+            active->enabled ? "native" : "reference", ((Snes *)c->mem)->cycles, c->k & 0x7f, c->pc, c->a, c->x, c->y, c->sp, c->dp, c->k, c->db,
             c->c, c->z, c->v, c->n, c->i, c->d, c->xf, c->mf, c->e);
   }
   if(entry_trace_file) fflush(entry_trace_file);
