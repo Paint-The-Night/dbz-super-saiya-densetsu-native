@@ -19,24 +19,12 @@
       }
     ],
     "native_filter": "Bank $00 ranges from docs/progress.md / native.c dispatch excluded",
-    "combined_interpreted_unique_pcs": 7864,
-    "combined_interpreted_hits": 18352180,
-    "start_interpreted_hits": 11888713,
+    "combined_interpreted_unique_pcs": 7859,
+    "combined_interpreted_hits": 13987714,
+    "start_interpreted_hits": 7524247,
     "battle_interpreted_hits": 6463467
   },
   "top_interpreted_pcs": [
-    {
-      "cpu_address": "00:A95B",
-      "hits": 2178489,
-      "start_hits": 2178489,
-      "battle_hits": 0
-    },
-    {
-      "cpu_address": "00:A95E",
-      "hits": 2178489,
-      "start_hits": 2178489,
-      "battle_hits": 0
-    },
     {
       "cpu_address": "04:8612",
       "hits": 1190180,
@@ -504,6 +492,18 @@
       "hits": 10734,
       "start_hits": 1830,
       "battle_hits": 8904
+    },
+    {
+      "cpu_address": "06:F092",
+      "hits": 10734,
+      "start_hits": 1830,
+      "battle_hits": 8904
+    },
+    {
+      "cpu_address": "06:F094",
+      "hits": 10734,
+      "start_hits": 1830,
+      "battle_hits": 8904
     }
   ],
   "top_interpreted_clusters": [
@@ -511,11 +511,6 @@
       "range": "00:800E\u20138107",
       "hits": 4386080,
       "size": 250
-    },
-    {
-      "range": "00:A8F0\u2013A9E8",
-      "hits": 4376511,
-      "size": 249
     },
     {
       "range": "04:8550\u2013869D",
@@ -706,6 +701,11 @@
       "range": "00:A153\u2013A392",
       "hits": 26872,
       "size": 576
+    },
+    {
+      "range": "04:A074\u2013A0E3",
+      "hits": 26671,
+      "size": 112
     }
   ],
   "battle_route_top_clusters": [
