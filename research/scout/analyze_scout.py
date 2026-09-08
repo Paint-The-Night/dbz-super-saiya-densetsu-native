@@ -148,6 +148,9 @@ NATIVE_RANGES_BY_BANK = {
 # bytes that happen to be reached as operands.
 KNOWN_DATA_RANGES = {
     0: [(0x8AE5, 0x8AF0), (0x98A1, 0x98C4)],
+    # 03:972D is a compact lookup table (byte values do not form a valid
+    # instruction stream); hot-PC clustering reaches it as data, not code.
+    3: [(0x972D, 0x9734)],
     13: [(0xEB47, 0xEB7F)],
 }
 
