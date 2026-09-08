@@ -96,6 +96,10 @@ build/dbz-port --rom "$DBZ_ROM" \
   --dump-dir artifacts/replay
 ```
 
+For caller diagnosis, `DBZ_DISABLE_NATIVE_AT=BB:AAAA` forces one native entry
+point back through the reference interpreter while leaving other replacements
+enabled. This is useful for isolating nested native-call context issues.
+
 To capture caller context for an unresolved routine, set `DBZ_ENTRY_TRACE`
 to its address (for example `03:99A6`). The native runner writes matching
 pre-instruction CPU register and cycle snapshots to `entry-snapshots.csv`; this local

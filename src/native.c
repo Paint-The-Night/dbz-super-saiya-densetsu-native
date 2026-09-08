@@ -16,6 +16,20 @@ static FILE *entry_trace_file;
 static uint32_t entry_trace_pc;
 static bool entry_trace_initialized;
 static DbzExecution *active;
+static bool native_disable_initialized;
+static uint32_t native_disable_pc;
+static bool native_disable_valid;
+static bool native_disabled_at(uint32_t pc) {
+  if(!native_disable_initialized) {
+    native_disable_initialized = true;
+    const char *spec = getenv("DBZ_DISABLE_NATIVE_AT");
+    unsigned bank, address;
+    if(spec && sscanf(spec, "%x:%x", &bank, &address) == 2 && bank < 0x80 && address >= 0x8000 && address <= 0xffff) {
+      native_disable_pc = (bank << 16) | address; native_disable_valid = true;
+    }
+  }
+  return native_disable_valid && pc == native_disable_pc;
+}
 static bool entry_state_dumped[2];
 static void dump_entry_state(const Cpu *c, unsigned mode) {
   if(entry_state_dumped[mode]) return;
@@ -1160,7 +1174,7 @@ void cpu_runOpcode(Cpu *cpu) {
   if(!cpu->resetWanted && !cpu->intWanted && !cpu->waiting && !cpu->stopped &&
       (pc & 0xffffu) >= 0x8000 && (pc >> 16 & 0x7fu) < 0x20)
     active->visited[((pc >> 16 & 0x1fu) * 32768u) + (pc & 0x7fffu)]++;
-  if(active->enabled && dbz_native_step(cpu, active)) {
+  if(active->enabled && !native_disabled_at(pc) && dbz_native_step(cpu, active)) {
     active->native_steps++; active->cycles_native += snes->cycles - before;
   } else {
     lakesnes_cpu_runOpcode(cpu);
