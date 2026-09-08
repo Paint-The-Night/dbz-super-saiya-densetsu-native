@@ -11181,6 +11181,24 @@ static bool scene_trampoline_99c3_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $00:99AD-$99C1: scene post-processing continuation. */
+static bool scene_post_99ad_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0x99ad: case 0x99b1: case 0x99b4: case 0x99b6: case 0x99b9: case 0x99bb: case 0x99bd: case 0x99c1: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) {
+    case 0x99ad: jsl_to(c,0x98d5); break;
+    case 0x99b1: video_load(c,0x0ea1,false); break;
+    case 0x99b4: branch_to(c,c->n,0x99bd); break;
+    case 0x99b6: video_load(c,0x0d66,false); break;
+    case 0x99b9: cmp_constant8(c,0x20); break;
+    case 0x99bb: branch_to(c,c->z,0x99c1); break;
+    case 0x99bd: jsl_to(c,0xf91f); break;
+    case 0x99c1: return_long(c); break;
+  }
+  return true;
+}
+
 /* $00:991D-$9926: scene continuation branch. */
 static bool scene_branch_991d_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf) return false;
