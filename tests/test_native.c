@@ -3209,6 +3209,10 @@ int main(int argc,char **argv) {
       require(dbz_native_step(&ca,stats),"expected 9569 status helper"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
     }
   }
+  {
+    Cpu ca=make_cpu(a,0x9579,0), cb=make_cpu(b,0x9579,0); ca.k=cb.k=0; ca.db=cb.db=0; ca.xf=cb.xf=false; ca.mf=cb.mf=true; ca.sp=cb.sp=0x1ff; a->count=b->count=0;
+    require(dbz_native_step(&ca,stats),"expected 9579 scene entry"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+  }
   /* $008D13: bit0 of $01BC clear → early RTL; set → second $85B6 */
   for(unsigned av=0;av<3;av++) {
     memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));

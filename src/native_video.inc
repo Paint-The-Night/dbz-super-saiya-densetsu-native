@@ -11227,6 +11227,14 @@ static bool scene_status_9569_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $00:9579: scene-table handler enters the shared preset helper. */
+static bool scene_entry_9579_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf || pc != 0x9579) return false;
+  (void)fetch(c);
+  jsr_abs_native(c, 0x9485);
+  return true;
+}
+
 /* $00:95A9-$95B6: scene-mode[15] setup around the native $8E96 path. */
 static bool scene_thunk_95a9_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf) return false;
