@@ -3281,6 +3281,7 @@ int main(int argc,char **argv) {
   { Cpu ca=make_cpu(a,0x92bf,0), cb=make_cpu(b,0x92bf,0); ca.k=cb.k=0; ca.db=cb.db=0; ca.xf=cb.xf=false; ca.mf=cb.mf=true; a->ram[0x01d8]=b->ram[0x01d8]=4; a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected 92bf scene read"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b); }
   { Cpu ca=make_cpu(a,0x9752,0), cb=make_cpu(b,0x9752,0); ca.k=cb.k=3; ca.db=cb.db=0; ca.xf=cb.xf=false; ca.mf=cb.mf=true; ca.sp=cb.sp=0x1ff; a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected 9752 actor entry"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b); }
   { Cpu ca=make_cpu(a,0x9753,0), cb=make_cpu(b,0x9753,0); ca.k=cb.k=3; ca.db=cb.db=0; ca.xf=cb.xf=false; ca.mf=cb.mf=true; ca.a=cb.a=0x7f; a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected 9753 actor mask"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b); }
+  { Cpu ca=make_cpu(a,0x9755,0), cb=make_cpu(b,0x9755,0); ca.k=cb.k=3; ca.db=cb.db=0; ca.xf=cb.xf=false; ca.mf=cb.mf=true; ca.a=cb.a=0x1234; a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected 9755 actor xba"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b); }
   /* $008D13: bit0 of $01BC clear → early RTL; set → second $85B6 */
   for(unsigned av=0;av<3;av++) {
     memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));

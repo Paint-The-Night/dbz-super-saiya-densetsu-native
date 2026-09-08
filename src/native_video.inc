@@ -11345,9 +11345,9 @@ static bool scene_read_92bf_step(Cpu *c, uint16_t pc) {
 
 /* $03:9752: actor helper entry preserves X on the native stack. */
 static bool actor_entry_9752_step(Cpu *c, uint16_t pc) {
-  if((c->k & 0x7f) != 3 || c->e || c->xf || c->d || !c->mf || (pc != 0x9752 && pc != 0x9753)) return false;
+  if((c->k & 0x7f) != 3 || c->e || c->xf || c->d || !c->mf || (pc != 0x9752 && pc != 0x9753 && pc != 0x9755)) return false;
   (void)fetch(c);
-  if(pc == 0x9752) phx16(c); else and_constant8(c, 0x3f);
+  if(pc == 0x9752) phx16(c); else if(pc == 0x9753) and_constant8(c, 0x3f); else xba_native(c);
   return true;
 }
 
