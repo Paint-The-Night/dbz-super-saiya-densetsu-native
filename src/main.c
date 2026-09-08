@@ -232,7 +232,9 @@ int main(int argc,char **argv) {
       bool video_match=!memcmp(pixels,reference_pixels,sizeof(pixels));
       bool audio_match=!memcmp(samples,reference_samples,(size_t)count*4);
       if(!state_match || !video_match || !audio_match) {
-        fprintf(stderr,"Divergence frame %u: state=%d video=%d audio=%d PC=%02x:%04x\n",frame,state_match,video_match,audio_match,game->cpu->k,game->cpu->pc);
+        size_t state_diff=(size_t)-1;
+        if(!state_match) for(size_t i=0;i<(size_t)state_size;i++) if(state[i]!=reference_state[i]) { state_diff=i; break; }
+        fprintf(stderr,"Divergence frame %u: state=%d video=%d audio=%d PC=%02x:%04x state_diff=%lld\n",frame,state_match,video_match,audio_match,game->cpu->k,game->cpu->pc,state_diff==(size_t)-1?-1LL:(long long)state_diff);
         if(dump_dir) { write_file(dump_dir,"divergence-native.state",state,(size_t)state_size);write_file(dump_dir,"divergence-reference.state",reference_state,(size_t)state_size); }
         matched=false;running=false;
       }
