@@ -7,7 +7,7 @@ Already-native ranges excluded. Sizes approximate.
 | Rank | Target | ~Size | Leaf? | One-line rationale |
 |---:|---|---:|:---:|---|
 | 1 | `03:99A6` | 45 | Y | hot interpreted cluster 03:99A6–9A26 (40294 hits) (replay range hits≈40132) |
-| 2 | `01:8404` | 42 | Y | hot interpreted cluster 01:8404–84CE (83772 hits) (replay range hits≈10476) |
+| 2 | `01:8401` | 45 | Y | hot interpreted cluster 01:8401–84CE (84605 hits) (replay range hits≈11309) |
 | 3 | `04:8EF7` | 39 | Y | hot interpreted cluster 04:8EF7–8F61 (52409 hits) (replay range hits≈18) |
 | 4 | `13:EB47` | 73 | ~ | hot interpreted cluster 13:EB47–EB7F (101024 hits) (replay range hits≈101024) |
 | 5 | `04:8000` | 169 | Y | hot interpreted cluster 04:8000–80F1 (76821 hits) (replay range hits≈57912) |
@@ -30,7 +30,7 @@ Already-native ranges excluded. Sizes approximate.
 ## Top 10 quick list
 
 1. `03:99A6` — hot interpreted cluster 03:99A6–9A26 (40294 hits)
-2. `01:8404` — hot interpreted cluster 01:8404–84CE (83772 hits)
+2. `01:8401` — hot interpreted cluster 01:8401–84CE (84605 hits)
 3. `04:8EF7` — hot interpreted cluster 04:8EF7–8F61 (52409 hits)
 4. `13:EB47` — hot interpreted cluster 13:EB47–EB7F (101024 hits)
 5. `04:8000` — hot interpreted cluster 04:8000–80F1 (76821 hits)
