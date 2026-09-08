@@ -11104,6 +11104,25 @@ static bool scene_thunk_952b_9530_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $00:95A9-$95B6: scene-mode[15] setup around the native $8E96 path. */
+static bool scene_thunk_95a9_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) {
+    case 0x95a9: case 0x95ab: case 0x95ae: case 0x95b2: case 0x95b4: case 0x95b6: break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0x95a9: byte_constant(c,0x80); break;
+    case 0x95ab: store_register8(c,0x01d6); break;
+    case 0x95ae: jsl_to(c,0x8e96); break;
+    case 0x95b2: byte_constant(c,0x0d); break;
+    case 0x95b4: store_dp(c,0x27,true); break;
+    case 0x95b6: return_long(c); break;
+  }
+  return true;
+}
+
 /* $05:B00A–$B044: BMI-path callee of $B0BE — seed $17EA..$17F3 from $0E03/$0E0A; JSL $1C806C/$1C8136; RTS. */
 static bool actor_seed_b00a_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7fu) != 0x05 || c->e || c->xf || c->d) return false;
