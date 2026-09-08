@@ -674,6 +674,10 @@ The bank-1 `$C236–C256` actor-copy loop is native across all seventeen assigne
 instructions, including indexed byte/word stores, six 16-bit index increments,
 the loop bound, branch, and RTL. Differential tests add 17 sites and 33 ROM bytes.
 
+The bank-1 `$D1DC–D201` actor-marker routine is native across all sixteen assigned
+instructions, including selector masking, local branches, long marker stores,
+shared dispatch, and RTL. Differential tests add 16 sites and 41 ROM bytes.
+
 The bank-1 `$863A–8650` actor-pointer prefix is native across all ten assigned
 instructions, including the M/X width transitions, 16-bit pointer arithmetic,
 WRAM stores, shared dispatch, and RTL. Differential tests add 10 sites and 23

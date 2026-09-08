@@ -11546,6 +11546,30 @@ static bool actor_copy_c236_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $01:D1DC–D201: select and publish the actor marker bytes. */
+static bool actor_marker_d1dc_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) {
+    case 0xd1dc: case 0xd1de: case 0xd1e0: case 0xd1e2: case 0xd1e5:
+    case 0xd1e8: case 0xd1ea: case 0xd1ec: case 0xd1ee: case 0xd1f0:
+    case 0xd1f2: case 0xd1f6: case 0xd1f7: case 0xd1f9: case 0xd1fd:
+    case 0xd201: break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0xd1dc: load_dp8(c, 0x4f); break; case 0xd1de: and_constant8(c, 0x07); break;
+    case 0xd1e0: branch_to(c, !c->z, 0xd201); break; case 0xd1e2: ldx_abs16(c, 0x0728); break;
+    case 0xd1e5: video_load(c, 0x004f, false); break; case 0xd1e8: and_constant8(c, 0x08); break;
+    case 0xd1ea: branch_to(c, !c->z, 0xd1f0); break; case 0xd1ec: byte_constant(c, 0x29); break;
+    case 0xd1ee: branch_to(c, true, 0xd1f2); break; case 0xd1f0: byte_constant(c, 0x2a); break;
+    case 0xd1f2: store_a_long_x8(c, 0x7e3000); break; case 0xd1f6: implied(c); c->x++; zn(c, c->x, false); break;
+    case 0xd1f7: byte_constant(c, 0x29); break; case 0xd1f9: store_a_long_x8(c, 0x7e3000); break;
+    case 0xd1fd: jsl_to(c, 0xb67a); break; case 0xd201: return_long(c); break;
+  }
+  return true;
+}
+
 static bool actor_pointer_d3c0_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 1 || c->e || c->xf || c->d) return false;
   switch(pc) {

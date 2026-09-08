@@ -636,6 +636,16 @@ int main(int argc,char **argv) {
     }
   }
   {
+    const uint16_t sites[] = {0xd1dc,0xd1de,0xd1e0,0xd1e2,0xd1e5,0xd1e8,0xd1ea,0xd1ec,
+                              0xd1ee,0xd1f0,0xd1f2,0xd1f6,0xd1f7,0xd1f9,0xd1fd,0xd201};
+    for(unsigned n=0;n<16;n++) {
+      memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+      Cpu ca=make_cpu(a,sites[n],0), cb=make_cpu(b,sites[n],0); ca.k=cb.k=1; ca.xf=cb.xf=false; ca.mf=cb.mf=true; ca.sp=cb.sp=0x1ff;
+      a->ram[0x4f]=b->ram[0x4f]=0x02; word(a,0x728,0x0010); word(b,0x728,0x0010); a->count=b->count=0;
+      require(dbz_native_step(&ca,stats),"expected d1dc marker"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+  }
+  {
     const uint16_t sites[] = {0x863a,0x863c,0x863f,0x8640,0x8643,0x8645,0x8648,0x864a,0x864c,0x8650};
     for(unsigned n=0;n<10;n++) {
       memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
