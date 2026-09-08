@@ -19,10 +19,10 @@
       }
     ],
     "native_filter": "Bank $00 ranges from docs/progress.md / native.c dispatch excluded",
-    "combined_interpreted_unique_pcs": 5579,
-    "combined_interpreted_hits": 7445291,
-    "start_interpreted_hits": 4492185,
-    "battle_interpreted_hits": 2953106
+    "combined_interpreted_unique_pcs": 5578,
+    "combined_interpreted_hits": 7444458,
+    "start_interpreted_hits": 4491830,
+    "battle_interpreted_hits": 2952628
   },
   "top_interpreted_pcs": [
     {
@@ -553,9 +553,9 @@
       "size": 65
     },
     {
-      "range": "01:8401\u201384CE",
-      "hits": 84605,
-      "size": 206
+      "range": "01:8404\u201384CE",
+      "hits": 83772,
+      "size": 203
     },
     {
       "range": "04:8000\u201380F1",
@@ -726,8 +726,8 @@
       "hits": 70990
     },
     {
-      "range": "01:8401\u201384CE",
-      "hits": 60110
+      "range": "01:8404\u201384CE",
+      "hits": 59632
     },
     {
       "range": "01:8250\u201382CF",

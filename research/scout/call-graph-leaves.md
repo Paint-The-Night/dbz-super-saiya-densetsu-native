@@ -38,13 +38,13 @@ Native HDMA/queue wipe ends in `JMP ($8B54,X)` with X = (DP+$24 & $7F) * 2.
 - Rationale: hot interpreted cluster 03:99A6–9A26 (40294 hits)
 - Hits entry/range: 4704/40132
 
-### `01:8401` — LEAF
+### `01:8404` — LEAF
 
-- Range ≈ `01:8401–01:842D` (~45 bytes)
+- Range ≈ `01:8404–01:842D` (~42 bytes)
 - Nested: none; exits: [('RTL', 33837)]
-- Callers (static sample): 00:976E/JSL, 00:9A19/JSL
-- Rationale: hot interpreted cluster 01:8401–84CE (84605 hits)
-- Hits entry/range: 833/11309
+- Callers (static sample): n/a
+- Rationale: hot interpreted cluster 01:8404–84CE (83772 hits)
+- Hits entry/range: 833/10476
 
 ### `04:8EF7` — LEAF
 
