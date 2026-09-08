@@ -11315,6 +11315,26 @@ static bool scene_callee_929c_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $00:92A4-$92BD: alternate scene-mode initialization path. */
+static bool scene_alt_92a4_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0x92a4: case 0x92a6: case 0x92a9: case 0x92ac: case 0x92ae: case 0x92af: case 0x92b2: case 0x92b7: case 0x92ba: case 0x92bd: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) {
+    case 0x92a4: byte_constant(c, 0x80); break;
+    case 0x92a6: store_register8(c, 0x0d90); break;
+    case 0x92a9: stz_abs8(c, 0x01a1); break;
+    case 0x92ac: byte_constant(c, 0); break;
+    case 0x92ae: xba_native(c); break;
+    case 0x92af: video_load(c, 0x01bd, false); break;
+    case 0x92b2: tax16(c); break;
+    case 0x92b7: store_register8(c, 0x01a0); break;
+    case 0x92ba: video_load(c, 0x1648, false); break;
+    case 0x92bd: branch_to(c, !c->n, 0x92d1); break;
+  }
+  return true;
+}
+
 /* $00:95A9-$95B6: scene-mode[15] setup around the native $8E96 path. */
 static bool scene_thunk_95a9_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf) return false;
