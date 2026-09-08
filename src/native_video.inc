@@ -11168,6 +11168,19 @@ static bool scene_thunk_9459_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $00:99C3-$99CB: scene transition trampoline. */
+static bool scene_trampoline_99c3_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0x99c3: case 0x99c7: case 0x99cb: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) {
+    case 0x99c3: jsl_to(c,0x8000); break;
+    case 0x99c7: jsl_to(c,0x982c); break;
+    case 0x99cb: return_long(c); break;
+  }
+  return true;
+}
+
 /* $00:99C2: scene leaf return. */
 static bool scene_return_99c2_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf || pc != 0x99c2) return false;

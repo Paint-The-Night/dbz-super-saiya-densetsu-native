@@ -369,6 +369,7 @@ the upload call at `$00:85F5`.
 | 00:9459–946E | Scene-table reset wrapper with dual bank calls | 22 | 8 |
 | 00:97E9–97FC | Scene-state seed leaf | 20 | 10 |
 | 00:99C2 | Scene leaf return | 1 | 1 |
+| 00:99C3–99CB | Scene transition trampoline | 7 | 3 |
 | **Total** | **Three hundred twenty-four complete routines plus a reset prefix** | **26780** | **11942** |
 
 
