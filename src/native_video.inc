@@ -11396,6 +11396,15 @@ static bool actor_index_8092_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $01:8241–824F: resolve the compact actor table entry into $0D5E. */
+static bool actor_index_8241_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0x8241: case 0x8243: case 0x8244: case 0x8247: case 0x8248: case 0x824c: case 0x824f: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) { case 0x8241: byte_constant(c,0); break; case 0x8243: xba_native(c); break; case 0x8244: video_load(c,0x0d59,false); break; case 0x8247: tax16(c); break; case 0x8248: load_a_long_x8(c,0x0183c9); break; case 0x824c: store_register8(c,0x0d5e); break; case 0x824f: return_long(c); break; }
+  return true;
+}
+
 /* $01:EDF9: actor leaf return. */
 static bool actor_return_edf9_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf || pc != 0xedf9) return false;

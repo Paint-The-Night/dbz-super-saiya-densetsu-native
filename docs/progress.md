@@ -569,3 +569,7 @@ verified sites and 18 ROM bytes.
 The `$01:8092–80A1` actor-index resolver is native, including table indexing,
 long-ROM lookup, result storage, and RTL. Differential coverage exercises the
 complete path and return stack. This adds 8 verified sites and 23 ROM bytes.
+
+The matching `$01:8241–824F` actor-index resolver is native, including its
+second table lookup, `$0D5E` result store, and RTL. Differential coverage adds
+7 verified sites and 15 ROM bytes.
