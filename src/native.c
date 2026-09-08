@@ -776,6 +776,8 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = vram_queue_8974_step(c, c->pc); x->upload_steps += done;
     } else if(c->pc >= 0x89e2 && c->pc <= 0x8a4e) {
       done = mode7_ppu_89e2_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc == 0x8c4f) {
+      done = audio_return_8c4f_step(c, c->pc); x->display_control_steps += done;
     }
     return done;
   }
