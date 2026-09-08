@@ -775,6 +775,15 @@ int main(int argc,char **argv) {
     }
   }
   {
+    const uint16_t sites[] = {0xf561,0xf564,0xf565,0xf567,0xf56a,0xf56c,0xf56e,0xf571,0xf573,0xf575,0xf577,0xf57b,0xf57e,0xf581};
+    for(unsigned i=0;i<14;i++) {
+      memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+      Cpu ca=make_cpu(a,sites[i],0), cb=make_cpu(b,sites[i],0); ca.k=cb.k=3; ca.xf=cb.xf=false; ca.mf=cb.mf=true; ca.sp=cb.sp=0x1ff;
+      a->ram[0x0171]=b->ram[0x0171]=0x02; a->ram[0x01a3]=b->ram[0x01a3]=0x08; a->ram[0x01a5]=b->ram[0x01a5]=0x0a; a->count=b->count=0;
+      require(dbz_native_step(&ca,stats),"expected f561 actor gate"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+  }
+  {
     const uint16_t sites[] = {0xe769,0xe76c,0xe770,0xe774,0xe775,0xe778,0xe77a,0xe77b,0xe77e,0xe782,0xe786,0xe787,0xe78a,0xe78c};
     for(unsigned i=0;i<14;i++) {
       memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));

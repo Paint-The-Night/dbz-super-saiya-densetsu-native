@@ -11665,6 +11665,24 @@ static bool actor_setup_f5f6_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $03:F561–F581: inspect actor phase/type bytes, dispatch the shared phase
+ * handler when needed, clear the two local markers, and return long. */
+static bool actor_gate_f561_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 3 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0xf561: case 0xf564: case 0xf565: case 0xf567: case 0xf56a: case 0xf56c: case 0xf56e: case 0xf571: case 0xf573: case 0xf575: case 0xf577: case 0xf57b: case 0xf57e: case 0xf581: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) {
+    case 0xf561: video_load(c,0x0171,false); break; case 0xf564: lsr_a8(c); break;
+    case 0xf565: branch_to(c,!c->c,0xf581); break; case 0xf567: video_load(c,0x01a3,false); break;
+    case 0xf56a: cmp_constant8(c,0x08); break; case 0xf56c: branch_to(c,!c->z,0xf581); break;
+    case 0xf56e: video_load(c,0x01a5,false); break; case 0xf571: cmp_constant8(c,0x0a); break;
+    case 0xf573: branch_to(c,!c->z,0xf581); break; case 0xf575: byte_constant(c,0x40); break;
+    case 0xf577: jsl_to(c,0xf7de); break; case 0xf57b: stz_abs8(c,0x01d9); break;
+    case 0xf57e: stz_abs8(c,0x1661); break; case 0xf581: return_long(c); break;
+  }
+  return true;
+}
+
 /* $03:953E–954B: status gate and setup prefix before the shared actor loop. */
 static bool actor_prefix_953e_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 3 || c->e || c->xf || c->d || !c->mf) return false;

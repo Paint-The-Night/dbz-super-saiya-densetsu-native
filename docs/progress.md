@@ -631,6 +631,10 @@ The bank-4 `$8E4A–8E5E` counter clamp is native across all nine assigned
 instructions, including the masked threshold branch, 16-bit increment, and
 RTS. Differential tests add 9 sites and 21 ROM bytes.
 
+The bank-3 `$F561–F581` actor gate is native across all 14 assigned
+instructions, including phase/type tests, the shared `$F7DE` dispatch, marker
+clears, and RTL. Differential tests add 14 sites and 33 ROM bytes.
+
 The bank-3 `$F7DE–F7E6` phase marker leaf is native, covering both status stores,
 the `$80` phase value, and RTL. Differential tests cover all 4 manifest-listed
 sites, adding 4 verified sites and 9 ROM bytes.
