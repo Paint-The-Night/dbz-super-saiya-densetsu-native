@@ -11181,6 +11181,20 @@ static bool scene_trampoline_99c3_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $00:987A-$9883: scene flag branch. */
+static bool scene_branch_987a_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0x987a: case 0x987d: case 0x987f: case 0x9883: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) {
+    case 0x987a: video_load(c,0x07af,false); break;
+    case 0x987d: branch_to(c,!c->n,0x9885); break;
+    case 0x987f: jsl_to(c,0xa3a8); break;
+    case 0x9883: branch_to(c,true,0x9889); break;
+  }
+  return true;
+}
+
 /* $01:8481: actor long-jump stub. */
 static bool actor_jump_8481_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf || pc != 0x8481) return false;
