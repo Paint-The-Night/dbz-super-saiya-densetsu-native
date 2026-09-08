@@ -738,6 +738,15 @@ int main(int argc,char **argv) {
     }
   }
   {
+    const uint16_t sites[] = {0xe769,0xe76c,0xe770,0xe774,0xe775,0xe778,0xe77a,0xe77b,0xe77e,0xe782,0xe786,0xe787,0xe78a,0xe78c};
+    for(unsigned i=0;i<14;i++) {
+      memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+      Cpu ca=make_cpu(a,sites[i],0), cb=make_cpu(b,sites[i],0); ca.k=cb.k=3; ca.xf=cb.xf=false; ca.mf=cb.mf=true; ca.sp=cb.sp=0x1ff;
+      word(a,0x200,0x8fff); word(b,0x200,0x8fff); a->count=b->count=0;
+      require(dbz_native_step(&ca,stats),"expected e769 span"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+  }
+  {
     memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
     Cpu ca=make_cpu(a,0x991d,0), cb=make_cpu(b,0x991d,0); ca.k=cb.k=0; ca.xf=cb.xf=false;
     a->ram[0x0ea1]=b->ram[0x0ea1]=0x00; a->count=b->count=0;

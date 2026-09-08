@@ -11529,6 +11529,31 @@ static bool copy_span_e757_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $03:E769–E78C: copy two additional eight-byte long-memory spans. */
+static bool copy_span_e769_e77b_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 3 || c->e || c->xf || c->d || !c->mf) return false;
+  const bool first = pc >= 0xe769 && pc <= 0xe77a;
+  const bool second = pc >= 0xe77b && pc <= 0xe78c;
+  if(!first && !second) return false;
+  switch(pc) {
+    case 0xe769: case 0xe76c: case 0xe770: case 0xe774: case 0xe775: case 0xe778: case 0xe77a:
+    case 0xe77b: case 0xe77e: case 0xe782: case 0xe786: case 0xe787: case 0xe78a: case 0xe78c: break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0xe769: case 0xe77b: index_constant(c,false,0); break;
+    case 0xe76c: load_a_long_x8(c,0x7009e0); break;
+    case 0xe77e: load_a_long_x8(c,0x700ee0); break;
+    case 0xe770: case 0xe782: store_a_long_x8(c,0x7e2be0); break;
+    case 0xe774: case 0xe786: implied(c); c->x++; zn(c,c->x,false); break;
+    case 0xe775: case 0xe787: cpx16_constant(c,0x0008); break;
+    case 0xe778: case 0xe78a: branch_to(c,!c->c,pc == 0xe778 ? 0xe76c : 0xe77e); break;
+    case 0xe77a: case 0xe78c: return_short(c); break;
+  }
+  return true;
+}
+
 /* $01:EDF9: actor leaf return. */
 static bool actor_return_edf9_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf || pc != 0xedf9) return false;

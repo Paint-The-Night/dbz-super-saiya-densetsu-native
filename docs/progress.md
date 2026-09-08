@@ -621,3 +621,8 @@ The bank-4 `$8E3C–8E49` 16-bit counter clamp is native, covering its absolute
 load, mask, direct-page compare, carry gate, increment, and RTS. Differential
 tests cover all 6 manifest-listed sites, adding 6 verified sites and 16 ROM
 bytes.
+
+The bank-3 `$E769–E78C` sibling long-memory copy loops are native, covering
+both indexed spans, their 16-bit counters, carry gates, and RTSs. Differential
+tests cover all 14 manifest-listed sites, adding 14 verified sites and 36 ROM
+bytes.
