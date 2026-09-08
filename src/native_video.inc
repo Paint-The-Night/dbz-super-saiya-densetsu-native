@@ -6481,6 +6481,15 @@ static bool scene_wrap_fce2_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $00:9AEC-$9AF4: scene call/return wrapper. */
+static bool scene_wrap_9aec_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0x9aec: case 0x9af0: case 0x9af4: break; default: return false; }
+  (void)fetch(c);
+  if(pc == 0x9aec) jsl_to(c,0x9735); else if(pc == 0x9af0) jsl_to(c,0xf463); else return_long(c);
+  return true;
+}
+
 /* $00:9AE3-$9AE7: scene call wrapper. */
 static bool scene_wrap_9ae3_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf) return false;
