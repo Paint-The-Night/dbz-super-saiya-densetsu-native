@@ -11425,6 +11425,38 @@ static bool actor_index_8a0e_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $01:C8AB–C8C7: build a table pointer from the actor selector and dispatch
+ * the selected entry while preserving the native register widths. */
+static bool actor_table_c8ab_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 1 || c->e || c->xf || c->d) return false;
+  switch(pc) {
+    case 0xc8ab: case 0xc8ad: case 0xc8af: case 0xc8b1: case 0xc8b2:
+    case 0xc8b4: case 0xc8b6: case 0xc8b7: case 0xc8b8: case 0xc8bb:
+    case 0xc8bd: case 0xc8bf: case 0xc8c1: case 0xc8c3: case 0xc8c7: break;
+    default: return false;
+  }
+  if((pc <= 0xc8b2 || pc >= 0xc8c3) ? !c->mf : c->mf) return false;
+  (void)fetch(c);
+  switch(pc) {
+    case 0xc8ab: byte_constant(c, 2); break;
+    case 0xc8ad: store_dp(c, 0x02, true); break;
+    case 0xc8af: byte_constant(c, 0); break;
+    case 0xc8b1: xba_native(c); break;
+    case 0xc8b2: load_dp8(c, 0x04); break;
+    case 0xc8b4: set_m(c, false); break;
+    case 0xc8b6: asl_a16(c); break;
+    case 0xc8b7: tay16(c); break;
+    case 0xc8b8: lda16_constant(c, 0xa284); break;
+    case 0xc8bb: store_dp(c, 0x00, false); break;
+    case 0xc8bd: lda_indirect_long_y16(c, 0x00); break;
+    case 0xc8bf: store_dp(c, 0x00, false); break;
+    case 0xc8c1: set_m(c, true); break;
+    case 0xc8c3: jsl_to(c, 0xc885); break;
+    case 0xc8c7: return_long(c); break;
+  }
+  return true;
+}
+
 /* $01:863A–8650: widen the accumulator, compute the actor pointer, then
  * dispatch to the shared table helper. */
 static bool actor_pointer_863a_step(Cpu *c, uint16_t pc) {

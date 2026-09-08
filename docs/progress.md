@@ -635,6 +635,11 @@ The bank-1 `$8A0E–8A21` actor-index prefix is native across all ten assigned
 instructions, including the table index arithmetic, long indexed load, cached
 result store, and RTL. Differential tests add 10 sites and 20 ROM bytes.
 
+The bank-1 `$C8AB–C8C7` actor-table prefix is native across all fifteen assigned
+instructions, including selector setup, 16-bit table-pointer formation, indexed
+lookup, width transitions, shared dispatch, and RTL. Differential tests add 15
+sites and 29 ROM bytes.
+
 The bank-1 `$863A–8650` actor-pointer prefix is native across all ten assigned
 instructions, including the M/X width transitions, 16-bit pointer arithmetic,
 WRAM stores, shared dispatch, and RTL. Differential tests add 10 sites and 23

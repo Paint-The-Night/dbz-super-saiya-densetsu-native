@@ -580,6 +580,17 @@ int main(int argc,char **argv) {
     }
   }
   {
+    const uint16_t sites[] = {0xc8ab,0xc8ad,0xc8af,0xc8b1,0xc8b2,0xc8b4,0xc8b6,0xc8b7,
+                              0xc8b8,0xc8bb,0xc8bd,0xc8bf,0xc8c1,0xc8c3,0xc8c7};
+    for(unsigned n=0;n<15;n++) {
+      memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+      Cpu ca=make_cpu(a,sites[n],0), cb=make_cpu(b,sites[n],0);
+      ca.k=cb.k=1; ca.xf=cb.xf=false; ca.mf=cb.mf=(n<=4 || n>=13); ca.sp=cb.sp=0x1ff;
+      a->ram[0x04]=b->ram[0x04]=0x03; a->ram[0x02]=b->ram[0x02]=0x00; a->count=b->count=0;
+      require(dbz_native_step(&ca,stats),"expected c8ab actor table"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+  }
+  {
     const uint16_t sites[] = {0x863a,0x863c,0x863f,0x8640,0x8643,0x8645,0x8648,0x864a,0x864c,0x8650};
     for(unsigned n=0;n<10;n++) {
       memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
