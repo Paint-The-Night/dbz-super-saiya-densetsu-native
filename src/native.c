@@ -422,6 +422,8 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = scene_gate_f375_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc == 0xe8aa) {
       done = scene_actor_e8aa_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xb7cb && c->pc <= 0xb7d6) {
+      done = actor_scratch_b7cb_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xc232 && c->pc <= 0xc24a) {
       done = actor_seed_c232_step(c, c->pc); x->display_control_steps += done;
     }

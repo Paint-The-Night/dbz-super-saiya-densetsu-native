@@ -599,3 +599,7 @@ The bank-1 `$CE96–CEAC` actor-status dispatch is native, including the status
 nibble gate, conditional helper path, dispatch calls, and RTL. Differential
 tests cover all 8 manifest-listed sites, adding 8 verified sites and 22 ROM
 bytes.
+
+The bank-3 `$B7CB–B7D6` scratch-index wrapper is native, covering the 16-bit
+index load, direct-page store, helper call, and RTL. Differential tests cover
+all 5 manifest-listed sites, adding 5 verified sites and 12 ROM bytes.

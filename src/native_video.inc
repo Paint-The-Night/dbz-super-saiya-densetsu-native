@@ -11469,6 +11469,22 @@ static bool actor_status_ce96_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+static void ldy16_constant(Cpu *c, uint16_t value) {
+  uint16_t low = c->pc++, high = c->pc++;
+  (void)c->read(c->mem, ((uint32_t)c->k << 16) | low); sample_interrupt(c);
+  (void)c->read(c->mem, ((uint32_t)c->k << 16) | high);
+  c->y = value; zn(c, value, false);
+}
+
+/* $03:B7CB–B7D6: set the actor scratch index and call the bank-1 helper. */
+static bool actor_scratch_b7cb_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 3 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0xb7cb: case 0xb7ce: case 0xb7d0: case 0xb7d2: case 0xb7d6: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) { case 0xb7cb: ldy16_constant(c,0x05c4); break; case 0xb7ce: store_dp_y16(c,0x10); break; case 0xb7d0: byte_constant(c,0x2e); break; case 0xb7d2: jsl_to(c,0xa74e); break; case 0xb7d6: return_long(c); break; }
+  return true;
+}
+
 /* $01:EDF9: actor leaf return. */
 static bool actor_return_edf9_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf || pc != 0xedf9) return false;
