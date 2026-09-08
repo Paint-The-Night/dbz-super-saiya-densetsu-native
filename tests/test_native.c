@@ -605,6 +605,17 @@ int main(int argc,char **argv) {
   }
   {
     memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xae29,0), cb=make_cpu(b,0xae29,0); ca.k=cb.k=0; ca.xf=cb.xf=false; ca.sp=cb.sp=0x1ff; ca.x=cb.x=0x1234; ca.a=cb.a=0x5678; ca.y=cb.y=0x3456;
+    a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected ae29 prepare"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    require(a->ram[0x83]==0x34 && a->ram[0x84]==0x12,"ae29 pointer");
+    ca.pc=cb.pc=0xae2b; ca.a=cb.a=0x5678; a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected ae2b prepare"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    ca.pc=cb.pc=0xae2d; a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected ae2d call"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b); require(ca.pc==0xc559 && ca.sp==0x1fc,"ae2d call boundary");
+    ca=make_cpu(a,0xae31,0); cb=make_cpu(b,0xae31,0); ca.k=cb.k=0; ca.xf=cb.xf=false; ca.sp=cb.sp=0x1ff; a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected ae31 call"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b); require(ca.pc==0xc68c && ca.sp==0x1fc,"ae31 call boundary");
+    ca=make_cpu(a,0xae35,0); cb=make_cpu(b,0xae35,0); ca.k=cb.k=0; ca.xf=cb.xf=false; a->ram[0x89]=0x78; a->ram[0x8a]=0x56; b->ram[0x89]=0x78; b->ram[0x8a]=0x56; a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected ae35 load"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b); require(ca.y==0x5678,"ae35 index");
+    ca=make_cpu(a,0xae37,0); cb=make_cpu(b,0xae37,0); ca.k=cb.k=0; ca.xf=cb.xf=false; ca.sp=cb.sp=0x1ff; word(a,0x200,0x8fff); word(b,0x200,0x8fff); a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected ae37 return"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b); require(ca.pc==0x9000 && ca.sp==0x201,"ae37 return");
+  }
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
     Cpu ca=make_cpu(a,0xf463,0), cb=make_cpu(b,0xf463,0); ca.k=cb.k=2; ca.xf=cb.xf=false; ca.sp=cb.sp=0x1ff;
     word(a,0x200,0x8fff); word(b,0x200,0x8fff); a->count=b->count=0;
     require(dbz_native_step(&ca,stats),"expected 2f463 RTL"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);

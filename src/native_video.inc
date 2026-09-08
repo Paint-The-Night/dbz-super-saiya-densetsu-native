@@ -4,6 +4,7 @@
  * VRAM queue: 8-byte entries at 0800; bit 7 of byte 0 means occupied.
  * Entry layout: VMAIN, VMADD word, source word, source bank, length word.
  */
+static void ldy_dp16(Cpu *c, uint8_t offset);
 static void branch_to(Cpu *c, bool take, uint16_t target) {
   if(!take) sample_interrupt(c);
   (void)fetch(c);
@@ -11374,6 +11375,15 @@ static bool actor_table_a4eb_step(Cpu *c, uint16_t pc) {
   switch(pc) { case 0xa4eb: case 0xa4ef: case 0xa4f2: break; default: return false; }
   (void)fetch(c);
   switch(pc) { case 0xa4eb: jsl_to(c,0xb72b); break; case 0xa4ef: video_load(c,0x0d66,false); break; case 0xa4f2: jsr_abs_native(c,0xbf44); break; }
+  return true;
+}
+
+/* $00:AE29–AE37: prepare the tile decompression pointers and return. */
+static bool mode7_prepare_ae29_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0xae29: case 0xae2b: case 0xae2d: case 0xae31: case 0xae35: case 0xae37: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) { case 0xae29: stx_dp16(c,0x83); break; case 0xae2b: store_dp(c,0x85,true); break; case 0xae2d: jsl_to(c,0xc559); break; case 0xae31: jsl_to(c,0xc68c); break; case 0xae35: ldy_dp16(c,0x89); break; case 0xae37: return_short(c); break; }
   return true;
 }
 

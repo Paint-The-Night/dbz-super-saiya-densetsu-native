@@ -890,6 +890,8 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
     done = vram_queue_enqueue_dp_step(c, c->pc); x->upload_steps += done;
   } else if(c->pc >= 0x9bbf && c->pc <= 0x9c4a) {
     done = vram_queue_enqueue_tiled_step(c, c->pc); x->upload_steps += done;
+  } else if(c->pc >= 0xae29 && c->pc <= 0xae37) {
+    done = mode7_prepare_ae29_step(c, c->pc); x->display_control_steps += done;
   } else if(c->pc >= 0x8954 && c->pc <= 0x8995) {
     done = palette_index_load_step(c, c->pc); x->palette_steps += done;
   } else if(c->pc >= 0x8e26 && c->pc <= 0x8e75) {

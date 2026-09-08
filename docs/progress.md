@@ -560,3 +560,8 @@ ROM bytes.
 The bank-1 `$A4EB–A4F2` table-entry prefix is native, covering both long-call
 boundaries, the `$0D66` selector load, and the local JSR boundary. This adds 3
 verified instruction sites and 10 ROM bytes.
+
+The `$00:AE29–AE37` mode-7 preparation leaf is native, covering pointer setup,
+two existing decompression calls, output-index loading, and RTS. Direct tests
+cover each instruction boundary and the complete return behavior. This adds 6
+verified sites and 18 ROM bytes.
