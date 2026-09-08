@@ -11345,9 +11345,12 @@ static bool scene_read_92bf_step(Cpu *c, uint16_t pc) {
 
 /* $03:9752: actor helper entry preserves X on the native stack. */
 static bool actor_entry_9752_step(Cpu *c, uint16_t pc) {
-  if((c->k & 0x7f) != 3 || c->e || c->xf || c->d || !c->mf ||
+  bool narrow = pc <= 0x9761;
+  if((c->k & 0x7f) != 3 || c->e || c->xf || c->d ||
+     (narrow ? !c->mf : c->mf) ||
      (pc != 0x9752 && pc != 0x9753 && pc != 0x9755 && pc != 0x9756 &&
-      pc != 0x9758 && pc != 0x975a && pc != 0x975c && pc != 0x975e && pc != 0x9760)) return false;
+      pc != 0x9758 && pc != 0x975a && pc != 0x975c && pc != 0x975e &&
+      pc != 0x9760 && pc != 0x9761 && pc != 0x9763 && pc != 0x9764 && pc != 0x9765)) return false;
   (void)fetch(c);
   switch(pc) {
     case 0x9752: phx16(c); break;
@@ -11358,6 +11361,10 @@ static bool actor_entry_9752_step(Cpu *c, uint16_t pc) {
     case 0x975a: store_dp(c, 0x15); break;
     case 0x975c: store_dp(c, 0x07); break;
     case 0x975e: store_dp(c, 0x17); break;
+    case 0x9761: set_m(c, false); break;
+    case 0x9763: asl_a16(c); break;
+    case 0x9764: tax16(c); break;
+    case 0x9765: set_m(c, true); break;
   }
   return true;
 }
