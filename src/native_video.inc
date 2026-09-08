@@ -11485,6 +11485,15 @@ static bool actor_scratch_b7cb_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $03:B7F4–B7FF: set the alternate actor scratch index and call the helper. */
+static bool actor_scratch_b7f4_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 3 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0xb7f4: case 0xb7f7: case 0xb7f9: case 0xb7fb: case 0xb7ff: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) { case 0xb7f4: ldy16_constant(c,0x05f4); break; case 0xb7f7: store_dp_y16(c,0x10); break; case 0xb7f9: byte_constant(c,0x2e); break; case 0xb7fb: jsl_to(c,0xa74e); break; case 0xb7ff: return_long(c); break; }
+  return true;
+}
+
 /* $01:EDF9: actor leaf return. */
 static bool actor_return_edf9_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf || pc != 0xedf9) return false;

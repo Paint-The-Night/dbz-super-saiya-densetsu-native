@@ -702,6 +702,15 @@ int main(int argc,char **argv) {
     }
   }
   {
+    const uint16_t sites[] = {0xb7f4,0xb7f7,0xb7f9,0xb7fb,0xb7ff};
+    for(unsigned i=0;i<5;i++) {
+      memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+      Cpu ca=make_cpu(a,sites[i],0), cb=make_cpu(b,sites[i],0); ca.k=cb.k=3; ca.xf=cb.xf=false; ca.sp=cb.sp=0x1ff;
+      word(a,0x200,0x8fff); word(b,0x200,0x8fff); a->count=b->count=0;
+      require(dbz_native_step(&ca,stats),"expected b7f4 scratch"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+  }
+  {
     memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
     Cpu ca=make_cpu(a,0x991d,0), cb=make_cpu(b,0x991d,0); ca.k=cb.k=0; ca.xf=cb.xf=false;
     a->ram[0x0ea1]=b->ram[0x0ea1]=0x00; a->count=b->count=0;

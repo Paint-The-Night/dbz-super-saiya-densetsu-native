@@ -603,3 +603,7 @@ bytes.
 The bank-3 `$B7CB–B7D6` scratch-index wrapper is native, covering the 16-bit
 index load, direct-page store, helper call, and RTL. Differential tests cover
 all 5 manifest-listed sites, adding 5 verified sites and 12 ROM bytes.
+
+The bank-3 `$B7F4–B7FF` sibling wrapper is native with its alternate scratch
+index constant. Differential tests cover all 5 manifest-listed sites, adding
+5 verified sites and 12 ROM bytes.
