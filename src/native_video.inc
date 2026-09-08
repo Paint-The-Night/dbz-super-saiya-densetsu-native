@@ -11345,9 +11345,20 @@ static bool scene_read_92bf_step(Cpu *c, uint16_t pc) {
 
 /* $03:9752: actor helper entry preserves X on the native stack. */
 static bool actor_entry_9752_step(Cpu *c, uint16_t pc) {
-  if((c->k & 0x7f) != 3 || c->e || c->xf || c->d || !c->mf || (pc != 0x9752 && pc != 0x9753 && pc != 0x9755)) return false;
+  if((c->k & 0x7f) != 3 || c->e || c->xf || c->d || !c->mf ||
+     (pc != 0x9752 && pc != 0x9753 && pc != 0x9755 && pc != 0x9756 &&
+      pc != 0x9758 && pc != 0x975a && pc != 0x975c && pc != 0x975e && pc != 0x9760)) return false;
   (void)fetch(c);
-  if(pc == 0x9752) phx16(c); else if(pc == 0x9753) and_constant8(c, 0x3f); else xba_native(c);
+  switch(pc) {
+    case 0x9752: phx16(c); break;
+    case 0x9753: and_constant8(c, 0x3f); break;
+    case 0x9755: case 0x9760: xba_native(c); break;
+    case 0x9756: byte_constant(c, 0); break;
+    case 0x9758: store_dp(c, 0x05); break;
+    case 0x975a: store_dp(c, 0x15); break;
+    case 0x975c: store_dp(c, 0x07); break;
+    case 0x975e: store_dp(c, 0x17); break;
+  }
   return true;
 }
 
