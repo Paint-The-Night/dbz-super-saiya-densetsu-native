@@ -185,7 +185,7 @@ static bool small_helper_step(Cpu *c, uint16_t pc) {
     case 0x8b0e: case 0x8b0f: case 0x8b10: case 0x8b11: case 0x8b12: case 0x8b13: case 0x8b14:
     case 0x8b15: case 0x8b18: case 0x8b1a: case 0x8b1d: case 0x8b1e: case 0x8b1f: case 0x8b20:
     case 0x8b21: case 0x8b24: case 0x8b26:
-    case 0x8ad6: case 0x8ad8: case 0x8ad9: case 0x8adc: case 0x8add: case 0x8ae1: case 0x8ae4: break;
+    case 0x8ad6: case 0x8ad8: case 0x8ad9: case 0x8adc: case 0x8add: case 0x8ae1: case 0x8ae4: case 0x8ae5: case 0x8ae8: case 0x8aeb: case 0x8aef: break;
     default: return false;
   }
   (void)fetch(c);
@@ -229,6 +229,10 @@ static bool small_helper_step(Cpu *c, uint16_t pc) {
     case 0x8add: load_a_long_x8(c, 0x008ae5); break;
     case 0x8ae1: store_a_abs_y8(c, 0x0b01); break;
     case 0x8ae4: return_long(c); break;
+    case 0x8ae5: stz_abs8(c, 0x0d63); break;
+    case 0x8ae8: stz_abs8(c, 0x0d00); break;
+    case 0x8aeb: jsl_to(c, 0xbe5c); break;
+    case 0x8aef: return_long(c); break;
   }
   return true;
 }

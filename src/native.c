@@ -975,7 +975,7 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
   } else if(c->pc >= 0x89b8 && c->pc <= 0x8a06) {
     done = actor_accum_89b8_step(c, c->pc); x->display_control_steps += done;
   } else if((c->pc >= 0x89ac && c->pc <= 0x89b7) ||
-            (c->pc >= 0x8ad6 && c->pc <= 0x8ae4) ||
+            (c->pc >= 0x8ad6 && c->pc <= 0x8aef) ||
             (c->pc >= 0x8af1 && c->pc <= 0x8b26)) {
     done = small_helper_step(c, c->pc); x->display_control_steps += done;
   } else if(c->pc >= 0x8b28 && c->pc <= 0x8b51) {
