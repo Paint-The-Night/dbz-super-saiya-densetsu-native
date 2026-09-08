@@ -490,6 +490,16 @@ int main(int argc,char **argv) {
     require(ca.pc==0x98d5 && ca.k==0 && ca.sp==0x1fc,"99ad JSL boundary");
   }
   {
+    const uint16_t sites[] = {0xf39e,0xf39f,0xf3a0,0xf4ad,0xf560,0xf582,0xf5a2};
+    for(unsigned n=0;n<7;n++) {
+      memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+      Cpu ca=make_cpu(a,sites[n],0), cb=make_cpu(b,sites[n],0); ca.k=cb.k=3; ca.xf=cb.xf=false; ca.sp=cb.sp=0x1ff;
+      word(a,0x200,0x8fff); word(b,0x200,0x8fff); a->count=b->count=0;
+      require(dbz_native_step(&ca,stats),"expected bank3 RTL"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+      require(ca.pc==0x9000 && ca.k==0 && ca.sp==0x202,"bank3 return");
+    }
+  }
+  {
     memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
     Cpu ca=make_cpu(a,0x991d,0), cb=make_cpu(b,0x991d,0); ca.k=cb.k=0; ca.xf=cb.xf=false;
     a->ram[0x0ea1]=b->ram[0x0ea1]=0x00; a->count=b->count=0;
