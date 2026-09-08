@@ -185,7 +185,7 @@ static bool small_helper_step(Cpu *c, uint16_t pc) {
     case 0x8b0e: case 0x8b0f: case 0x8b10: case 0x8b11: case 0x8b12: case 0x8b13: case 0x8b14:
     case 0x8b15: case 0x8b18: case 0x8b1a: case 0x8b1d: case 0x8b1e: case 0x8b1f: case 0x8b20:
     case 0x8b21: case 0x8b24: case 0x8b26:
-    case 0x8ad6: case 0x8ad8: case 0x8ad9: case 0x8adc: case 0x8add: case 0x8ae1: case 0x8ae4: case 0x8ae5: case 0x8ae8: case 0x8aeb: case 0x8aef: break;
+    case 0x8ad6: case 0x8ad8: case 0x8ad9: case 0x8adc: case 0x8add: case 0x8ae1: case 0x8ae4: break;
     default: return false;
   }
   (void)fetch(c);
@@ -229,10 +229,6 @@ static bool small_helper_step(Cpu *c, uint16_t pc) {
     case 0x8add: load_a_long_x8(c, 0x008ae5); break;
     case 0x8ae1: store_a_abs_y8(c, 0x0b01); break;
     case 0x8ae4: return_long(c); break;
-    case 0x8ae5: stz_abs8(c, 0x0d63); break;
-    case 0x8ae8: stz_abs8(c, 0x0d00); break;
-    case 0x8aeb: jsl_to(c, 0xbe5c); break;
-    case 0x8aef: return_long(c); break;
   }
   return true;
 }
@@ -11349,9 +11345,10 @@ static bool scene_read_92bf_step(Cpu *c, uint16_t pc) {
 
 /* $03:9752: actor helper entry preserves X on the native stack. */
 static bool actor_entry_9752_step(Cpu *c, uint16_t pc) {
-  bool narrow = pc <= 0x9761;
+  bool m16 = (pc == 0x9763 || pc == 0x9764);
+  bool mode_transition = m16 || pc == 0x9765;
   if((c->k & 0x7f) != 3 || c->e || c->xf || c->d ||
-     (narrow ? !c->mf : c->mf) ||
+     (c->mf == mode_transition) ||
      (pc != 0x9752 && pc != 0x9753 && pc != 0x9755 && pc != 0x9756 &&
       pc != 0x9758 && pc != 0x975a && pc != 0x975c && pc != 0x975e &&
       pc != 0x9760 && pc != 0x9761 && pc != 0x9763 && pc != 0x9764 && pc != 0x9765 &&
@@ -11363,21 +11360,21 @@ static bool actor_entry_9752_step(Cpu *c, uint16_t pc) {
     case 0x9753: and_constant8(c, 0x3f); break;
     case 0x9755: case 0x9760: xba_native(c); break;
     case 0x9756: byte_constant(c, 0); break;
-    case 0x9758: store_dp(c, 0x05); break;
-    case 0x975a: store_dp(c, 0x15); break;
-    case 0x975c: store_dp(c, 0x07); break;
-    case 0x975e: store_dp(c, 0x17); break;
+    case 0x9758: store_dp(c, 0x05, true); break;
+    case 0x975a: store_dp(c, 0x15, true); break;
+    case 0x975c: store_dp(c, 0x07, true); break;
+    case 0x975e: store_dp(c, 0x17, true); break;
     case 0x9761: set_m(c, false); break;
     case 0x9763: asl_a16(c); break;
     case 0x9764: tax16(c); break;
     case 0x9765: set_m(c, true); break;
     case 0x9767: case 0x9771: load_a_long_x8(c, 0x039aa8); break;
-    case 0x976b: store_dp(c, 0x04); break;
+    case 0x976b: store_dp(c, 0x04, true); break;
     case 0x976d: case 0x9777: asl_a8(c); break;
-    case 0x976e: store_dp(c, 0x14); break;
+    case 0x976e: store_dp(c, 0x14, true); break;
     case 0x9770: implied(c); c->x++; zn(c, c->x, false); break;
-    case 0x9775: store_dp(c, 0x06); break;
-    case 0x9778: store_dp(c, 0x16); break;
+    case 0x9775: store_dp(c, 0x06, true); break;
+    case 0x9778: store_dp(c, 0x16, true); break;
     case 0x977a: plx16(c); break;
     case 0x977b: return_long(c); break;
   }
