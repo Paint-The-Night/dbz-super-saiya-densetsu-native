@@ -11593,6 +11593,15 @@ static bool actor_setup_f5f6_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $03:953E–954B: status gate and setup prefix before the shared actor loop. */
+static bool actor_prefix_953e_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 3 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0x953e: case 0x9541: case 0x9542: case 0x9544: case 0x9548: case 0x954b: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) { case 0x953e: video_load(c,0x01bc,false); break; case 0x9541: lsr_a8(c); break; case 0x9542: branch_to(c,c->c,0x9588); break; case 0x9544: jsl_to(c,0x958a); break; case 0x9548: index_constant(c,false,0); break; case 0x954b: load_a_abs_x8(c,0x1180); break; }
+  return true;
+}
+
 /* $01:EDF9: actor leaf return. */
 static bool actor_return_edf9_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf || pc != 0xedf9) return false;

@@ -617,6 +617,11 @@ The bank-3 `$F5F6–F5FD` setup prefix is native across its three assigned sites
 helper call, status load, and shared `$8000` call. Differential tests add 3
 verified sites and 10 ROM bytes.
 
+The bank-3 `$953E–954B` status/setup prefix is native across its six assigned
+sites, including the carry gate, shared `$958A` call, and indexed load. The
+manifest’s later continuation remains truncated; differential tests add 6
+verified sites and 16 ROM bytes.
+
 The bank-3 `$E655–E66A` bounded copy loop is native, including its indexed
 span, `BNE` exit, `BCC` repeat, and both long-return paths. Differential tests
 cover all 10 manifest-listed sites, adding 10 verified sites and 22 ROM bytes.
