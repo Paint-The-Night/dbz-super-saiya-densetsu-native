@@ -514,6 +514,20 @@ int main(int argc,char **argv) {
   }
   {
     memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0x9aff,0), cb=make_cpu(b,0x9aff,0); ca.k=cb.k=0; ca.xf=cb.xf=false; ca.sp=cb.sp=0x1ff;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+    a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected 9aff wrapper"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    require(ca.pc==0x9735 && ca.k==0 && ca.sp==0x1fc,"9aff first JSL boundary");
+  }
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0x9b03,0), cb=make_cpu(b,0x9b03,0); ca.k=cb.k=0; ca.xf=cb.xf=false; ca.sp=cb.sp=0x1ff;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+    a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected 9b03 wrapper"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    require(ca.pc==0xe8aa && ca.k==3 && ca.sp==0x1fc,"9b03 second JSL boundary");
+  }
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
     Cpu ca=make_cpu(a,0xf463,0), cb=make_cpu(b,0xf463,0); ca.k=cb.k=2; ca.xf=cb.xf=false; ca.sp=cb.sp=0x1ff;
     word(a,0x200,0x8fff); word(b,0x200,0x8fff); a->count=b->count=0;
     require(dbz_native_step(&ca,stats),"expected 2f463 RTL"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);

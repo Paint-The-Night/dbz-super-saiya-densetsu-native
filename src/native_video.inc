@@ -6497,6 +6497,15 @@ static bool scene_wrap_9ae3_step(Cpu *c, uint16_t pc) {
   (void)fetch(c); if(pc == 0x9ae3) jsl_to(c,0x9735); else jsl_to(c,0xf0bc); return true;
 }
 
+/* $00:9AFF-$9B03: scene wrapper chaining the common return leaf and bank-3 actor setup. */
+static bool scene_wrap_9aff_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf) return false;
+  if(pc != 0x9aff && pc != 0x9b03) return false;
+  (void)fetch(c);
+  if(pc == 0x9aff) jsl_to(c,0x9735); else jsl_to(c,0xe8aa);
+  return true;
+}
+
 /* $02:F463: actor leaf return. */
 static bool actor_return_2f463_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 2 || c->e || c->xf || c->d || !c->mf || pc != 0xf463) return false;

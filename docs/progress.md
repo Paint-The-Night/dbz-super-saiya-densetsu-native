@@ -526,3 +526,11 @@ The updated package passes a 600-frame checkpoint-restored takeoff replay in
 `artifacts/packaged-video/`, ending at the identical checkpoint as the old build.
 The first actual battle remains uncovered; `research/battle-route.md` records
 sourced navigation guidance for the next replay.
+
+## Scene-wrapper increment — 8 September 2026
+
+The `$00:9AFF–9B03` scene wrapper is now native. Its two long-call boundaries
+match the interpreter exactly: the first calls the shared `$00:9735` return leaf,
+and the continuation calls bank-3 `$E8AA`. Differential tests cover both entry
+sites and preserve the ROM's stack and bank transitions. This adds 2 verified
+instruction sites and 8 ROM bytes.
