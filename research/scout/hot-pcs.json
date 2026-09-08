@@ -19,10 +19,10 @@
       }
     ],
     "native_filter": "Bank $00 ranges from docs/progress.md / native.c dispatch excluded",
-    "combined_interpreted_unique_pcs": 7929,
-    "combined_interpreted_hits": 18352310,
-    "start_interpreted_hits": 11888778,
-    "battle_interpreted_hits": 6463532
+    "combined_interpreted_unique_pcs": 7864,
+    "combined_interpreted_hits": 18352180,
+    "start_interpreted_hits": 11888713,
+    "battle_interpreted_hits": 6463467
   },
   "top_interpreted_pcs": [
     {

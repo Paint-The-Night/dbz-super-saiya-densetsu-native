@@ -30,14 +30,6 @@ Native HDMA/queue wipe ends in `JMP ($8B54,X)` with X = (DP+$24 & $7F) * 2.
 
 ## Notable bank `$00` leaves / near-leaves near hot PCs & native frontiers
 
-### `00:8B7A` — CANDIDATE
-
-- Range ≈ `00:8B7A–00:8D2A` (~433 bytes)
-- Nested: [('JSL', '03:A6CB'), ('JSR', '00:0284'), ('JSL', '00:8887'), ('JSL', '06:E837'), ('JSL', '00:8B15'), ('JSL', '03:9255'), ('JSL', '00:86B6'), ('JSR', '00:94E7'), ('JSR', '00:9485'), ('JSL', '01:B61E'), ('JSL', '01:B67A'), ('JSL', '01:B6AC'), ('JSL', '01:B6BF'), ('JSL', '00:8324'), ('JSL', '02:D37D'), ('JSL', '03:99B3'), ('JSL', '03:93FA'), ('JSL', '06:EC12'), ('JSL', '00:C559'), ('JSL', '00:C68C'), ('JSL', '00:90E6'), ('JSL', '00:8DAC'), ('JSL', '00:877E'), ('JSL', '03:91FC'), ('JSL', '03:F7A4'), ('JSL', '00:8DFA'), ('JSR', '00:00A9'), ('JSL', '01:C535'), ('JSL', '00:8D4E'), ('JSL', '03:D2F2'), ('JSL', '02:D844'), ('JSL', '06:EBC1'), ('JSL', '04:85B6'), ('JSL', '04:85B6')]; exits: [('RTL', 36138)]
-- Callers (static sample): 02:F0B2/JSL
-- Rationale: scene-mode table $8B54[0] (JMP from native 8B51); scene table[0]; first mode handler after HDMA wipe
-- Hits entry/range: 2/830
-
 ### `00:8AE5` — NEAR-LEAF
 
 - Range ≈ `00:8AE5–00:8AFB` (~23 bytes)

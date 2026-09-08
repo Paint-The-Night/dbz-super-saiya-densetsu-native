@@ -9,9 +9,9 @@ ROM SHA-256 `962aa7a09765a97164af67098877a8fe5b7f1ea9db738561eb466b7600fd241c` (
 
 Coverage counts every visited ROM PC while natives run (visited increments before native/interpret dispatch). Hits below exclude already-native bank `$00` ranges.
 
-- Combined interpreted hits: **18,352,310** across **7929** unique PCs
-- Start-game interpreted hits: 11,888,778
-- Battle-route interpreted hits: 6,463,532
+- Combined interpreted hits: **18,352,180** across **7864** unique PCs
+- Start-game interpreted hits: 11,888,713
+- Battle-route interpreted hits: 6,463,467
 
 ## Top 40 interpreted PC hits (combined)
 
