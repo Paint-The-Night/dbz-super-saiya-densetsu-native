@@ -374,6 +374,9 @@ the upload call at `$00:85F5`.
 | 00:9AFA | Scene call stub | 4 | 1 |
 | 00:FCD8 | Scene call stub | 4 | 1 |
 | 01:CD1E | Actor call stub | 4 | 1 |
+| 01:CD27 | Actor call stub | 4 | 1 |
+| 01:CD4B | Actor call stub | 4 | 1 |
+| 01:CD8A | Actor call stub | 4 | 1 |
 | 01:EDF9 | Actor leaf return | 1 | 1 |
 | 00:99C2 | Scene leaf return | 1 | 1 |
 | 00:99C3–99CB | Scene transition trampoline | 7 | 3 |

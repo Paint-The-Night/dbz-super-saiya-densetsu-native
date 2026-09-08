@@ -11181,6 +11181,13 @@ static bool scene_trampoline_99c3_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $01:CD27/$CD4B/$CD8A: actor call stubs. */
+static bool actor_call_cdb2_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf) return false;
+  if(pc != 0xcd27 && pc != 0xcd4b && pc != 0xcd8a) return false;
+  (void)fetch(c); jsl_to(c,0xcfb2); return true;
+}
+
 /* $01:CD1E: actor call stub. */
 static bool actor_call_cd1e_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf || pc != 0xcd1e) return false;
