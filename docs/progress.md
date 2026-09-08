@@ -45,6 +45,7 @@ The `$00:9251` scene-mode entry read is now native and differentially verified, 
 Its first gate now includes `$9254` BMI and `$9256` STZ `$0D59`, adding 2 sites and 5 bytes with taken-branch coverage.
 The non-BMI path now covers `$9259–$9263` (mode read, sign gate, compare, and equality branch), adding 5 sites and 12 bytes.
 The selector comparison chain at `$9265–$9276` is now native, adding 9 sites and 19 bytes with each equality and non-equality branch tested.
+The selector now covers `$9278–$9287`, including range checks and the REP transition to a 16-bit state read; this adds 8 sites and 18 bytes.
 
 
 The `$00:98D5–990E` actor-slot loop adds 27 instruction sites and 58 bytes.
