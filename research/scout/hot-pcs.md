@@ -9,9 +9,9 @@ ROM SHA-256 `962aa7a09765a97164af67098877a8fe5b7f1ea9db738561eb466b7600fd241c` (
 
 Coverage counts every visited ROM PC while natives run (visited increments before native/interpret dispatch). Hits below exclude already-native bank `$00` ranges.
 
-- Combined interpreted hits: **7,545,669** across **5904** unique PCs
-- Start-game interpreted hits: 4,541,268
-- Battle-route interpreted hits: 3,004,401
+- Combined interpreted hits: **7,449,358** across **5629** unique PCs
+- Start-game interpreted hits: 4,494,308
+- Battle-route interpreted hits: 2,955,050
 
 ## Top 40 interpreted PC hits (combined)
 
@@ -67,7 +67,7 @@ Coverage counts every visited ROM PC while natives run (visited increments befor
 | 3 | `01:C885–C8AA` | 232089 | 38 |
 | 4 | `00:AB00–AD3E` | 190137 | 575 |
 | 5 | `03:93F7–94D3` | 155576 | 221 |
-| 6 | `06:EFC4–F081` | 143290 | 190 |
+| 6 | `06:F000–F081` | 133678 | 130 |
 | 7 | `13:EB47–EB7F` | 101024 | 57 |
 | 8 | `01:8250–82CF` | 97088 | 128 |
 | 9 | `00:8113–8153` | 95172 | 65 |
@@ -83,15 +83,15 @@ Coverage counts every visited ROM PC while natives run (visited increments befor
 | 19 | `00:97BC–988E` | 41292 | 211 |
 | 20 | `01:816F–81F4` | 40896 | 134 |
 | 21 | `03:99A6–9A26` | 40294 | 129 |
-| 22 | `06:EE42–EED2` | 35999 | 145 |
-| 23 | `03:957A–9589` | 35488 | 16 |
-| 24 | `00:9735–9747` | 34988 | 19 |
-| 25 | `01:802A–8067` | 31704 | 62 |
-| 26 | `03:91D4–9254` | 31218 | 129 |
-| 27 | `04:8118–8162` | 27912 | 75 |
-| 28 | `00:A153–A392` | 26872 | 576 |
-| 29 | `04:A074–A0E3` | 26671 | 112 |
-| 30 | `01:C8C8–C8E4` | 24345 | 29 |
+| 22 | `03:957A–9589` | 35488 | 16 |
+| 23 | `00:9735–9747` | 34988 | 19 |
+| 24 | `01:802A–8067` | 31704 | 62 |
+| 25 | `03:91D4–9254` | 31218 | 129 |
+| 26 | `04:8118–8162` | 27912 | 75 |
+| 27 | `00:A153–A392` | 26872 | 576 |
+| 28 | `04:A074–A0E3` | 26671 | 112 |
+| 29 | `01:C8C8–C8E4` | 24345 | 29 |
+| 30 | `01:B82D–B87F` | 22334 | 83 |
 
 ## Battle-route-only hot clusters
 
@@ -99,7 +99,7 @@ Coverage counts every visited ROM PC while natives run (visited increments befor
 |---:|---|---:|
 | 1 | `00:80AE–8107` | 1941488 |
 | 2 | `03:9158–9192` | 292362 |
-| 3 | `06:EFC4–F081` | 143290 |
+| 3 | `06:F000–F081` | 133678 |
 | 4 | `03:93F7–94D3` | 70990 |
 | 5 | `01:8401–84CE` | 60110 |
 | 6 | `01:8250–82CF` | 58718 |
@@ -108,12 +108,12 @@ Coverage counts every visited ROM PC while natives run (visited increments befor
 | 9 | `03:94DC–9504` | 23606 |
 | 10 | `03:994C–9961` | 22533 |
 | 11 | `00:98A1–98DB` | 21057 |
-| 12 | `06:EE42–EED2` | 19669 |
-| 13 | `00:97BC–988E` | 19000 |
-| 14 | `03:99A6–9A26` | 18396 |
-| 15 | `00:9735–9747` | 13987 |
-| 16 | `01:81FD–821C` | 11640 |
-| 17 | `01:8668–86D7` | 11472 |
-| 18 | `01:B82D–B87F` | 10148 |
-| 19 | `01:883C–886F` | 9963 |
-| 20 | `01:F8FA–F97F` | 9813 |
+| 12 | `00:97BC–988E` | 19000 |
+| 13 | `03:99A6–9A26` | 18396 |
+| 14 | `00:9735–9747` | 13987 |
+| 15 | `01:81FD–821C` | 11640 |
+| 16 | `01:8668–86D7` | 11472 |
+| 17 | `01:B82D–B87F` | 10148 |
+| 18 | `01:883C–886F` | 9963 |
+| 19 | `01:F8FA–F97F` | 9813 |
+| 20 | `01:82E3–8320` | 9233 |
