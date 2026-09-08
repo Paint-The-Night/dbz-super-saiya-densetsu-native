@@ -84,6 +84,16 @@ NATIVE_RANGES = [
 # Known JSL callees from already-native code (bank:addr) that are NOT yet native.
 NATIVE_CALLEES = []  # all previously listed callees are now native in src/native.c
 
+# Verified native ranges in nonzero banks (inclusive). These mirror native.c
+# dispatch and prevent the queue from re-reporting implemented code.
+NATIVE_RANGES_BY_BANK = {
+    3: [(0x9752, 0x977B)],
+    4: [(0x8282, 0x82EB), (0x83B2, 0x8410), (0x8411, 0x8449),
+        (0x844A, 0x848F), (0x8490, 0x8513), (0x8514, 0x85A0),
+        (0x85A1, 0x85B5), (0x85B6, 0x85F0), (0x85F1, 0x8673),
+        (0x8674, 0x869D), (0x871E, 0x8802), (0x889E, 0x88C5)],
+}
+
 # Scene-mode jump table at $00:8B54 (words); JMP ($8B54,X) from native 8B51.
 SCENE_TABLE_BASE = 0x8B54
 
@@ -131,9 +141,8 @@ def lorom_offset(bank: int, addr: int) -> int:
 
 
 def is_native(bank: int, addr: int) -> bool:
-    if bank & 0x7F:
-        return False
-    for a, b in NATIVE_RANGES:
+    ranges = NATIVE_RANGES_BY_BANK.get(bank & 0x7F, NATIVE_RANGES if not (bank & 0x7F) else ())
+    for a, b in ranges:
         if a <= addr <= b:
             return True
     return False

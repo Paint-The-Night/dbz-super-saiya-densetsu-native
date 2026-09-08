@@ -19,24 +19,12 @@
       }
     ],
     "native_filter": "Bank $00 ranges from docs/progress.md / native.c dispatch excluded",
-    "combined_interpreted_unique_pcs": 7859,
-    "combined_interpreted_hits": 13987714,
-    "start_interpreted_hits": 7524247,
-    "battle_interpreted_hits": 6463467
+    "combined_interpreted_unique_pcs": 7388,
+    "combined_interpreted_hits": 9229296,
+    "start_interpreted_hits": 5093108,
+    "battle_interpreted_hits": 4136188
   },
   "top_interpreted_pcs": [
-    {
-      "cpu_address": "04:8612",
-      "hits": 1190180,
-      "start_hits": 567648,
-      "battle_hits": 622532
-    },
-    {
-      "cpu_address": "04:8615",
-      "hits": 1190180,
-      "start_hits": 567648,
-      "battle_hits": 622532
-    },
     {
       "cpu_address": "00:80CE",
       "hits": 852114,
@@ -66,66 +54,6 @@
       "hits": 852113,
       "start_hits": 474247,
       "battle_hits": 377866
-    },
-    {
-      "cpu_address": "04:8618",
-      "hits": 188898,
-      "start_hits": 94472,
-      "battle_hits": 94426
-    },
-    {
-      "cpu_address": "04:861A",
-      "hits": 188898,
-      "start_hits": 94472,
-      "battle_hits": 94426
-    },
-    {
-      "cpu_address": "04:861D",
-      "hits": 188898,
-      "start_hits": 94472,
-      "battle_hits": 94426
-    },
-    {
-      "cpu_address": "04:861F",
-      "hits": 188898,
-      "start_hits": 94472,
-      "battle_hits": 94426
-    },
-    {
-      "cpu_address": "04:8620",
-      "hits": 188898,
-      "start_hits": 94472,
-      "battle_hits": 94426
-    },
-    {
-      "cpu_address": "04:860D",
-      "hits": 188874,
-      "start_hits": 94460,
-      "battle_hits": 94414
-    },
-    {
-      "cpu_address": "04:860E",
-      "hits": 188874,
-      "start_hits": 94460,
-      "battle_hits": 94414
-    },
-    {
-      "cpu_address": "04:8610",
-      "hits": 188874,
-      "start_hits": 94460,
-      "battle_hits": 94414
-    },
-    {
-      "cpu_address": "04:8611",
-      "hits": 188874,
-      "start_hits": 94460,
-      "battle_hits": 94414
-    },
-    {
-      "cpu_address": "04:8617",
-      "hits": 188874,
-      "start_hits": 94460,
-      "battle_hits": 94414
     },
     {
       "cpu_address": "03:9160",
@@ -162,18 +90,6 @@
       "hits": 75264,
       "start_hits": 40928,
       "battle_hits": 34336
-    },
-    {
-      "cpu_address": "04:84F7",
-      "hits": 38643,
-      "start_hits": 27477,
-      "battle_hits": 11166
-    },
-    {
-      "cpu_address": "04:84FA",
-      "hits": 38643,
-      "start_hits": 27477,
-      "battle_hits": 11166
     },
     {
       "cpu_address": "03:94AA",
@@ -332,84 +248,6 @@
       "battle_hits": 8104
     },
     {
-      "cpu_address": "04:88AE",
-      "hits": 16320,
-      "start_hits": 16320,
-      "battle_hits": 0
-    },
-    {
-      "cpu_address": "04:88B0",
-      "hits": 16320,
-      "start_hits": 16320,
-      "battle_hits": 0
-    },
-    {
-      "cpu_address": "04:88B1",
-      "hits": 16320,
-      "start_hits": 16320,
-      "battle_hits": 0
-    },
-    {
-      "cpu_address": "04:88B2",
-      "hits": 16320,
-      "start_hits": 16320,
-      "battle_hits": 0
-    },
-    {
-      "cpu_address": "04:88B5",
-      "hits": 16320,
-      "start_hits": 16320,
-      "battle_hits": 0
-    },
-    {
-      "cpu_address": "04:850E",
-      "hits": 14251,
-      "start_hits": 4999,
-      "battle_hits": 9252
-    },
-    {
-      "cpu_address": "04:8511",
-      "hits": 14251,
-      "start_hits": 4999,
-      "battle_hits": 9252
-    },
-    {
-      "cpu_address": "04:8504",
-      "hits": 13889,
-      "start_hits": 5173,
-      "battle_hits": 8716
-    },
-    {
-      "cpu_address": "04:8506",
-      "hits": 13889,
-      "start_hits": 5173,
-      "battle_hits": 8716
-    },
-    {
-      "cpu_address": "04:8509",
-      "hits": 13889,
-      "start_hits": 5173,
-      "battle_hits": 8716
-    },
-    {
-      "cpu_address": "04:850C",
-      "hits": 13889,
-      "start_hits": 5173,
-      "battle_hits": 8716
-    },
-    {
-      "cpu_address": "04:866B",
-      "hits": 13048,
-      "start_hits": 4415,
-      "battle_hits": 8633
-    },
-    {
-      "cpu_address": "04:866E",
-      "hits": 13048,
-      "start_hits": 4415,
-      "battle_hits": 8633
-    },
-    {
       "cpu_address": "00:80E2",
       "hits": 12853,
       "start_hits": 4535,
@@ -504,6 +342,168 @@
       "hits": 10734,
       "start_hits": 1830,
       "battle_hits": 8904
+    },
+    {
+      "cpu_address": "06:F096",
+      "hits": 10734,
+      "start_hits": 1830,
+      "battle_hits": 8904
+    },
+    {
+      "cpu_address": "06:F099",
+      "hits": 10734,
+      "start_hits": 1830,
+      "battle_hits": 8904
+    },
+    {
+      "cpu_address": "06:F09B",
+      "hits": 10734,
+      "start_hits": 1830,
+      "battle_hits": 8904
+    },
+    {
+      "cpu_address": "06:F09C",
+      "hits": 10734,
+      "start_hits": 1830,
+      "battle_hits": 8904
+    },
+    {
+      "cpu_address": "06:F09F",
+      "hits": 10734,
+      "start_hits": 1830,
+      "battle_hits": 8904
+    },
+    {
+      "cpu_address": "06:F0A2",
+      "hits": 10734,
+      "start_hits": 1830,
+      "battle_hits": 8904
+    },
+    {
+      "cpu_address": "06:F0A5",
+      "hits": 10734,
+      "start_hits": 1830,
+      "battle_hits": 8904
+    },
+    {
+      "cpu_address": "06:F0A6",
+      "hits": 10734,
+      "start_hits": 1830,
+      "battle_hits": 8904
+    },
+    {
+      "cpu_address": "06:F0A7",
+      "hits": 10734,
+      "start_hits": 1830,
+      "battle_hits": 8904
+    },
+    {
+      "cpu_address": "06:F0A8",
+      "hits": 10734,
+      "start_hits": 1830,
+      "battle_hits": 8904
+    },
+    {
+      "cpu_address": "06:F0AB",
+      "hits": 10734,
+      "start_hits": 1830,
+      "battle_hits": 8904
+    },
+    {
+      "cpu_address": "06:F0AD",
+      "hits": 10734,
+      "start_hits": 1830,
+      "battle_hits": 8904
+    },
+    {
+      "cpu_address": "06:F0B0",
+      "hits": 10734,
+      "start_hits": 1830,
+      "battle_hits": 8904
+    },
+    {
+      "cpu_address": "06:F0B2",
+      "hits": 10734,
+      "start_hits": 1830,
+      "battle_hits": 8904
+    },
+    {
+      "cpu_address": "06:F0B4",
+      "hits": 10734,
+      "start_hits": 1830,
+      "battle_hits": 8904
+    },
+    {
+      "cpu_address": "06:F0B5",
+      "hits": 10734,
+      "start_hits": 1830,
+      "battle_hits": 8904
+    },
+    {
+      "cpu_address": "06:F0B7",
+      "hits": 10734,
+      "start_hits": 1830,
+      "battle_hits": 8904
+    },
+    {
+      "cpu_address": "06:F0B9",
+      "hits": 10734,
+      "start_hits": 1830,
+      "battle_hits": 8904
+    },
+    {
+      "cpu_address": "06:F0BB",
+      "hits": 10734,
+      "start_hits": 1830,
+      "battle_hits": 8904
+    },
+    {
+      "cpu_address": "06:F0BD",
+      "hits": 10734,
+      "start_hits": 1830,
+      "battle_hits": 8904
+    },
+    {
+      "cpu_address": "06:F0BF",
+      "hits": 10734,
+      "start_hits": 1830,
+      "battle_hits": 8904
+    },
+    {
+      "cpu_address": "06:F0C1",
+      "hits": 10734,
+      "start_hits": 1830,
+      "battle_hits": 8904
+    },
+    {
+      "cpu_address": "06:F0C3",
+      "hits": 10734,
+      "start_hits": 1830,
+      "battle_hits": 8904
+    },
+    {
+      "cpu_address": "06:F0C5",
+      "hits": 10734,
+      "start_hits": 1830,
+      "battle_hits": 8904
+    },
+    {
+      "cpu_address": "06:F0C7",
+      "hits": 10734,
+      "start_hits": 1830,
+      "battle_hits": 8904
+    },
+    {
+      "cpu_address": "06:F0C8",
+      "hits": 10734,
+      "start_hits": 1830,
+      "battle_hits": 8904
+    },
+    {
+      "cpu_address": "06:F0CB",
+      "hits": 10734,
+      "start_hits": 1830,
+      "battle_hits": 8904
     }
   ],
   "top_interpreted_clusters": [
@@ -511,11 +511,6 @@
       "range": "00:800E\u20138107",
       "hits": 4386080,
       "size": 250
-    },
-    {
-      "range": "04:8550\u2013869D",
-      "hits": 4336327,
-      "size": 334
     },
     {
       "range": "06:EFC4\u2013F18C",
@@ -536,11 +531,6 @@
       "range": "01:C885\u2013C8AA",
       "hits": 232089,
       "size": 38
-    },
-    {
-      "range": "04:844A\u2013851C",
-      "hits": 202753,
-      "size": 211
     },
     {
       "range": "00:AB00\u2013AD3E",
@@ -571,16 +561,6 @@
       "range": "01:8401\u201384CE",
       "hits": 85438,
       "size": 206
-    },
-    {
-      "range": "03:9752\u2013977B",
-      "hits": 85200,
-      "size": 42
-    },
-    {
-      "range": "04:889E\u201388C5",
-      "hits": 81930,
-      "size": 40
     },
     {
       "range": "04:8000\u201380F1",
@@ -626,11 +606,6 @@
       "range": "03:94DC\u20139504",
       "hits": 51744,
       "size": 41
-    },
-    {
-      "range": "04:83B2\u20138410",
-      "hits": 51327,
-      "size": 95
     },
     {
       "range": "06:EF3C\u2013EFB4",
@@ -706,13 +681,34 @@
       "range": "04:A074\u2013A0E3",
       "hits": 26671,
       "size": 112
+    },
+    {
+      "range": "01:C8C8\u2013C8E4",
+      "hits": 24345,
+      "size": 29
+    },
+    {
+      "range": "01:B82D\u2013B87F",
+      "hits": 22334,
+      "size": 83
+    },
+    {
+      "range": "06:EB87\u2013EC09",
+      "hits": 22118,
+      "size": 131
+    },
+    {
+      "range": "13:EB90\u2013EB9E",
+      "hits": 21648,
+      "size": 15
+    },
+    {
+      "range": "01:883C\u2013886F",
+      "hits": 20609,
+      "size": 52
     }
   ],
   "battle_route_top_clusters": [
-    {
-      "range": "04:8550\u20138673",
-      "hits": 2224974
-    },
     {
       "range": "00:80AE\u20138107",
       "hits": 1941488
@@ -728,10 +724,6 @@
     {
       "range": "03:952E\u20139542",
       "hits": 104442
-    },
-    {
-      "range": "04:844A\u2013851C",
-      "hits": 102273
     },
     {
       "range": "03:93F7\u201394D3",
@@ -808,6 +800,14 @@
     {
       "range": "01:B82D\u2013B87F",
       "hits": 10148
+    },
+    {
+      "range": "01:883C\u2013886F",
+      "hits": 9963
+    },
+    {
+      "range": "01:F8FA\u2013F99F",
+      "hits": 9828
     }
   ]
 }
