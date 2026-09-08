@@ -587,6 +587,24 @@ int main(int argc,char **argv) {
   }
   {
     memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xa4eb,0), cb=make_cpu(b,0xa4eb,0); ca.k=cb.k=1; ca.xf=cb.xf=false; ca.sp=cb.sp=0x1ff;
+    a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected a4eb call"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    require(ca.pc==0xb72b && ca.k==1 && ca.sp==0x1fc,"a4eb call boundary");
+  }
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xa4ef,0), cb=make_cpu(b,0xa4ef,0); ca.k=cb.k=1; ca.xf=cb.xf=false;
+    a->ram[0x0d66]=0x42; b->ram[0x0d66]=0x42; a->count=b->count=0;
+    require(dbz_native_step(&ca,stats),"expected a4ef load"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b); require((ca.a&0xff)==0x42,"a4ef selector");
+  }
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xa4f2,0), cb=make_cpu(b,0xa4f2,0); ca.k=cb.k=1; ca.xf=cb.xf=false; ca.sp=cb.sp=0x1ff;
+    a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected a4f2 call"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    require(ca.pc==0xbf44 && ca.k==1 && ca.sp==0x1fd,"a4f2 JSR boundary");
+  }
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
     Cpu ca=make_cpu(a,0xf463,0), cb=make_cpu(b,0xf463,0); ca.k=cb.k=2; ca.xf=cb.xf=false; ca.sp=cb.sp=0x1ff;
     word(a,0x200,0x8fff); word(b,0x200,0x8fff); a->count=b->count=0;
     require(dbz_native_step(&ca,stats),"expected 2f463 RTL"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);

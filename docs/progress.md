@@ -556,3 +556,7 @@ complete leaf paths, adding 8 sites and 17 ROM bytes.
 The bank-1 `$CEBA–CEC5` actor reset leaf is native, including both long-call
 boundaries, the `$0725` clear, and its RTL. Tests add 4 verified sites and 12
 ROM bytes.
+
+The bank-1 `$A4EB–A4F2` table-entry prefix is native, covering both long-call
+boundaries, the `$0D66` selector load, and the local JSR boundary. This adds 3
+verified instruction sites and 10 ROM bytes.

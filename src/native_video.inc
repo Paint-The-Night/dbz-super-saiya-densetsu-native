@@ -11368,6 +11368,15 @@ static bool actor_reset_ceba_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $01:A4EB–A4F2: enter the shared actor table helper and load its selector. */
+static bool actor_table_a4eb_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0xa4eb: case 0xa4ef: case 0xa4f2: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) { case 0xa4eb: jsl_to(c,0xb72b); break; case 0xa4ef: video_load(c,0x0d66,false); break; case 0xa4f2: jsr_abs_native(c,0xbf44); break; }
+  return true;
+}
+
 /* $01:EDF9: actor leaf return. */
 static bool actor_return_edf9_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf || pc != 0xedf9) return false;
