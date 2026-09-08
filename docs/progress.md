@@ -373,6 +373,7 @@ the upload call at `$00:85F5`.
 | 00:9AF5 | Scene call stub | 4 | 1 |
 | 00:9AFA | Scene call stub | 4 | 1 |
 | 00:FCD8 | Scene call stub | 4 | 1 |
+| 01:EC4C | Actor call stub | 4 | 1 |
 | 01:CD1E | Actor call stub | 4 | 1 |
 | 01:CD27 | Actor call stub | 4 | 1 |
 | 01:CD4B | Actor call stub | 4 | 1 |
