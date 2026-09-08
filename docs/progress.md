@@ -605,6 +605,11 @@ sites, including both conditional paths and actor dispatch calls. Differential
 tests add 6 verified sites and 17 ROM bytes; the later `$A3C4` continuation
 remains outside this entry’s assigned slice.
 
+The bank-1 `$CEAC–CEB8` status-counter prefix is native across its five
+unclaimed sites, including the helper call, increment, compare, and carry gate.
+The later `$CEBA–CEC5` leaf remains covered by its existing native entry.
+Differential tests add 5 verified sites and 14 ROM bytes.
+
 The bank-3 `$F7DE–F7E6` phase marker leaf is native, covering both status stores,
 the `$80` phase value, and RTL. Differential tests cover all 4 manifest-listed
 sites, adding 4 verified sites and 9 ROM bytes.

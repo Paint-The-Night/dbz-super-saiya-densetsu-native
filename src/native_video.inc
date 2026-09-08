@@ -11480,6 +11480,15 @@ static bool actor_status_ce96_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $01:CEAC–CEC5: advance the actor counter and dispatch its next state. */
+static bool actor_status_ceac_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0xceac: case 0xceb0: case 0xceb3: case 0xceb6: case 0xceb8: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) { case 0xceac: jsl_to(c,0xcd0d); break; case 0xceb0: inc_abs8_native(c,0x0725); break; case 0xceb3: video_load(c,0x0725,false); break; case 0xceb6: cmp_dp8(c,4); break; case 0xceb8: branch_to(c,!c->c,0xcec5); break; }
+  return true;
+}
+
 static void ldy16_constant(Cpu *c, uint16_t value) {
   uint16_t low = c->pc++, high = c->pc++;
   (void)c->read(c->mem, ((uint32_t)c->k << 16) | low); sample_interrupt(c);
