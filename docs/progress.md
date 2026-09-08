@@ -367,7 +367,8 @@ the upload call at `$00:85F5`.
 | 00:95A9–95B6 | Scene-mode[15] flag setup and bank-00:8E96 delegation | 14 | 6 |
 | 00:9444–9458 | Scene-table PPU preset wrapper and bank-04 delegation | 21 | 9 |
 | 00:9459–946E | Scene-table reset wrapper with dual bank calls | 22 | 8 |
-| **Total** | **Three hundred twenty-three complete routines plus a reset prefix** | **26780** | **11942** |
+| 00:97E9–97FC | Scene-state seed leaf | 20 | 10 |
+| **Total** | **Three hundred twenty-four complete routines plus a reset prefix** | **26780** | **11942** |
 
 
 

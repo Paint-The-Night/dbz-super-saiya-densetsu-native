@@ -11168,6 +11168,30 @@ static bool scene_thunk_9459_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $00:97E9-$97FC: scene-state seed leaf. */
+static bool scene_seed_97e9_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) {
+    case 0x97e9: case 0x97eb: case 0x97ee: case 0x97f0: case 0x97f2:
+    case 0x97f4: case 0x97f6: case 0x97f8: case 0x97fa: case 0x97fc: break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0x97e9: byte_constant(c,0xa1); break;
+    case 0x97eb: store_register8(c,0x0716); break;
+    case 0x97ee: byte_constant(c,0x02); break;
+    case 0x97f0: store_dp(c,0x24,true); break;
+    case 0x97f2: store_dp(c,0x27,true); break;
+    case 0x97f4: byte_constant(c,0x03); break;
+    case 0x97f6: store_dp(c,0x25,true); break;
+    case 0x97f8: byte_constant(c,0x04); break;
+    case 0x97fa: store_dp(c,0x26,true); break;
+    case 0x97fc: return_long(c); break;
+  }
+  return true;
+}
+
 /* $05:B00A–$B044: BMI-path callee of $B0BE — seed $17EA..$17F3 from $0E03/$0E0A; JSL $1C806C/$1C8136; RTS. */
 static bool actor_seed_b00a_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7fu) != 0x05 || c->e || c->xf || c->d) return false;
