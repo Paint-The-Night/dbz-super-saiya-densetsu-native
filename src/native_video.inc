@@ -11087,6 +11087,23 @@ static bool scene_thunk_943f_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* Scene-table leaves that only delegate to another bank's handler. */
+static bool scene_thunk_952b_9530_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) {
+    case 0x952b: case 0x952f: case 0x9530: case 0x9534: break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0x952b: jsl_to(c,0xf462); break;
+    case 0x952f: return_long(c); break;
+    case 0x9530: jsl_to(c,0x8674); break;
+    case 0x9534: return_long(c); break;
+  }
+  return true;
+}
+
 /* $05:B00A–$B044: BMI-path callee of $B0BE — seed $17EA..$17F3 from $0E03/$0E0A; JSL $1C806C/$1C8136; RTS. */
 static bool actor_seed_b00a_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7fu) != 0x05 || c->e || c->xf || c->d) return false;
