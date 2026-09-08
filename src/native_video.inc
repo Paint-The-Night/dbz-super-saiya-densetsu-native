@@ -11264,12 +11264,17 @@ static bool scene_cleanup_9599_step(Cpu *c, uint16_t pc) {
 
 /* $00:9251: scene-mode handler reads the active scene flag. */
 static bool scene_entry_9251_step(Cpu *c, uint16_t pc) {
-  if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf || (pc != 0x9251 && pc != 0x9254 && pc != 0x9256)) return false;
+  if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf || (pc != 0x9251 && pc != 0x9254 && pc != 0x9256 && pc != 0x9259 && pc != 0x925c && pc != 0x925e && pc != 0x9261 && pc != 0x9263)) return false;
   (void)fetch(c);
   switch(pc) {
     case 0x9251: video_load(c, 0x01a1, false); break;
     case 0x9254: branch_to(c, c->n, 0x9285); break;
     case 0x9256: stz_abs8(c, 0x0d59); break;
+    case 0x9259: video_load(c, 0x01e7, false); break;
+    case 0x925c: branch_to(c, c->n, 0x9265); break;
+    case 0x925e: video_load(c, 0x01a0, false); break;
+    case 0x9261: cmp_constant8(c, 0x0a); break;
+    case 0x9263: branch_to(c, c->z, 0x9285); break;
   }
   return true;
 }
