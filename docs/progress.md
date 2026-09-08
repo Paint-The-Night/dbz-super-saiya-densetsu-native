@@ -635,6 +635,11 @@ The bank-1 `$8A0E–8A21` actor-index prefix is native across all ten assigned
 instructions, including the table index arithmetic, long indexed load, cached
 result store, and RTL. Differential tests add 10 sites and 20 ROM bytes.
 
+The bank-1 `$863A–8650` actor-pointer prefix is native across all ten assigned
+instructions, including the M/X width transitions, 16-bit pointer arithmetic,
+WRAM stores, shared dispatch, and RTL. Differential tests add 10 sites and 23
+ROM bytes.
+
 The bank-1 `$073C` entry-prefix family now covers all 24 manifest-listed
 entries through their shared `$BF44` helper calls. Differential tests cover 48
 instruction sites, adding 35 sites and 105 ROM bytes beyond the original

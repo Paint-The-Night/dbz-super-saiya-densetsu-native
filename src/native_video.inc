@@ -11425,6 +11425,32 @@ static bool actor_index_8a0e_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $01:863A–8650: widen the accumulator, compute the actor pointer, then
+ * dispatch to the shared table helper. */
+static bool actor_pointer_863a_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 1 || c->e || c->xf || c->d) return false;
+  switch(pc) {
+    case 0x863a: case 0x863c: case 0x863f: case 0x8640: case 0x8643:
+    case 0x8645: case 0x8648: case 0x864a: case 0x864c: case 0x8650: break;
+    default: return false;
+  }
+  if((pc == 0x863a || pc >= 0x864c) ? !c->mf : c->mf) return false;
+  (void)fetch(c);
+  switch(pc) {
+    case 0x863a: set_m(c, false); break;
+    case 0x863c: load_a_abs16(c, 0x01a2); break;
+    case 0x863f: implied(c); c->c = false; break;
+    case 0x8640: adc16_constant(c, 0x0008); break;
+    case 0x8643: store_dp(c, 0x00, false); break;
+    case 0x8645: load_a_abs16(c, 0x01a4); break;
+    case 0x8648: store_dp(c, 0x02, false); break;
+    case 0x864a: set_m(c, true); break;
+    case 0x864c: jsl_to(c, 0x8485); break;
+    case 0x8650: return_long(c); break;
+  }
+  return true;
+}
+
 /* $00:AB96–ABB4: initialize the actor scratch pointers and seed bytes. */
 static bool actor_seed_ab96_step(Cpu *c, uint16_t pc) {
   if(c->e || c->d || !c->mf || c->xf) return false;
