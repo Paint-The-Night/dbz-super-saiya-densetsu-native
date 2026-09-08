@@ -10,22 +10,22 @@ Already-native ranges excluded. Sizes approximate.
 | 2 | `00:8AE5` | 23 | ~ | actor-type table / fallthrough after 8AD6–8AE4 (replay range hits≈1421) |
 | 3 | `03:9752` | 42 | Y | hot interpreted cluster 03:9752–977B (85200 hits) (replay range hits≈85200) |
 | 4 | `00:9251` | 75 | n | scene-mode table $8B54[5] (JMP from native 8B51) |
-| 5 | `00:9535` | 36 | n | scene-mode table $8B54[13] (JMP from native 8B51) |
-| 6 | `00:9579` | 48 | n | scene-mode table $8B54[14] (JMP from native 8B51) |
-| 7 | `04:8550` | 29 | Y | hot interpreted cluster 04:8550–869D (4336327 hits) (replay range hits≈26663) |
-| 8 | `01:8401` | 45 | Y | hot interpreted cluster 01:8401–84CE (85438 hits) (replay range hits≈11309) |
-| 9 | `04:8EF7` | 39 | Y | hot interpreted cluster 04:8EF7–8F61 (52409 hits) (replay range hits≈18) |
-| 10 | `03:952E` | 76 | n | hot interpreted cluster 03:952E–9561 (243602 hits) (replay range hits≈243602) |
-| 11 | `13:EB47` | 73 | ~ | hot interpreted cluster 13:EB47–EB7F (101024 hits) (replay range hits≈101024) |
-| 12 | `04:8000` | 169 | Y | hot interpreted cluster 04:8000–80F1 (76821 hits) (replay range hits≈57912) |
-| 13 | `04:889E` | 97 | ~ | hot interpreted cluster 04:889E–88C5 (81930 hits) (replay range hits≈81930) |
-| 14 | `00:933A` | 111 | n | scene-mode table $8B54[6] (JMP from native 8B51) (replay range hits≈39) |
-| 15 | `00:9102` | 155 | n | scene-mode table $8B54[3] (JMP from native 8B51) |
-| 16 | `00:91B6` | 7 | n | scene-mode table $8B54[4] (JMP from native 8B51) |
-| 17 | `03:972D` | 16 | ~ | hot interpreted cluster 03:972D–973C (57155 hits) (replay range hits≈57155) |
-| 18 | `00:9A3B` | 60 | ~ | hot interpreted cluster 00:9A3B–9A71 (53795 hits) (replay range hits≈53795) |
-| 19 | `03:93F7` | 3 | Y | hot interpreted cluster 03:93F7–94D3 (155576 hits) (replay range hits≈6) |
-| 20 | `03:9158` | 164 | n | hot interpreted cluster 03:9158–9192 (642808 hits) (replay range hits≈673448) |
+| 5 | `04:8550` | 29 | Y | hot interpreted cluster 04:8550–869D (4336327 hits) (replay range hits≈26663) |
+| 6 | `01:8401` | 45 | Y | hot interpreted cluster 01:8401–84CE (85438 hits) (replay range hits≈11309) |
+| 7 | `04:8EF7` | 39 | Y | hot interpreted cluster 04:8EF7–8F61 (52409 hits) (replay range hits≈18) |
+| 8 | `03:952E` | 76 | n | hot interpreted cluster 03:952E–9561 (243602 hits) (replay range hits≈243602) |
+| 9 | `13:EB47` | 73 | ~ | hot interpreted cluster 13:EB47–EB7F (101024 hits) (replay range hits≈101024) |
+| 10 | `04:8000` | 169 | Y | hot interpreted cluster 04:8000–80F1 (76821 hits) (replay range hits≈57912) |
+| 11 | `04:889E` | 97 | ~ | hot interpreted cluster 04:889E–88C5 (81930 hits) (replay range hits≈81930) |
+| 12 | `00:933A` | 111 | n | scene-mode table $8B54[6] (JMP from native 8B51) (replay range hits≈39) |
+| 13 | `00:9102` | 155 | n | scene-mode table $8B54[3] (JMP from native 8B51) |
+| 14 | `00:91B6` | 7 | n | scene-mode table $8B54[4] (JMP from native 8B51) |
+| 15 | `03:972D` | 16 | ~ | hot interpreted cluster 03:972D–973C (57155 hits) (replay range hits≈57155) |
+| 16 | `00:9A3B` | 60 | ~ | hot interpreted cluster 00:9A3B–9A71 (53795 hits) (replay range hits≈53795) |
+| 17 | `03:93F7` | 3 | Y | hot interpreted cluster 03:93F7–94D3 (155576 hits) (replay range hits≈6) |
+| 18 | `03:9158` | 164 | n | hot interpreted cluster 03:9158–9192 (642808 hits) (replay range hits≈673448) |
+| 19 | `01:C885` | 190 | n | hot interpreted cluster 01:C885–C8AA (232089 hits) (replay range hits≈282402) |
+| 20 | `03:94DC` | 158 | n | hot interpreted cluster 03:94DC–9504 (51744 hits) (replay range hits≈295346) |
 
 ## Top 10 quick list
 
@@ -33,12 +33,12 @@ Already-native ranges excluded. Sizes approximate.
 2. `00:8AE5` — actor-type table / fallthrough after 8AD6–8AE4
 3. `03:9752` — hot interpreted cluster 03:9752–977B (85200 hits)
 4. `00:9251` — scene-mode table $8B54[5] (JMP from native 8B51)
-5. `00:9535` — scene-mode table $8B54[13] (JMP from native 8B51)
-6. `00:9579` — scene-mode table $8B54[14] (JMP from native 8B51)
-7. `04:8550` — hot interpreted cluster 04:8550–869D (4336327 hits)
-8. `01:8401` — hot interpreted cluster 01:8401–84CE (85438 hits)
-9. `04:8EF7` — hot interpreted cluster 04:8EF7–8F61 (52409 hits)
-10. `03:952E` — hot interpreted cluster 03:952E–9561 (243602 hits)
+5. `04:8550` — hot interpreted cluster 04:8550–869D (4336327 hits)
+6. `01:8401` — hot interpreted cluster 01:8401–84CE (85438 hits)
+7. `04:8EF7` — hot interpreted cluster 04:8EF7–8F61 (52409 hits)
+8. `03:952E` — hot interpreted cluster 03:952E–9561 (243602 hits)
+9. `13:EB47` — hot interpreted cluster 13:EB47–EB7F (101024 hits)
+10. `04:8000` — hot interpreted cluster 04:8000–80F1 (76821 hits)
 
 ## Preference mapping
 
@@ -48,7 +48,7 @@ Already-native ranges excluded. Sizes approximate.
 | (b) HDMA/queue 8B28+ | `00:8B7A` |
 | (c) 8954+ palette/WRAM | `00:8AE5` |
 | (d) 9B36+ producers | — |
-| (e) battle/hot call-chain leaves | `03:952E`, `13:EB47`, `03:9158` |
+| (e) battle/hot call-chain leaves | `03:952E`, `13:EB47`, `03:9158`, `01:C885`, `03:94DC` |
 
 ## Notes for reconstruct lane
 
