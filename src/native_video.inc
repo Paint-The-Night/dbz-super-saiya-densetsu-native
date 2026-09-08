@@ -11175,6 +11175,14 @@ static bool scene_thunk_952b_9530_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $00:9535: scene-table continuation begins by reading the scene mode. */
+static bool scene_read_9535_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf || pc != 0x9535) return false;
+  (void)fetch(c);
+  video_load(c, 0x01e7, false);
+  return true;
+}
+
 /* $00:95A9-$95B6: scene-mode[15] setup around the native $8E96 path. */
 static bool scene_thunk_95a9_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf) return false;

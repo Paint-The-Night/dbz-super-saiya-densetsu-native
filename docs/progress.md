@@ -27,6 +27,9 @@ completeness or the fidelity of untested game routes.
 
 ## Reconstructed and verified
 
+The scene-table continuation at `$00:9535` now has a native, differentially verified read of the scene-mode register. This adds 1 instruction site and 3 ROM bytes while preserving the following interpreted branch body.
+
+
 The `$00:98D5–990E` actor-slot loop adds 27 instruction sites and 58 bytes.
 Its `$01:C91F` graphics setup callee and `$01:C943` pointer helper are now native;
 `$01:C95A` still uses interpreter fallback. The loop reconstruction covers
