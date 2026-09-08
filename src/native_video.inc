@@ -11322,6 +11322,19 @@ static bool actor_call_cd1e_step(Cpu *c, uint16_t pc) {
   (void)fetch(c); jsl_to(c,0xcfb2); return true;
 }
 
+/* Bank-1 short prefixes that all load the shared status word at $073C before
+ * their local continuation. The continuation remains interpreter-backed. */
+static bool actor_load_073c_prefix_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) {
+    case 0xdc60: case 0xde10: case 0xde46: case 0xde7c: case 0xdfcc:
+    case 0xe066: case 0xe0b7: case 0xe0f9: case 0xe124: case 0xe14f:
+    case 0xe1d3: case 0xeb48: case 0xec9d: case 0xed2e: break;
+    default: return false;
+  }
+  (void)fetch(c); video_load(c, 0x073c, false); return true;
+}
+
 /* $01:EDF9: actor leaf return. */
 static bool actor_return_edf9_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf || pc != 0xedf9) return false;

@@ -541,3 +541,7 @@ and 3 ROM bytes.
 
 The bank-3 `$F246` leaf return now shares the verified RTL handler used by the
 neighboring scene exits, adding 1 site and 1 ROM byte.
+
+Thirteen bank-1 entry prefixes that begin with the shared absolute `$073C`
+status load are native and differentially tested; their local continuations
+remain interpreter-backed. This adds 13 verified sites and 39 ROM bytes.
