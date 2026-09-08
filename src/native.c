@@ -16,6 +16,18 @@ static FILE *entry_trace_file;
 static uint32_t entry_trace_pc;
 static bool entry_trace_initialized;
 static DbzExecution *active;
+static bool entry_state_dumped[2];
+static void dump_entry_state(const Cpu *c, unsigned mode) {
+  if(entry_state_dumped[mode]) return;
+  int size = snes_saveState((Snes *)c->mem, NULL);
+  if(size <= 0) return;
+  uint8_t *data = malloc((size_t)size);
+  if(!data || snes_saveState((Snes *)c->mem, data) != size) { free(data); return; }
+  const char *name = mode ? "entry-snapshot-reference.state" : "entry-snapshot-native.state";
+  FILE *f = fopen(name, "wb");
+  if(f) { fwrite(data, 1, (size_t)size, f); fclose(f); entry_state_dumped[mode] = true; }
+  free(data);
+}
 static void trace_entry(const Cpu *c) {
   if(!entry_trace_initialized) {
     entry_trace_initialized = true;
@@ -29,10 +41,12 @@ static void trace_entry(const Cpu *c) {
       }
     }
   }
-  if(entry_trace_file && (((uint32_t)(c->k & 0x7f) << 16) | c->pc) == entry_trace_pc)
+  if(entry_trace_file && (((uint32_t)(c->k & 0x7f) << 16) | c->pc) == entry_trace_pc) {
+    dump_entry_state(c, active->enabled ? 0u : 1u);
     fprintf(entry_trace_file, "%s,%02x,%04x,%04x,%04x,%04x,%04x,%04x,%02x,%02x,%d,%d,%d,%d,%d,%d,%d,%d,%d\n",
             active->enabled ? "native" : "reference", c->k & 0x7f, c->pc, c->a, c->x, c->y, c->sp, c->dp, c->k, c->db,
             c->c, c->z, c->v, c->n, c->i, c->d, c->xf, c->mf, c->e);
+  }
   if(entry_trace_file) fflush(entry_trace_file);
 }
 

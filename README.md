@@ -102,6 +102,8 @@ pre-instruction CPU register snapshots to `entry-snapshots.csv`; this local
 file is ignored by Git and never contains the ROM.
 Set `DBZ_TRACE_REFERENCE=1` alongside it to label snapshots from the reference
 interpreter as well as the native run.
+The first matching entry in each mode also writes a complete local emulator
+state to `entry-snapshot-native.state` and `entry-snapshot-reference.state`.
 
 For an interactive window, omit `--headless --frames`:
 
