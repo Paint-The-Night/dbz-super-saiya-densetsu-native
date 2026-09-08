@@ -589,3 +589,8 @@ sites and branch conditions, adding 12 sites and 26 ROM bytes.
 The bank-1 `$CE57–CE6C` status-reset leaf is native, including both helper
 calls, masked active-bit update, and RTL. Differential tests cover all 8 sites,
 adding 8 verified sites and 22 ROM bytes.
+
+The bank-1 `$CCEF–CD01` status-counter prefix is native, covering its helper
+call, counter increment, compare/branch gate, and two dispatch calls.
+Differential tests cover all 7 manifest-listed sites, adding 7 verified sites
+and 22 ROM bytes.
