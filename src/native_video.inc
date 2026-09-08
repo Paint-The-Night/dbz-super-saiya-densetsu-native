@@ -11401,6 +11401,30 @@ static bool actor_status_ec9d_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $01:8A0E–8A21: form the actor-table index and cache its selected byte. */
+static bool actor_index_8a0e_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) {
+    case 0x8a0e: case 0x8a10: case 0x8a11: case 0x8a14: case 0x8a15:
+    case 0x8a16: case 0x8a19: case 0x8a1a: case 0x8a1e: case 0x8a21: break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0x8a0e: byte_constant(c, 0); break;
+    case 0x8a10: xba_native(c); break;
+    case 0x8a11: video_load(c, 0x0d59, false); break;
+    case 0x8a14: asl_a8(c); break;
+    case 0x8a15: implied(c); c->c = false; break;
+    case 0x8a16: adc_abs8(c, 0x0d59); break;
+    case 0x8a19: tax16_from_a8(c); break;
+    case 0x8a1a: load_a_long_x8(c, 0x0183bd); break;
+    case 0x8a1e: store_a_abs8(c, 0x01e3); break;
+    case 0x8a21: return_long(c); break;
+  }
+  return true;
+}
+
 /* $00:AB96–ABB4: initialize the actor scratch pointers and seed bytes. */
 static bool actor_seed_ab96_step(Cpu *c, uint16_t pc) {
   if(c->e || c->d || !c->mf || c->xf) return false;

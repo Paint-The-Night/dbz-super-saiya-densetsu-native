@@ -570,6 +570,16 @@ int main(int argc,char **argv) {
     }
   }
   {
+    const uint16_t sites[] = {0x8a0e,0x8a10,0x8a11,0x8a14,0x8a15,0x8a16,0x8a19,0x8a1a,0x8a1e,0x8a21};
+    for(unsigned n=0;n<10;n++) {
+      memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+      Cpu ca=make_cpu(a,sites[n],0), cb=make_cpu(b,sites[n],0);
+      ca.k=cb.k=1; ca.xf=cb.xf=false; ca.mf=cb.mf=true; ca.sp=cb.sp=0x1ff;
+      a->ram[0x0d59]=b->ram[0x0d59]=0x12; a->ram[0x1e3]=b->ram[0x1e3]=0x00; a->count=b->count=0;
+      require(dbz_native_step(&ca,stats),"expected 8a0e actor index"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+  }
+  {
     const uint16_t sites[] = {0xab96,0xab99,0xab9b,0xab9e,0xaba0,0xaba2,0xaba4,0xaba6,
                               0xaba8,0xabaa,0xabac,0xabae,0xabb0,0xabb2,0xabb4};
     for(unsigned n=0;n<15;n++) {

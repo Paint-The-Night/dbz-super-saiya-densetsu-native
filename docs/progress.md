@@ -631,6 +631,10 @@ instructions, initializing the scratch pointers and eight-byte seed table before
 returning to the interpreter-backed continuation. Differential tests add 15
 sites and 31 ROM bytes.
 
+The bank-1 `$8A0E–8A21` actor-index prefix is native across all ten assigned
+instructions, including the table index arithmetic, long indexed load, cached
+result store, and RTL. Differential tests add 10 sites and 20 ROM bytes.
+
 The bank-1 `$073C` entry-prefix family now covers all 24 manifest-listed
 entries through their shared `$BF44` helper calls. Differential tests cover 48
 instruction sites, adding 35 sites and 105 ROM bytes beyond the original
