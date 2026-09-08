@@ -11405,6 +11405,15 @@ static bool actor_index_8241_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $01:BBF7–BC03: resolve the actor table pointer into Y and return. */
+static bool actor_index_bbf7_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0xbbf7: case 0xbbf9: case 0xbbfa: case 0xbbfd: case 0xbbfe: case 0xbc02: case 0xbc03: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) { case 0xbbf7: byte_constant(c,0); break; case 0xbbf9: xba_native(c); break; case 0xbbfa: video_load(c,0x0d62,false); break; case 0xbbfd: tax16(c); break; case 0xbbfe: load_a_long_x8(c,0x01bc04); break; case 0xbc02: tay16(c); break; case 0xbc03: return_long(c); break; }
+  return true;
+}
+
 /* $01:EDF9: actor leaf return. */
 static bool actor_return_edf9_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf || pc != 0xedf9) return false;

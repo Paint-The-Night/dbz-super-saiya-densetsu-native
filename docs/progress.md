@@ -573,3 +573,7 @@ complete path and return stack. This adds 8 verified sites and 23 ROM bytes.
 The matching `$01:8241–824F` actor-index resolver is native, including its
 second table lookup, `$0D5E` result store, and RTL. Differential coverage adds
 7 verified sites and 15 ROM bytes.
+
+The bank-1 `$BBF7–BC03` actor-table resolver is native, including indexed
+long-ROM lookup, Y result transfer, and RTL. Differential coverage adds 7
+verified sites and 13 ROM bytes.
