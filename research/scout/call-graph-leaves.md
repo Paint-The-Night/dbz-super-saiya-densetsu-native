@@ -158,6 +158,14 @@ Native HDMA/queue wipe ends in `JMP ($8B54,X)` with X = (DP+$24 & $7F) * 2.
 - Rationale: hot interpreted cluster 01:8250–82CF (97088 hits)
 - Hits entry/range: 58/1160
 
+### `01:802A` — NEAR-LEAF
+
+- Range ≈ `01:802A–01:8091` (~104 bytes)
+- Nested: [('JSL', '01:8292'), ('JSL', '01:8292')]; exits: [('RTL', 32913)]
+- Callers (static sample): n/a
+- Rationale: hot interpreted cluster 01:802A–8067 (31704 hits)
+- Hits entry/range: 1321/33025
+
 ## Good next-native heuristics
 
 1. **`00:8E76` / `00:8B7A`** — immediate scene-mode handlers after already-native `8B28`/`8E26`.
