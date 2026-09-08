@@ -802,6 +802,15 @@ int main(int argc,char **argv) {
     }
   }
   {
+    const uint16_t sites[] = {0xf5a3,0xf5a6,0xf5a8,0xf5aa,0xf5ac,0xf5ae,0xf5b1,0xf5b3,0xf5b5,0xf5b7,0xf5b9,0xf5bc,0xf5be,0xf5c0,0xf5c2,0xf5c5,0xf5c7,0xf5ca};
+    for(unsigned i=0;i<18;i++) {
+      memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+      Cpu ca=make_cpu(a,sites[i],0), cb=make_cpu(b,sites[i],0); ca.k=cb.k=3; ca.xf=cb.xf=false; ca.mf=cb.mf=true; ca.sp=cb.sp=0x1ff;
+      a->ram[0x01a2]=b->ram[0x01a2]=0x80; a->ram[0x01a4]=b->ram[0x01a4]=0x70; a->ram[0x01bd]=b->ram[0x01bd]=0x3f; a->count=b->count=0;
+      require(dbz_native_step(&ca,stats),"expected f5a3 actor gate"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+  }
+  {
     const uint16_t sites[] = {0xe769,0xe76c,0xe770,0xe774,0xe775,0xe778,0xe77a,0xe77b,0xe77e,0xe782,0xe786,0xe787,0xe78a,0xe78c};
     for(unsigned i=0;i<14;i++) {
       memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));

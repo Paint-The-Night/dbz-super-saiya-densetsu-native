@@ -447,6 +447,8 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = actor_gate_f561_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xf583 && c->pc <= 0xf5a1) {
       done = actor_gate_f583_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xf5a3 && c->pc <= 0xf5ca) {
+      done = actor_gate_f5a3_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xf5cb && c->pc <= 0xf5f5) {
       done = actor_gate_f5cb_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xf5f6 && c->pc <= 0xf5fd) {

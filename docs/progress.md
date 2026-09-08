@@ -643,6 +643,10 @@ The bank-3 `$F5CB–F5F5` actor gate is native across all 18 assigned
 instructions, including alternate phase thresholds, both helper dispatches,
 and RTL. Differential tests add 18 sites and 43 ROM bytes.
 
+The bank-3 `$F5A3–F5CA` actor fallback selector is native across all 18
+assigned instructions, including its threshold gates, marker publication, and
+RTL. Differential tests add 18 sites and 40 ROM bytes.
+
 The bank-3 `$F7DE–F7E6` phase marker leaf is native, covering both status stores,
 the `$80` phase value, and RTL. Differential tests cover all 4 manifest-listed
 sites, adding 4 verified sites and 9 ROM bytes.

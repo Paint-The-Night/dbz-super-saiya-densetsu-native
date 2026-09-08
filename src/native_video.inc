@@ -11726,6 +11726,26 @@ static bool actor_gate_f5cb_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $03:F5A3–F5CA: actor fallback selector with the remaining phase thresholds
+ * and marker publication before RTL. */
+static bool actor_gate_f5a3_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 3 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0xf5a3: case 0xf5a6: case 0xf5a8: case 0xf5aa: case 0xf5ac: case 0xf5ae: case 0xf5b1: case 0xf5b3: case 0xf5b5: case 0xf5b7: case 0xf5b9: case 0xf5bc: case 0xf5be: case 0xf5c0: case 0xf5c2: case 0xf5c5: case 0xf5c7: case 0xf5ca: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) {
+    case 0xf5a3: video_load(c,0x01a2,false); break; case 0xf5a6: cmp_constant8(c,0x78); break;
+    case 0xf5a8: branch_to(c,!c->c,0xf5ca); break; case 0xf5aa: cmp_constant8(c,0x88); break;
+    case 0xf5ac: branch_to(c,c->c,0xf5ca); break; case 0xf5ae: video_load(c,0x01a4,false); break;
+    case 0xf5b1: cmp_constant8(c,0x6c); break; case 0xf5b3: branch_to(c,!c->c,0xf5ca); break;
+    case 0xf5b5: cmp_constant8(c,0x78); break; case 0xf5b7: branch_to(c,c->c,0xf5ca); break;
+    case 0xf5b9: video_load(c,0x01bd,false); break; case 0xf5bc: cmp_constant8(c,0x3f); break;
+    case 0xf5be: branch_to(c,!c->z,0xf5ca); break; case 0xf5c0: byte_constant(c,0x2a); break;
+    case 0xf5c2: store_a_abs8(c,0x01d8); break; case 0xf5c5: byte_constant(c,0x80); break;
+    case 0xf5c7: store_a_abs8(c,0x1648); break; case 0xf5ca: return_long(c); break;
+  }
+  return true;
+}
+
 /* $03:953E–954B: status gate and setup prefix before the shared actor loop. */
 static bool actor_prefix_953e_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 3 || c->e || c->xf || c->d || !c->mf) return false;
