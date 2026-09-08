@@ -11264,7 +11264,7 @@ static bool scene_cleanup_9599_step(Cpu *c, uint16_t pc) {
 
 /* $00:9251: scene-mode handler reads the active scene flag. */
 static bool scene_entry_9251_step(Cpu *c, uint16_t pc) {
-  if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf || (pc != 0x9251 && pc != 0x9254 && pc != 0x9256 && pc != 0x9259 && pc != 0x925c && pc != 0x925e && pc != 0x9261 && pc != 0x9263)) return false;
+  if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf || (pc != 0x9251 && pc != 0x9254 && pc != 0x9256 && pc != 0x9259 && pc != 0x925c && pc != 0x925e && pc != 0x9261 && pc != 0x9263 && pc != 0x9265 && pc != 0x9268 && pc != 0x926a && pc != 0x926c && pc != 0x926e && pc != 0x9270 && pc != 0x9272 && pc != 0x9274 && pc != 0x9276)) return false;
   (void)fetch(c);
   switch(pc) {
     case 0x9251: video_load(c, 0x01a1, false); break;
@@ -11275,6 +11275,15 @@ static bool scene_entry_9251_step(Cpu *c, uint16_t pc) {
     case 0x925e: video_load(c, 0x01a0, false); break;
     case 0x9261: cmp_constant8(c, 0x0a); break;
     case 0x9263: branch_to(c, c->z, 0x9285); break;
+    case 0x9265: video_load(c, 0x01a0, false); break;
+    case 0x9268: cmp_constant8(c, 0x0f); break;
+    case 0x926a: branch_to(c, c->z, 0x9295); break;
+    case 0x926c: cmp_constant8(c, 0x08); break;
+    case 0x926e: branch_to(c, c->z, 0x9295); break;
+    case 0x9270: cmp_constant8(c, 0x1b); break;
+    case 0x9272: branch_to(c, c->z, 0x9278); break;
+    case 0x9274: cmp_constant8(c, 0x0d); break;
+    case 0x9276: branch_to(c, !c->z, 0x927d); break;
   }
   return true;
 }

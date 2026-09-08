@@ -3256,6 +3256,14 @@ int main(int argc,char **argv) {
       require(dbz_native_step(&ca,stats),"expected 9259 scene path"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
     }
   }
+  {
+    const uint16_t sites[] = {0x9265,0x9268,0x926a,0x926c,0x926e,0x9270,0x9272,0x9274,0x9276};
+    for(unsigned n=0;n<9;n++) {
+      memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+      Cpu ca=make_cpu(a,sites[n],0), cb=make_cpu(b,sites[n],0); ca.k=cb.k=0; ca.db=cb.db=0; ca.xf=cb.xf=false; ca.mf=cb.mf=true; ca.a=cb.a=(n==1?0x0f:(n==3?0x08:(n==5?0x1b:(n==7?0x0d:0)))); a->ram[0x01a0]=b->ram[0x01a0]=ca.a; a->count=b->count=0;
+      require(dbz_native_step(&ca,stats),"expected 9265 scene selector"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+  }
   /* $008D13: bit0 of $01BC clear → early RTL; set → second $85B6 */
   for(unsigned av=0;av<3;av++) {
     memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
