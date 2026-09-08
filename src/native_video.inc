@@ -11168,6 +11168,12 @@ static bool scene_thunk_9459_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $00:99C2: scene leaf return. */
+static bool scene_return_99c2_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf || pc != 0x99c2) return false;
+  (void)fetch(c); return_long(c); return true;
+}
+
 /* $00:97E9-$97FC: scene-state seed leaf. */
 static bool scene_seed_97e9_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf) return false;
