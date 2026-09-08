@@ -565,3 +565,7 @@ The `$00:AE29–AE37` mode-7 preparation leaf is native, covering pointer setup,
 two existing decompression calls, output-index loading, and RTS. Direct tests
 cover each instruction boundary and the complete return behavior. This adds 6
 verified sites and 18 ROM bytes.
+
+The `$01:8092–80A1` actor-index resolver is native, including table indexing,
+long-ROM lookup, result storage, and RTL. Differential coverage exercises the
+complete path and return stack. This adds 8 verified sites and 23 ROM bytes.

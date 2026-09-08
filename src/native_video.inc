@@ -11387,6 +11387,15 @@ static bool mode7_prepare_ae29_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $01:8092–80A1: resolve the actor index through the bank-1 table. */
+static bool actor_index_8092_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0x8092: case 0x8094: case 0x8095: case 0x8098: case 0x8099: case 0x809a: case 0x809e: case 0x80a1: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) { case 0x8092: byte_constant(c,0); break; case 0x8094: xba_native(c); break; case 0x8095: video_load(c,0x0d59,false); break; case 0x8098: asl_a8(c); break; case 0x8099: tax16(c); break; case 0x809a: load_a_long_x8(c,0x0183a8); break; case 0x809e: store_register8(c,0x01e3); break; case 0x80a1: return_long(c); break; }
+  return true;
+}
+
 /* $01:EDF9: actor leaf return. */
 static bool actor_return_edf9_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf || pc != 0xedf9) return false;
