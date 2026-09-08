@@ -9,8 +9,6 @@ static void sbc_abs16(Cpu *c, uint16_t address);
 static void ldy_dp16(Cpu *c, uint8_t offset);
 static void cmp_dp16(Cpu *c, uint8_t offset);
 static void cmp_long_x8(Cpu *c, uint32_t base);
-static void php_native(Cpu *c);
-static void jsl_to(Cpu *c, uint16_t dest);
 static void branch_to(Cpu *c, bool take, uint16_t target) {
   if(!take) sample_interrupt(c);
   (void)fetch(c);
@@ -50,12 +48,8 @@ static void byte_constant(Cpu *c, uint8_t value) {
 /* $06:EE42 entry prefix: preserve processor flags before actor setup. */
 static bool actor_setup_ee42_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 6 || c->e) return false;
-  if(pc != 0xee42 && pc != 0xee43 && pc != 0xee46) return false;
-  if(pc == 0xee43 && (c->xf || c->mf)) return false;
-  (void)fetch(c);
-  if(pc == 0xee42) php_native(c);
-  else if(pc == 0xee43) index_constant(c, false, 0x0000);
-  else jsl_to(c, 0xf089);
+  if(pc != 0xee42) return false;
+  (void)fetch(c); php_native(c);
   return true;
 }
 static void xba_native(Cpu *c) {

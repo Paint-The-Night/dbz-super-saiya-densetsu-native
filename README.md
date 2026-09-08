@@ -35,7 +35,7 @@ and elimination of the remaining interpreter fallback are still unfinished.
 
 ### Progress tracker
 
-**95.54% — 12,646 / 13,237 discovered instruction sites reconstructed and verified**
+**95.52% — 12,644 / 13,237 discovered instruction sites reconstructed and verified**
 
 This percentage uses the pinned static-analysis worklist as its denominator.
 That worklist is incomplete, so it is a useful progress gauge for this project,
@@ -95,11 +95,6 @@ build/dbz-port --rom "$DBZ_ROM" \
   --inputs tests/flight-event.inputs \
   --dump-dir artifacts/replay
 ```
-
-To capture caller context for an unresolved routine, set `DBZ_ENTRY_TRACE`
-to its address (for example `03:99A6`). The native runner writes matching
-pre-instruction CPU register snapshots to `entry-snapshots.csv`; this local
-file is ignored by Git and never contains the ROM.
 
 For an interactive window, omit `--headless --frames`:
 

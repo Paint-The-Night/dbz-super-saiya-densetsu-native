@@ -10048,15 +10048,6 @@ int main(int argc,char **argv) {
     a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected ee42 PHP"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
     require(ca.pc==0xee43 && ca.sp==0x1fe,"ee42 PHP frame");
   }
-  /* $06EE43: 16-bit X initialization after PHP. */
-  for(unsigned variant=0; variant<32; variant++) if(!(variant&1) && !(variant&2)) {
-    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
-    Cpu ca=make_cpu(a,0xee43,variant), cb=make_cpu(b,0xee43,variant);
-    ca.k=cb.k=6; ca.xf=cb.xf=false; ca.mf=cb.mf=false; ca.sp=cb.sp=0x1fe;
-    a->ram[0x1ff]=b->ram[0x1ff]=0; a->count=b->count=0;
-    require(dbz_native_step(&ca,stats),"expected ee43 LDX"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
-    require(ca.pc==0xee46 && ca.x==0,"ee43 zero X");
-  }
 
   /* $06EE46: long-call boundary into the verified F089 tile fetcher. */
   for(unsigned variant=0; variant<8; variant++) {

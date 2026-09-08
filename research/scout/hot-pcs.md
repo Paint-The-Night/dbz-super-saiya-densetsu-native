@@ -9,9 +9,9 @@ ROM SHA-256 `962aa7a09765a97164af67098877a8fe5b7f1ea9db738561eb466b7600fd241c` (
 
 Coverage counts every visited ROM PC while natives run (visited increments before native/interpret dispatch). Hits below exclude already-native bank `$00` ranges.
 
-- Combined interpreted hits: **7,768,129** across **5907** unique PCs
-- Start-game interpreted hits: 4,662,632
-- Battle-route interpreted hits: 3,105,497
+- Combined interpreted hits: **7,770,628** across **5910** unique PCs
+- Start-game interpreted hits: 4,663,697
+- Battle-route interpreted hits: 3,106,931
 
 ## Top 40 interpreted PC hits (combined)
 
@@ -85,8 +85,8 @@ Coverage counts every visited ROM PC while natives run (visited increments befor
 | 21 | `01:816F–81F4` | 40896 | 134 |
 | 22 | `03:99A6–9A26` | 40294 | 129 |
 | 23 | `03:957A–9589` | 35488 | 16 |
-| 24 | `00:9735–9747` | 34988 | 19 |
-| 25 | `06:EE4A–EED2` | 32667 | 137 |
+| 24 | `06:EE45–EED2` | 35166 | 142 |
+| 25 | `00:9735–9747` | 34988 | 19 |
 | 26 | `01:802A–8067` | 31704 | 62 |
 | 27 | `03:91D4–9254` | 31218 | 129 |
 | 28 | `04:8118–8162` | 27912 | 75 |
@@ -109,9 +109,9 @@ Coverage counts every visited ROM PC while natives run (visited increments befor
 | 10 | `03:94DC–9504` | 23606 |
 | 11 | `03:994C–9961` | 22533 |
 | 12 | `00:98A1–98DB` | 21057 |
-| 13 | `00:97BC–988E` | 19000 |
-| 14 | `03:99A6–9A26` | 18396 |
-| 15 | `06:EE4A–EED2` | 17757 |
+| 13 | `06:EE45–EED2` | 19191 |
+| 14 | `00:97BC–988E` | 19000 |
+| 15 | `03:99A6–9A26` | 18396 |
 | 16 | `00:9735–9747` | 13987 |
 | 17 | `01:81FD–821C` | 11640 |
 | 18 | `01:8668–86D7` | 11472 |
