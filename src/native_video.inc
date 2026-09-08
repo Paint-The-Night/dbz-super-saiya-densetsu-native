@@ -11350,7 +11350,9 @@ static bool actor_entry_9752_step(Cpu *c, uint16_t pc) {
      (narrow ? !c->mf : c->mf) ||
      (pc != 0x9752 && pc != 0x9753 && pc != 0x9755 && pc != 0x9756 &&
       pc != 0x9758 && pc != 0x975a && pc != 0x975c && pc != 0x975e &&
-      pc != 0x9760 && pc != 0x9761 && pc != 0x9763 && pc != 0x9764 && pc != 0x9765)) return false;
+      pc != 0x9760 && pc != 0x9761 && pc != 0x9763 && pc != 0x9764 && pc != 0x9765 &&
+      pc != 0x9767 && pc != 0x976b && pc != 0x976d && pc != 0x976e && pc != 0x9770 &&
+      pc != 0x9771 && pc != 0x9775 && pc != 0x9777 && pc != 0x9778)) return false;
   (void)fetch(c);
   switch(pc) {
     case 0x9752: phx16(c); break;
@@ -11365,6 +11367,13 @@ static bool actor_entry_9752_step(Cpu *c, uint16_t pc) {
     case 0x9763: asl_a16(c); break;
     case 0x9764: tax16(c); break;
     case 0x9765: set_m(c, true); break;
+    case 0x9767: case 0x9771: load_a_long_x8(c, 0x039aa8); break;
+    case 0x976b: store_dp(c, 0x04); break;
+    case 0x976d: case 0x9777: asl_a8(c); break;
+    case 0x976e: store_dp(c, 0x14); break;
+    case 0x9770: implied(c); c->x++; zn(c, c->x, false); break;
+    case 0x9775: store_dp(c, 0x06); break;
+    case 0x9778: store_dp(c, 0x16); break;
   }
   return true;
 }
