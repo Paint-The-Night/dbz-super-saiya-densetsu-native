@@ -6481,6 +6481,13 @@ static bool scene_wrap_fce2_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $00:9AE3-$9AE7: scene call wrapper. */
+static bool scene_wrap_9ae3_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf) return false;
+  if(pc != 0x9ae3 && pc != 0x9ae7) return false;
+  (void)fetch(c); if(pc == 0x9ae3) jsl_to(c,0x9735); else jsl_to(c,0xf0bc); return true;
+}
+
 /* $02:F463: actor leaf return. */
 static bool actor_return_2f463_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 2 || c->e || c->xf || c->d || !c->mf || pc != 0xf463) return false;
