@@ -336,6 +336,18 @@ int main(int argc,char **argv) {
     lakesnes_cpu_runOpcode(&cb);compare(&ca,&cb,a,b);
     require(ca.pc==0x9000 && ca.k==0 && ca.sp==0x202,"C942 return frame");
   }
+  for(unsigned dp_mode=0;dp_mode<2;dp_mode++) {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0x91b6,dp_mode), cb=make_cpu(b,0x91b6,dp_mode);
+    ca.k=cb.k=0; ca.dp=cb.dp=dp_mode?0x101:0; ca.xf=cb.xf=false; ca.mf=cb.mf=true;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff); unsigned steps=0;
+    while(ca.pc!=0xfcd3 && steps++<4) {
+      a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected 91b6 scene thunk");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0xfcd3 && a->ram[ca.dp+0x61]==2,"91b6 scene thunk result");
+  }
+  { Cpu guard=make_cpu(a,0x91b6,0); guard.k=7; a->count=0; require(!dbz_native_step(&guard,stats)&&a->count==0,"91b6 unsupported-bank guard"); }
   /* $00:98D5-$990E: eight actor-slot dispatch loop. Exercise the empty
    * loop, all selector branches, both JSL boundaries, and the final epilogue
    * without pretending to execute either callee in this unit test. */

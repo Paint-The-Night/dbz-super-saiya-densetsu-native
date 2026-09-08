@@ -11061,6 +11061,23 @@ static bool actor_cont_9115_step(Cpu *c, uint16_t pc) {
 }
 
 
+/* $00:91B6-$91BC: scene-mode thunk. The same offset is a different bank-05
+ * actor continuation above, so the dispatcher keeps this implementation bank-specific. */
+static bool scene_thunk_91b6_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 0 || c->e || c->xf || !c->mf || c->d) return false;
+  switch(pc) {
+    case 0x91b6: case 0x91b8: case 0x91ba: break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0x91b6: byte_constant(c, 2); break;
+    case 0x91b8: store_dp(c, 0x61, true); break;
+    case 0x91ba: jmp_abs_native(c, 0xfcd3); break;
+  }
+  return true;
+}
+
 /* $05:B00A–$B044: BMI-path callee of $B0BE — seed $17EA..$17F3 from $0E03/$0E0A; JSL $1C806C/$1C8136; RTS. */
 static bool actor_seed_b00a_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7fu) != 0x05 || c->e || c->xf || c->d) return false;
