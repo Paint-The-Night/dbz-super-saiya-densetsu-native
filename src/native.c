@@ -689,6 +689,8 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = tile_expand_f8b2_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xf910 && c->pc <= 0xf91d) {
       done = queue_len_f910_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc == 0x9390) {
+      done = actor_return_9390_step(c, c->pc); x->display_control_steps += done;
     }
     return done;
   }

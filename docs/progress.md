@@ -373,6 +373,7 @@ the upload call at `$00:85F5`.
 | 00:9AF5 | Scene call stub | 4 | 1 |
 | 00:9AFA | Scene call stub | 4 | 1 |
 | 00:FCD8 | Scene call stub | 4 | 1 |
+| 05:9390 (M/X variants) | Actor leaf return | 2 | 2 |
 | 04:8C4F | Audio leaf return | 1 | 1 |
 | 01:EDF4 | Actor call stub | 4 | 1 |
 | 01:EC4C | Actor call stub | 4 | 1 |
