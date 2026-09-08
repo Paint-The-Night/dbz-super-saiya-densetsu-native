@@ -60,15 +60,7 @@ NATIVE_RANGES = [
 ]
 
 # Known JSL callees from already-native code (bank:addr) that are NOT yet native.
-NATIVE_CALLEES = [
-    ("04", 0x85B6, "JSL from 00:8B3E (HDMA/queue wipe); small bank-04 leaf"),
-    ("03", 0xFB8D, "JSL from 00:8B42 (HDMA/queue wipe / scene entry)"),
-    ("00", 0x90C1, "JSL from 00:8E14 (scene setup 8DFE chain)"),
-    ("06", 0xF14D, "JSL from 00:8E21 (scene setup writes $0700=$20 then F14D)"),
-    ("00", 0xC559, "JSL from 00:90C1; hottest interpreted worker on both routes"),
-    ("00", 0xC68C, "JSL from 00:90C1 (pair with C559)"),
-    ("00", 0x8D2B, "JSL from scene-mode 8E76 (abuts native scene build)"),
-]
+NATIVE_CALLEES = []  # all previously listed callees are now native in src/native.c
 
 # Scene-mode jump table at $00:8B54 (words); JMP ($8B54,X) from native 8B51.
 SCENE_TABLE_BASE = 0x8B54
