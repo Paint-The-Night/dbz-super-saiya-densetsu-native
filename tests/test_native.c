@@ -386,6 +386,17 @@ int main(int argc,char **argv) {
   }
   {
     memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0x9459,0), cb=make_cpu(b,0x9459,0); ca.k=cb.k=0; ca.xf=cb.xf=false;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff); unsigned steps=0;
+    while(ca.pc!=0xef1a && steps++<8) { a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected 9459 prefix"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b); }
+    require(ca.pc==0xef1a && ca.k==3 && ca.sp==0x1fc && a->ram[0x420c]==0 && a->ram[0x10c0]==0 && a->ram[0x1bc]==0,"9459 first JSL boundary");
+    ca=make_cpu(a,0x946a,0); cb=make_cpu(b,0x946a,0); ca.k=cb.k=0; ca.xf=cb.xf=false; ca.sp=cb.sp=0x1ff;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff); a->count=b->count=0;
+    for(unsigned i=0;i<3;i++) { require(dbz_native_step(&ca,stats),"expected 9459 suffix"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b); a->count=b->count=0; }
+    require(ca.pc==0x9000 && ca.k==0 && ca.sp==0x202 && a->ram[0x25]==0x0a,"9459 return");
+  }
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
     Cpu ca=make_cpu(a,0x943f,0),cb=make_cpu(b,0x943f,0); ca.k=cb.k=0; ca.xf=cb.xf=false;
     word(a,0x200,0x8fff); word(b,0x200,0x8fff); a->count=b->count=0;
     require(dbz_native_step(&ca,stats),"expected 943f scene thunk"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);

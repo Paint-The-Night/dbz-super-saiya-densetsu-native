@@ -11146,6 +11146,28 @@ static bool scene_thunk_9444_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $00:9459-$946E: scene-table reset wrapper with two cross-bank calls. */
+static bool scene_thunk_9459_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) {
+    case 0x9459: case 0x945c: case 0x945f: case 0x9462: case 0x9466:
+    case 0x946a: case 0x946c: case 0x946e: break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0x9459: stz_abs8(c,0x420c); break;
+    case 0x945c: stz_abs8(c,0x10c0); break;
+    case 0x945f: stz_abs8(c,0x01bc); break;
+    case 0x9462: jsl_to(c,0xef1a); break;
+    case 0x9466: jsl_to(c,0xefe1); break;
+    case 0x946a: byte_constant(c,0x0a); break;
+    case 0x946c: store_dp(c,0x25,true); break;
+    case 0x946e: return_long(c); break;
+  }
+  return true;
+}
+
 /* $05:B00A–$B044: BMI-path callee of $B0BE — seed $17EA..$17F3 from $0E03/$0E0A; JSL $1C806C/$1C8136; RTS. */
 static bool actor_seed_b00a_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7fu) != 0x05 || c->e || c->xf || c->d) return false;

@@ -366,7 +366,8 @@ the upload call at `$00:85F5`.
 | 00:9530–9534 | Scene-table leaf delegating to bank-04 handler | 5 | 2 |
 | 00:95A9–95B6 | Scene-mode[15] flag setup and bank-00:8E96 delegation | 14 | 6 |
 | 00:9444–9458 | Scene-table PPU preset wrapper and bank-04 delegation | 21 | 9 |
-| **Total** | **Three hundred twenty-two complete routines plus a reset prefix** | **26758** | **11934** |
+| 00:9459–946E | Scene-table reset wrapper with dual bank calls | 22 | 8 |
+| **Total** | **Three hundred twenty-three complete routines plus a reset prefix** | **26780** | **11942** |
 
 
 
@@ -409,7 +410,7 @@ independent hardware-fidelity comparison with another emulator is still needed.
 ## How far from complete?
 
 The project now has a reproducible scoped tracker. The pinned static-analysis
-worklist contains 13,237 instruction variants. Of those, 11934 instruction sites
+worklist contains 13,237 instruction variants. Of those, 11942 instruction sites
 are covered by reviewed C replacements: **89.54% of the discovered worklist**.
 Run `python3 tools/progress.py` to recalculate this figure. If the local
 SNESRecomp manifest exists, the script sums it directly; a public clone uses the
@@ -479,7 +480,7 @@ Next work is a reproducible actual battle and larger game-logic translations.
 `src/native_video.inc` reconstructs the complete frame graphics upload routine,
 unused-sprite hiding, and palette-shadow clearing. The new `ram-map.md` records
 the verified shadow buffers, flags, and eight-byte VRAM queue entry layout.
-The current inventory is 26758 ROM bytes / 11934 instruction sites.
+The current inventory is 26780 ROM bytes / 11942 instruction sites.
 
 The isolated suite now also covers interrupt-enable, VRAM queue find/mark,
 PPU multiply, DMA1 setup, pointer resolve, palette-shadow copy, actor-table
