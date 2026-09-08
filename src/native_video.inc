@@ -11302,6 +11302,19 @@ static bool scene_entry_9251_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $00:929C-$92A3: scene-mode callee entry gate. */
+static bool scene_callee_929c_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0x929c: case 0x929f: case 0x92a1: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) {
+    case 0x929c: video_load(c, 0x01a1, false); break;
+    case 0x929f: branch_to(c, c->n, 0x92a4); break;
+    case 0x92a1: jmp_abs_native(c, 0x92fb); break;
+  }
+  return true;
+}
+
 /* $00:95A9-$95B6: scene-mode[15] setup around the native $8E96 path. */
 static bool scene_thunk_95a9_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf) return false;
