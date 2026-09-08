@@ -600,6 +600,10 @@ nibble gate, conditional helper path, dispatch calls, and RTL. Differential
 tests cover all 8 manifest-listed sites, adding 8 verified sites and 22 ROM
 bytes.
 
+The bank-3 `$E655–E66A` bounded copy loop is native, including its indexed
+span, `BNE` exit, `BCC` repeat, and both long-return paths. Differential tests
+cover all 10 manifest-listed sites, adding 10 verified sites and 22 ROM bytes.
+
 The bank-3 `$E757–E768` eight-byte long-memory copy loop is native, including
 the indexed loads/stores, 16-bit loop counter, carry gate, and RTS. Differential
 tests cover all 7 manifest-listed sites, adding 7 verified sites and 18 ROM

@@ -6,6 +6,7 @@
  */
 static void ldy_dp16(Cpu *c, uint8_t offset);
 static void cmp_dp16(Cpu *c, uint8_t offset);
+static void cmp_long_x8(Cpu *c, uint32_t base);
 static void branch_to(Cpu *c, bool take, uint16_t target) {
   if(!take) sample_interrupt(c);
   (void)fetch(c);
@@ -11551,6 +11552,15 @@ static bool copy_span_e769_e77b_step(Cpu *c, uint16_t pc) {
     case 0xe778: case 0xe78a: branch_to(c,!c->c,pc == 0xe778 ? 0xe76c : 0xe77e); break;
     case 0xe77a: case 0xe78c: return_short(c); break;
   }
+  return true;
+}
+
+/* $03:E655–E66A: copy a bounded indexed span with two return paths. */
+static bool copy_span_e655_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 3 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0xe655: case 0xe658: case 0xe65c: case 0xe660: case 0xe662: case 0xe663: case 0xe666: case 0xe668: case 0xe669: case 0xe66a: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) { case 0xe655: index_constant(c,false,0); break; case 0xe658: load_a_long_x8(c,0x03e5f4); break; case 0xe65c: cmp_long_x8(c,0x7e2be0); break; case 0xe660: branch_to(c,!c->z,0xe669); break; case 0xe662: implied(c); c->x++; zn(c,c->x,false); break; case 0xe663: cpx16_constant(c,0x0008); break; case 0xe666: branch_to(c,!c->c,0xe658); break; case 0xe668: return_long(c); break; case 0xe669: implied(c); c->c=false; break; case 0xe66a: return_long(c); break; }
   return true;
 }
 
