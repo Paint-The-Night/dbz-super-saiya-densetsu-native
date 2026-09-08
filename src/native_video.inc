@@ -11335,6 +11335,12 @@ static bool actor_load_073c_prefix_step(Cpu *c, uint16_t pc) {
   (void)fetch(c); video_load(c, 0x073c, false); return true;
 }
 
+/* $01:D433: load the shared map/status word before the local continuation. */
+static bool actor_load_072e_prefix_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf || pc != 0xd433) return false;
+  (void)fetch(c); video_load(c, 0x072e, false); return true;
+}
+
 /* $01:EDF9: actor leaf return. */
 static bool actor_return_edf9_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf || pc != 0xedf9) return false;
