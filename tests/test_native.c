@@ -3200,6 +3200,15 @@ int main(int argc,char **argv) {
       require(dbz_native_step(&ca,stats),"expected 9535 scene continuation"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
     }
   }
+  {
+    const uint16_t sites[] = {0x9569,0x956c,0x956e,0x9571,0x9573,0x9575,0x9576,0x9577,0x9578};
+    for(unsigned n=0;n<9;n++) {
+      memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+      Cpu ca=make_cpu(a,sites[n],0), cb=make_cpu(b,sites[n],0); ca.k=cb.k=0; ca.db=cb.db=0; ca.xf=cb.xf=false; ca.mf=cb.mf=true;
+      a->ram[0x1648]=b->ram[0x1648]=n==0 ? 0x80 : 0; a->ram[0x01d8]=b->ram[0x01d8]=4; a->count=b->count=0;
+      require(dbz_native_step(&ca,stats),"expected 9569 status helper"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+  }
   /* $008D13: bit0 of $01BC clear → early RTL; set → second $85B6 */
   for(unsigned av=0;av<3;av++) {
     memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));

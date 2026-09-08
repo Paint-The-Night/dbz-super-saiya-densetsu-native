@@ -11204,6 +11204,29 @@ static bool scene_read_9535_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $00:9569-$9578: scene status helper returning carry to its caller. */
+static bool scene_status_9569_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) {
+    case 0x9569: case 0x956c: case 0x956e: case 0x9571: case 0x9573: case 0x9575:
+    case 0x9576: case 0x9577: case 0x9578: break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0x9569: video_load(c, 0x1648, false); break;
+    case 0x956c: branch_to(c, !c->n, 0x9575); break;
+    case 0x956e: video_load(c, 0x01d8, false); break;
+    case 0x9571: cmp_constant8(c, 0x04); break;
+    case 0x9573: branch_to(c, c->z, 0x9577); break;
+    case 0x9575: implied(c); c->c = false; break;
+    case 0x9576: return_long(c); break;
+    case 0x9577: implied(c); c->c = true; break;
+    case 0x9578: return_long(c); break;
+  }
+  return true;
+}
+
 /* $00:95A9-$95B6: scene-mode[15] setup around the native $8E96 path. */
 static bool scene_thunk_95a9_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf) return false;
