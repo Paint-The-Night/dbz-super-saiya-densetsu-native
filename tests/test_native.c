@@ -624,6 +624,15 @@ int main(int argc,char **argv) {
     }
   }
   {
+    const uint16_t sites[] = {0xab2c,0xab2f,0xab32,0xab35,0xab37,0xab3b,0xab3d,0xab40,0xab42,
+                              0xab45,0xab48,0xab4b,0xab4e,0xab51,0xab53,0xab56,0xab59,0xab5b,0xab5e};
+    for(unsigned n=0;n<19;n++) {
+      memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+      Cpu ca=make_cpu(a,sites[n],0), cb=make_cpu(b,sites[n],0); ca.k=cb.k=0; ca.xf=cb.xf=false; ca.mf=cb.mf=true; ca.sp=cb.sp=0x1ff; ca.x=cb.x=0; a->count=b->count=0;
+      require(dbz_native_step(&ca,stats),"expected ab2c PPU start"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+  }
+  {
     const uint16_t sites[] = {0xd3c0,0xd3c3,0xd3c5,0xd3c7,0xd3ca,0xd3cb,0xd3cc,0xd3cf,
                               0xd3d1,0xd3d3,0xd3d5,0xd3d8,0xd3d9,0xd3da,0xd3dc};
     for(unsigned n=0;n<15;n++) {

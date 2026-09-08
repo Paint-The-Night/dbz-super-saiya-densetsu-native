@@ -11524,6 +11524,30 @@ static bool actor_table_c902_step(Cpu *c, uint16_t pc) {
 /* $01:D3C0–D3DC: resolve an actor pointer and derive the secondary table
  * index across the routine's REP/SEP boundary. */
 /* $01:C236–C256: copy the actor scratch pair into the indexed table. */
+/* $00:AB2C–AB5E: initialize the PPU transfer registers and trigger its worker. */
+static bool ppu_start_ab2c_step(Cpu *c, uint16_t pc) {
+  if(c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) {
+    case 0xab2c: case 0xab2f: case 0xab32: case 0xab35: case 0xab37: case 0xab3b:
+    case 0xab3d: case 0xab40: case 0xab42: case 0xab45: case 0xab48: case 0xab4b:
+    case 0xab4e: case 0xab51: case 0xab53: case 0xab56: case 0xab59: case 0xab5b: case 0xab5e: break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0xab2c: stz_abs8(c, 0x2115); break; case 0xab2f: stz_abs8(c, 0x2116); break; case 0xab32: stz_abs8(c, 0x2117); break;
+    case 0xab35: byte_constant(c, 0); break; case 0xab37: sta_long8(c, 0x7e9000); break;
+    case 0xab3b: byte_constant(c, 8); break; case 0xab3d: store_register8(c, 0x4340); break;
+    case 0xab40: byte_constant(c, 0x18); break; case 0xab42: store_register8(c, 0x4341); break;
+    case 0xab45: index_constant(c, false, 0x4000); break; case 0xab48: stx_abs16(c, 0x4345); break;
+    case 0xab4b: index_constant(c, false, 0x9000); break; case 0xab4e: stx_abs16(c, 0x4342); break;
+    case 0xab51: byte_constant(c, 0x7e); break; case 0xab53: store_register8(c, 0x4344); break;
+    case 0xab56: jsr_abs_native(c, 0xae56); break; case 0xab59: byte_constant(c, 0x80); break;
+    case 0xab5b: store_register8(c, 0x2115); break; case 0xab5e: return_short(c); break;
+  }
+  return true;
+}
+
 static bool actor_copy_c236_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 1 || c->e || c->xf || c->d) return false;
   switch(pc) {
