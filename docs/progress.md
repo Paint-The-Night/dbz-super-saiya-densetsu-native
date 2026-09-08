@@ -600,6 +600,11 @@ nibble gate, conditional helper path, dispatch calls, and RTL. Differential
 tests cover all 8 manifest-listed sites, adding 8 verified sites and 22 ROM
 bytes.
 
+The bank-3 `$A3A8–A3B8` status-mask gate is native across its six assigned
+sites, including both conditional paths and actor dispatch calls. Differential
+tests add 6 verified sites and 17 ROM bytes; the later `$A3C4` continuation
+remains outside this entry’s assigned slice.
+
 The bank-3 `$E655–E66A` bounded copy loop is native, including its indexed
 span, `BNE` exit, `BCC` repeat, and both long-return paths. Differential tests
 cover all 10 manifest-listed sites, adding 10 verified sites and 22 ROM bytes.

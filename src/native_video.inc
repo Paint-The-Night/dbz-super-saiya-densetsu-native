@@ -11564,6 +11564,15 @@ static bool copy_span_e655_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $03:A3A8–A3B8: status-mask gates around two actor dispatch calls. */
+static bool actor_gate_a3a8_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 3 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0xa3a8: case 0xa3aa: case 0xa3ac: case 0xa3b0: case 0xa3b3: case 0xa3b5: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) { case 0xa3a8: and_constant8(c,0x40); break; case 0xa3aa: branch_to(c,!c->n,0xa3bf); break; case 0xa3ac: jsl_to(c,0xcbe0); break; case 0xa3b0: video_load(c,0x0d67,false); break; case 0xa3b3: branch_to(c,c->n,0xa3ba); break; case 0xa3b5: jsl_to(c,0xa4eb); break; }
+  return true;
+}
+
 /* $01:EDF9: actor leaf return. */
 static bool actor_return_edf9_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf || pc != 0xedf9) return false;
