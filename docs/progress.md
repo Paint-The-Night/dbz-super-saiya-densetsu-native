@@ -31,6 +31,7 @@ The scene-table continuation at `$00:9535` now has a native, differentially veri
 The same continuation now also natively masks the scene mode at `$9538` and branches at `$953A`, adding 2 sites and 4 bytes with both branch outcomes covered by differential tests.
 It now covers the `$953C` immediate mode value and `$953E` unconditional branch as well, adding 2 sites and 4 bytes before the remaining scene-table body.
 The continuation now also reads the mode at `$9540` and shifts it at `$9543`, adding 2 sites and 5 bytes before the carry-dependent branch.
+The carry-dependent portion now includes `$9544` BCC and `$9546` JSL, adding 2 sites and 6 bytes; tests cover the branch boundary and long-call frame.
 
 
 The `$00:98D5–990E` actor-slot loop adds 27 instruction sites and 58 bytes.
