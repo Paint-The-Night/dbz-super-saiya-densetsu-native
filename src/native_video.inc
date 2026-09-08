@@ -11460,6 +11460,15 @@ static bool actor_status_ccef_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $01:CE96–CEAC: dispatch the actor update for its status nibble. */
+static bool actor_status_ce96_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0xce96: case 0xce9a: case 0xce9d: case 0xce9f: case 0xcea1: case 0xcea3: case 0xcea7: case 0xceab: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) { case 0xce96: jsl_to(c,0xcec6); break; case 0xce9a: video_load(c,0x071b,false); break; case 0xce9d: and_constant8(c,0x0f); break; case 0xce9f: cmp_constant8(c,1); break; case 0xcea1: branch_to(c,c->z,0xceab); break; case 0xcea3: jsl_to(c,0xcec9); break; case 0xcea7: jsl_to(c,0xb67a); break; case 0xceab: return_long(c); break; }
+  return true;
+}
+
 /* $01:EDF9: actor leaf return. */
 static bool actor_return_edf9_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf || pc != 0xedf9) return false;

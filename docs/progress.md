@@ -594,3 +594,8 @@ The bank-1 `$CCEF–CD01` status-counter prefix is native, covering its helper
 call, counter increment, compare/branch gate, and two dispatch calls.
 Differential tests cover all 7 manifest-listed sites, adding 7 verified sites
 and 22 ROM bytes.
+
+The bank-1 `$CE96–CEAC` actor-status dispatch is native, including the status
+nibble gate, conditional helper path, dispatch calls, and RTL. Differential
+tests cover all 8 manifest-listed sites, adding 8 verified sites and 22 ROM
+bytes.
