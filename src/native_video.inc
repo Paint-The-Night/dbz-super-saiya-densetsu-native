@@ -11181,6 +11181,12 @@ static bool scene_trampoline_99c3_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $00:9AF5: scene call stub. */
+static bool scene_call_9af5_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf || pc != 0x9af5) return false;
+  (void)fetch(c); jsl_to(c,0x869e); return true;
+}
+
 /* $00:9AC8: scene call stub. */
 static bool scene_call_9ac8_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf || pc != 0x9ac8) return false;
