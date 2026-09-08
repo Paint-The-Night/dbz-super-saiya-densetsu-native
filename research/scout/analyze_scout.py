@@ -320,8 +320,14 @@ def main() -> int:
     if sha != EXPECTED_SHA:
         raise SystemExit(f"ROM hash mismatch: {sha}")
 
+    # Prefer the dedicated scout captures, but use the current checked-in route
+    # captures when those exploratory names are absent.
     start_cov = ROOT / "artifacts/scout-start-game/executed-addresses.csv"
+    if not start_cov.exists():
+        start_cov = ROOT / "artifacts/start-game/executed-addresses.csv"
     battle_cov = ROOT / "artifacts/scout-battle/executed-addresses.csv"
+    if not battle_cov.exists():
+        battle_cov = ROOT / "artifacts/grok-integration-battle/executed-addresses.csv"
     start_hits = load_coverage(start_cov) if start_cov.exists() else {}
     battle_hits = load_coverage(battle_cov) if battle_cov.exists() else {}
     combined = merge_hits(start_hits, battle_hits)
