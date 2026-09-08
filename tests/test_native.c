@@ -560,6 +560,16 @@ int main(int argc,char **argv) {
     }
   }
   {
+    const uint16_t sites[] = {0xec9d,0xeca0,0xeca2,0xeca5};
+    for(unsigned n=0;n<4;n++) {
+      memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+      Cpu ca=make_cpu(a,sites[n],0), cb=make_cpu(b,sites[n],0);
+      ca.k=cb.k=1; ca.xf=cb.xf=false; ca.sp=cb.sp=0x1ff;
+      a->ram[0x0c35]=b->ram[0x0c35]=0x5a; a->count=b->count=0;
+      require(dbz_native_step(&ca,stats),"expected ec9d status prefix"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+  }
+  {
     const uint16_t sites[] = {0x8587,0x858a,0x858c,0x858e,0x8590,0x8591,0x8592,0x8594,0x8596,0x8598,0x8599,0x859a,0x859b};
     for(unsigned i=0;i<13;i++) {
       memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));

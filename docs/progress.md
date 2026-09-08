@@ -622,6 +622,10 @@ The bank-1 `$D433–D438` status prefix now includes the mask and shared-helper
 call after the existing `$072E` load. Differential tests add 2 verified sites
 and 8 ROM bytes while leaving the helper continuation interpreter-backed.
 
+The bank-1 `$EC9D–ECA5` status-bit prefix is native across all four assigned
+instructions, including the `$0C35` load/store, mask, and `$01:EB73` dispatch.
+Differential tests add 4 verified sites and 12 ROM bytes.
+
 The bank-1 `$073C` entry-prefix family now covers all 24 manifest-listed
 entries through their shared `$BF44` helper calls. Differential tests cover 48
 instruction sites, adding 35 sites and 105 ROM bytes beyond the original

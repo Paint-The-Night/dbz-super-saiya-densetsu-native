@@ -11384,6 +11384,23 @@ static bool actor_load_073c_prefix_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $01:EC9D–ECA5: set the shared status bit before the local continuation. */
+static bool actor_status_ec9d_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) {
+    case 0xec9d: case 0xeca0: case 0xeca2: case 0xeca5: break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0xec9d: video_load(c, 0x0c35, false); break;
+    case 0xeca0: ora_constant8(c, 0x20); break;
+    case 0xeca2: store_a_abs8(c, 0x0c35); break;
+    case 0xeca5: jsl_to(c, 0xeb73); break;
+  }
+  return true;
+}
+
 /* $01:D433–D438: load and mask the shared map/status word before the local
  * continuation, then enter the shared actor helper. */
 static bool actor_load_072e_prefix_step(Cpu *c, uint16_t pc) {
