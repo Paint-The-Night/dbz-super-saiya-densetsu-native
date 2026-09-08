@@ -15,6 +15,7 @@
 static FILE *entry_trace_file;
 static uint32_t entry_trace_pc;
 static bool entry_trace_initialized;
+static DbzExecution *active;
 static void trace_entry(const Cpu *c) {
   if(!entry_trace_initialized) {
     entry_trace_initialized = true;
@@ -24,18 +25,17 @@ static void trace_entry(const Cpu *c) {
       if(sscanf(spec, "%x:%x", &bank, &pc) == 2 && bank < 0x80 && pc >= 0x8000 && pc <= 0xffff) {
         entry_trace_pc = (bank << 16) | pc;
         entry_trace_file = fopen("entry-snapshots.csv", "w");
-        if(entry_trace_file) fputs("bank,pc,a,x,y,sp,dp,k,db,c,z,v,n,i,d,xf,mf,e\n", entry_trace_file);
+        if(entry_trace_file) fputs("mode,bank,pc,a,x,y,sp,dp,k,db,c,z,v,n,i,d,xf,mf,e\n", entry_trace_file);
       }
     }
   }
   if(entry_trace_file && (((uint32_t)(c->k & 0x7f) << 16) | c->pc) == entry_trace_pc)
-    fprintf(entry_trace_file, "%02x,%04x,%04x,%04x,%04x,%04x,%04x,%02x,%02x,%d,%d,%d,%d,%d,%d,%d,%d,%d\n",
-            c->k & 0x7f, c->pc, c->a, c->x, c->y, c->sp, c->dp, c->k, c->db,
+    fprintf(entry_trace_file, "%s,%02x,%04x,%04x,%04x,%04x,%04x,%04x,%02x,%02x,%d,%d,%d,%d,%d,%d,%d,%d,%d\n",
+            active->enabled ? "native" : "reference", c->k & 0x7f, c->pc, c->a, c->x, c->y, c->sp, c->dp, c->k, c->db,
             c->c, c->z, c->v, c->n, c->i, c->d, c->xf, c->mf, c->e);
   if(entry_trace_file) fflush(entry_trace_file);
 }
 
-static DbzExecution *active;
 void dbz_set_execution(DbzExecution *execution) { active = execution; }
 
 static void sample_interrupt(Cpu *c) {

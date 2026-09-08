@@ -199,6 +199,7 @@ int main(int argc,char **argv) {
   if(!state || (verify&&!reference_state)) die("State allocation failed");
   snes_saveState(game,state);
   FILE *trace=dump_dir?open_output(dump_dir,"frames.jsonl","w"):NULL;
+  const bool trace_reference = verify && getenv("DBZ_TRACE_REFERENCE") != NULL;
   unsigned frame=0,keys=0;bool running=true,paused=false,turbo=false,matched=true;
   uint64_t started=SDL_GetPerformanceCounter(),deadline=started,frequency=SDL_GetPerformanceFrequency();
   uint64_t active_audio=0;
@@ -221,7 +222,12 @@ int main(int argc,char **argv) {
     // Recorded game input must be reproducible even while the window is focused.
     unsigned mask=input_path?replay_mask(frame):keys;
     for(int b=0;b<12;b++) { snes_setButtonState(game,1,b,(mask>>b)&1u);if(verify) snes_setButtonState(reference,1,b,(mask>>b)&1u); }
-    snes_runFrame(game);if(verify) snes_runFrame(reference);
+    snes_runFrame(game);
+    if(verify) {
+      if(trace_reference) { execution.cpu=reference->cpu; execution.enabled=false; }
+      snes_runFrame(reference);
+      if(trace_reference) { execution.cpu=game->cpu; execution.enabled=native; }
+    }
     snes_setPixels(game,pixels);if(verify) snes_setPixels(reference,reference_pixels);
     sample_phase+=320400000;int count=(int)(sample_phase/600988);sample_phase%=600988;
     snes_setSamples(game,samples,count);if(verify) snes_setSamples(reference,reference_samples,count);
