@@ -126,6 +126,15 @@ NATIVE_RANGES_BY_BANK = {
         (0xEF11, 0xEF9A), (0xF082, 0xF14C), (0xF14D, 0xF1EB)],
 }
 
+# Addresses reviewed against the pinned ROM and current entry traces as data
+# or pointer tables. Keep them out of the reconstruct queue until a caller
+# proves an executable entry; hot-PC clustering can otherwise misclassify data
+# bytes that happen to be reached as operands.
+KNOWN_DATA_RANGES = {
+    0: [(0x8AE5, 0x8AF0), (0x98A1, 0x98C4)],
+    13: [(0xEB47, 0xEB7F)],
+}
+
 # Scene-mode jump table at $00:8B54 (words); JMP ($8B54,X) from native 8B51.
 SCENE_TABLE_BASE = 0x8B54
 
@@ -406,6 +415,8 @@ def main() -> int:
     def add_candidate(bank, addr, reason, priority_boost=0):
         key = (bank, addr)
         if is_native(bank, addr):
+            return
+        if any(start <= addr <= end for start, end in KNOWN_DATA_RANGES.get(bank & 0x7f, ())):
             return
         est = estimate_routine(rom, bank, addr)
         h = combined.get(key, 0)

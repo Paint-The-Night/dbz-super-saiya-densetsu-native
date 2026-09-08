@@ -30,14 +30,6 @@ Native HDMA/queue wipe ends in `JMP ($8B54,X)` with X = (DP+$24 & $7F) * 2.
 
 ## Notable bank `$00` leaves / near-leaves near hot PCs & native frontiers
 
-### `00:8AE5` — NEAR-LEAF
-
-- Range ≈ `00:8AE5–00:8AFB` (~23 bytes)
-- Nested: [('JSL', '61:2423')]; exits: [('RTL', 35579)]
-- Callers (static sample): n/a
-- Rationale: actor-type table / fallthrough after 8AD6–8AE4
-- Hits entry/range: 0/1421
-
 ### `03:99A6` — LEAF
 
 - Range ≈ `03:99A6–03:99D2` (~45 bytes)
@@ -133,14 +125,6 @@ Native HDMA/queue wipe ends in `JMP ($8B54,X)` with X = (DP+$24 & $7F) * 2.
 - Callers (static sample): 01:8124/JSL
 - Rationale: hot interpreted cluster 01:816F–81F4 (40896 hits)
 - Hits entry/range: 973/31363
-
-### `00:98A1` — NEAR-LEAF
-
-- Range ≈ `00:98A1–00:98B8` (~24 bytes)
-- Nested: [('JSL', '01:C987'), ('JSL', '01:B6BF')]; exits: [('RTL', 39096)]
-- Callers (static sample): n/a
-- Rationale: hot interpreted cluster 00:98A1–98E5 (64424 hits)
-- Hits entry/range: 1390/9641
 
 ### `00:AB00` — NEAR-LEAF
 
