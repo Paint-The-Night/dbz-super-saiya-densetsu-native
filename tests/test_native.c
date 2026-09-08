@@ -5499,6 +5499,17 @@ int main(int argc,char **argv) {
     }
   }
   {
+    const uint16_t sites[] = {0xf2dd,0xf2df,0xf2e2,0xf2e3,0xf2e6,0xf2e7,0xf2ea,0xf2ed,
+                              0xf2ef,0xf2f2,0xf2f3,0xf2f6,0xf2f7,0xf2fa,0xf2fd,0xf2ff};
+    for(unsigned n=0;n<16;n++) {
+      memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+      Cpu ca=make_cpu(a,sites[n],0), cb=make_cpu(b,sites[n],0);
+      ca.k=cb.k=3; ca.db=cb.db=0; ca.xf=cb.xf=false; ca.mf=cb.mf=(n==0 || n==15); ca.sp=cb.sp=0x1ff;
+      ca.x=cb.x=2; word(a,0x1a2,0x0010); word(b,0x1a2,0x0010); word(a,0x1a4,0x0020); word(b,0x1a4,0x0020); a->count=b->count=0;
+      require(dbz_native_step(&ca,stats),"expected f2dd bounds"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+  }
+  {
     memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
     Cpu ca=make_cpu(a,0x9aff,0), cb=make_cpu(b,0x9aff,0);
     ca.k=cb.k=5; ca.db=cb.db=0; ca.xf=cb.xf=false;

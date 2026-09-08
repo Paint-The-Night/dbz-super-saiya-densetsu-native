@@ -1,3 +1,5 @@
+static void sbc_abs16(Cpu *c, uint16_t address);
+
 /* Included after native.c's bus helpers. Fixed-address reconstruction of the
  * frame upload routine, not an instruction decoder. Original region 8324-83CB.
  * OAM shadow: 0400..061F. Palette shadow: 0200..03FF, dirty flag 0715.
@@ -12031,6 +12033,39 @@ static bool actor_fill_e6f0_step(Cpu *c, uint16_t pc) {
     case 0xe709: branch_to(c, !c->c, 0xe6f9); break;
     case 0xe70b: set_m(c, true); break;
     case 0xe70d: return_long(c); break;
+  }
+  return true;
+}
+
+static void load_a_abs_x16_native(Cpu *c, uint16_t base) {
+  (void)fetch(c); (void)fetch(c); idle(c);
+  uint32_t address = (((uint32_t)c->db << 16) | base) + c->x;
+  c->a = c->read(c->mem, address & 0xffffffu); sample_interrupt(c);
+  c->a |= (uint16_t)c->read(c->mem, (address + 1) & 0xffffffu) << 8;
+  zn(c, c->a, false);
+}
+
+/* $03:F2DD–F2FF: compare the actor coordinates against viewport bounds. */
+static bool actor_bounds_f2dd_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 3 || c->e || c->xf || c->d) return false;
+  switch(pc) {
+    case 0xf2dd: case 0xf2df: case 0xf2e2: case 0xf2e3: case 0xf2e6:
+    case 0xf2e7: case 0xf2ea: case 0xf2ed: case 0xf2ef: case 0xf2f2:
+    case 0xf2f3: case 0xf2f6: case 0xf2f7: case 0xf2fa: case 0xf2fd:
+    case 0xf2ff: break;
+    default: return false;
+  }
+  if((pc == 0xf2dd || pc == 0xf2ff) ? !c->mf : c->mf) return false;
+  (void)fetch(c);
+  switch(pc) {
+    case 0xf2dd: set_m(c, false); break; case 0xf2df: load_a_abs_x16_native(c, 0x1182); break;
+    case 0xf2e2: implied(c); c->c = true; break; case 0xf2e3: sbc_abs16(c, 0x01a2); break;
+    case 0xf2e6: implied(c); c->c = false; break; case 0xf2e7: adc16_constant(c, 0x0018); break;
+    case 0xf2ea: cmp_constant16(c, 0x0034); break; case 0xf2ed: branch_to(c, c->c, 0xf2fd); break;
+    case 0xf2ef: load_a_abs_x16_native(c, 0x1184); break; case 0xf2f2: implied(c); c->c = true; break;
+    case 0xf2f3: sbc_abs16(c, 0x01a4); break; case 0xf2f6: implied(c); c->c = false; break;
+    case 0xf2f7: adc16_constant(c, 0x0018); break; case 0xf2fa: cmp_constant16(c, 0x0034); break;
+    case 0xf2fd: set_m(c, true); break; case 0xf2ff: return_long(c); break;
   }
   return true;
 }
