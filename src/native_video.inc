@@ -48,10 +48,12 @@ static void byte_constant(Cpu *c, uint8_t value) {
 /* $06:EE42 entry prefix: preserve processor flags before actor setup. */
 static bool actor_setup_ee42_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 6 || c->e) return false;
-  if(pc != 0xee42 && pc != 0xee43) return false;
+  if(pc != 0xee42 && pc != 0xee43 && pc != 0xee46) return false;
   if(pc == 0xee43 && (c->xf || c->mf)) return false;
   (void)fetch(c);
-  if(pc == 0xee42) php_native(c); else index_constant(c, false, 0x0000);
+  if(pc == 0xee42) php_native(c);
+  else if(pc == 0xee43) index_constant(c, false, 0x0000);
+  else jsl_to(c, 0xf089);
   return true;
 }
 static void xba_native(Cpu *c) {

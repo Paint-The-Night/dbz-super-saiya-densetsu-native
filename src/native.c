@@ -825,7 +825,7 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
     return done;
   }
   if(bank == 6) {
-    if(c->pc == 0xee42) {
+    if(c->pc == 0xee42 || c->pc == 0xee43 || c->pc == 0xee46) {
       done = actor_setup_ee42_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xef11 && c->pc <= 0xef9a) {
       done = queue_fill_ef11_step(c, c->pc); x->upload_steps += done;

@@ -9,7 +9,7 @@ Already-native ranges excluded. Sizes approximate.
 | 1 | `00:8AE5` | 23 | ~ | actor-type table / fallthrough after 8AD6–8AE4 (replay range hits≈1421) |
 | 2 | `03:99A6` | 45 | Y | hot interpreted cluster 03:99A6–9A26 (40294 hits) (replay range hits≈40132) |
 | 3 | `01:8401` | 45 | Y | hot interpreted cluster 01:8401–84CE (84605 hits) (replay range hits≈11309) |
-| 4 | `06:EE48` | 22 | Y | hot interpreted cluster 06:EE48–EED2 (33500 hits) (replay range hits≈7495) |
+| 4 | `06:EE4A` | 20 | Y | hot interpreted cluster 06:EE4A–EED2 (32667 hits) (replay range hits≈6662) |
 | 5 | `04:8EF7` | 39 | Y | hot interpreted cluster 04:8EF7–8F61 (52409 hits) (replay range hits≈18) |
 | 6 | `03:952E` | 76 | n | hot interpreted cluster 03:952E–953D (225792 hits) (replay range hits≈243602) |
 | 7 | `13:EB47` | 73 | ~ | hot interpreted cluster 13:EB47–EB7F (101024 hits) (replay range hits≈101024) |
@@ -32,7 +32,7 @@ Already-native ranges excluded. Sizes approximate.
 1. `00:8AE5` — actor-type table / fallthrough after 8AD6–8AE4
 2. `03:99A6` — hot interpreted cluster 03:99A6–9A26 (40294 hits)
 3. `01:8401` — hot interpreted cluster 01:8401–84CE (84605 hits)
-4. `06:EE48` — hot interpreted cluster 06:EE48–EED2 (33500 hits)
+4. `06:EE4A` — hot interpreted cluster 06:EE4A–EED2 (32667 hits)
 5. `04:8EF7` — hot interpreted cluster 04:8EF7–8F61 (52409 hits)
 6. `03:952E` — hot interpreted cluster 03:952E–953D (225792 hits)
 7. `13:EB47` — hot interpreted cluster 13:EB47–EB7F (101024 hits)

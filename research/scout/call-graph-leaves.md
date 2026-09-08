@@ -54,13 +54,13 @@ Native HDMA/queue wipe ends in `JMP ($8B54,X)` with X = (DP+$24 & $7F) * 2.
 - Rationale: hot interpreted cluster 01:8401–84CE (84605 hits)
 - Hits entry/range: 833/11309
 
-### `06:EE48` — LEAF
+### `06:EE4A` — LEAF
 
-- Range ≈ `06:EE48–06:EE5D` (~22 bytes)
+- Range ≈ `06:EE4A–06:EE5D` (~20 bytes)
 - Nested: none; exits: [('RTL', 61021)]
 - Callers (static sample): n/a
-- Rationale: hot interpreted cluster 06:EE48–EED2 (33500 hits)
-- Hits entry/range: 833/7495
+- Rationale: hot interpreted cluster 06:EE4A–EED2 (32667 hits)
+- Hits entry/range: 833/6662
 
 ### `04:8EF7` — LEAF
 
