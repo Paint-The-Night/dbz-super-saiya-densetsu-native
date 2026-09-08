@@ -11123,6 +11123,29 @@ static bool scene_thunk_95a9_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $00:9444-$9458: scene-table PPU preset wrapper. */
+static bool scene_thunk_9444_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) {
+    case 0x9444: case 0x9446: case 0x9449: case 0x944b: case 0x944e:
+    case 0x9450: case 0x9454: case 0x9456: case 0x9458: break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0x9444: byte_constant(c,0x0c); break;
+    case 0x9446: store_register8(c,0x121b); break;
+    case 0x9449: byte_constant(c,0x80); break;
+    case 0x944b: store_register8(c,0x121c); break;
+    case 0x944e: byte_constant(c,0); break;
+    case 0x9450: jsl_to(c,0x8eba); break;
+    case 0x9454: byte_constant(c,0x09); break;
+    case 0x9456: store_dp(c,0x25,true); break;
+    case 0x9458: return_long(c); break;
+  }
+  return true;
+}
+
 /* $05:B00A–$B044: BMI-path callee of $B0BE — seed $17EA..$17F3 from $0E03/$0E0A; JSL $1C806C/$1C8136; RTS. */
 static bool actor_seed_b00a_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7fu) != 0x05 || c->e || c->xf || c->d) return false;
