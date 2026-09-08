@@ -49,6 +49,7 @@ The selector now covers `$9278–$9287`, including range checks and the REP tran
 The following `$928A` byte store into `$01DE` is now native and differentially verified, adding 1 site and 3 bytes.
 The second snapshot read/store at `$928D–$9290` and the `$9293` width restore are now native, adding 3 sites and 8 bytes.
 The snapshot path now ends with the `$9299` jump into native `$8B7A`, adding 1 site and 3 bytes.
+The `$9295` same-bank long-call boundary is now native and differentially verified, adding 1 site and 4 bytes while leaving `$929C` interpreter-backed.
 
 
 The `$00:98D5–990E` actor-slot loop adds 27 instruction sites and 58 bytes.

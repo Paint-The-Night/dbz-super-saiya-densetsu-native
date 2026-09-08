@@ -3275,6 +3275,7 @@ int main(int argc,char **argv) {
   { Cpu ca=make_cpu(a,0x928a,0), cb=make_cpu(b,0x928a,0); ca.k=cb.k=0; ca.db=cb.db=0; ca.xf=cb.xf=false; ca.mf=cb.mf=true; ca.a=cb.a=0x5a; a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected 928a scene store"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b); }
   { const uint16_t sites[] = {0x928d,0x9290,0x9293}; for(unsigned n=0;n<3;n++) { memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram)); Cpu ca=make_cpu(a,sites[n],0), cb=make_cpu(b,sites[n],0); ca.k=cb.k=0; ca.db=cb.db=0; ca.xf=cb.xf=false; ca.mf=cb.mf=true; ca.a=cb.a=0x56; a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected 928d scene snapshot"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b); } }
   { Cpu ca=make_cpu(a,0x9299,0), cb=make_cpu(b,0x9299,0); ca.k=cb.k=0; ca.db=cb.db=0; ca.xf=cb.xf=false; ca.mf=cb.mf=true; a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected 9299 scene jump"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b); }
+  { Cpu ca=make_cpu(a,0x9295,0), cb=make_cpu(b,0x9295,0); ca.k=cb.k=0; ca.db=cb.db=0; ca.xf=cb.xf=false; ca.mf=cb.mf=true; ca.sp=cb.sp=0x1ff; a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected 9295 scene call"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b); }
   /* $008D13: bit0 of $01BC clear → early RTL; set → second $85B6 */
   for(unsigned av=0;av<3;av++) {
     memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
