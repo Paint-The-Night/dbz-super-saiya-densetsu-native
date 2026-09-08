@@ -626,6 +626,11 @@ The bank-1 `$EC9D–ECA5` status-bit prefix is native across all four assigned
 instructions, including the `$0C35` load/store, mask, and `$01:EB73` dispatch.
 Differential tests add 4 verified sites and 12 ROM bytes.
 
+The bank-0 `$AB96–ABB4` actor seed prefix is native across all fifteen assigned
+instructions, initializing the scratch pointers and eight-byte seed table before
+returning to the interpreter-backed continuation. Differential tests add 15
+sites and 31 ROM bytes.
+
 The bank-1 `$073C` entry-prefix family now covers all 24 manifest-listed
 entries through their shared `$BF44` helper calls. Differential tests cover 48
 instruction sites, adding 35 sites and 105 ROM bytes beyond the original

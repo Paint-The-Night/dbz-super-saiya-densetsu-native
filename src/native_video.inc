@@ -11401,6 +11401,36 @@ static bool actor_status_ec9d_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $00:AB96–ABB4: initialize the actor scratch pointers and seed bytes. */
+static bool actor_seed_ab96_step(Cpu *c, uint16_t pc) {
+  if(c->e || c->d || !c->mf || c->xf) return false;
+  switch(pc) {
+    case 0xab96: case 0xab99: case 0xab9b: case 0xab9e: case 0xaba0:
+    case 0xaba2: case 0xaba4: case 0xaba6: case 0xaba8: case 0xabaa:
+    case 0xabac: case 0xabae: case 0xabb0: case 0xabb2: case 0xabb4: break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0xab96: index_constant(c, false, 0x0080); break;
+    case 0xab99: stx_dp16(c, 0x78); break;
+    case 0xab9b: index_constant(c, false, 0x0078); break;
+    case 0xab9e: stx_dp16(c, 0x7a); break;
+    case 0xaba0: byte_constant(c, 0x80); break;
+    case 0xaba2: store_dp(c, 0x63, true); break;
+    case 0xaba4: byte_constant(c, 0x82); break;
+    case 0xaba6: store_dp(c, 0x66, true); break;
+    case 0xaba8: byte_constant(c, 0x84); break;
+    case 0xabaa: store_dp(c, 0x69, true); break;
+    case 0xabac: byte_constant(c, 0x86); break;
+    case 0xabae: store_dp(c, 0x6c, true); break;
+    case 0xabb0: byte_constant(c, 0x88); break;
+    case 0xabb2: store_dp(c, 0x6f, true); break;
+    case 0xabb4: return_short(c); break;
+  }
+  return true;
+}
+
 /* $01:D433–D438: load and mask the shared map/status word before the local
  * continuation, then enter the shared actor helper. */
 static bool actor_load_072e_prefix_step(Cpu *c, uint16_t pc) {
