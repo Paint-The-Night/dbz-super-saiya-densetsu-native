@@ -439,6 +439,13 @@ int main(int argc,char **argv) {
   }
   {
     memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0x9afa,0), cb=make_cpu(b,0x9afa,0); ca.k=cb.k=0; ca.xf=cb.xf=false; ca.sp=cb.sp=0x1ff;
+    word(a,0x200,0x8fff); word(b,0x200,0x8fff); a->count=b->count=0;
+    require(dbz_native_step(&ca,stats),"expected 9afa call"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    require(ca.pc==0x991d && ca.k==0 && ca.sp==0x1fc,"9afa JSL boundary");
+  }
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
     Cpu ca=make_cpu(a,0x943f,0),cb=make_cpu(b,0x943f,0); ca.k=cb.k=0; ca.xf=cb.xf=false;
     word(a,0x200,0x8fff); word(b,0x200,0x8fff); a->count=b->count=0;
     require(dbz_native_step(&ca,stats),"expected 943f scene thunk"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
