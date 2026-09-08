@@ -407,7 +407,7 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
     return done;
   }
   if(bank == 3) {
-    if(c->pc == 0x9752) {
+    if(c->pc == 0x9752 || c->pc == 0x9753) {
       done = actor_entry_9752_step(c, c->pc); x->display_control_steps += done;
     } else 
     if(c->pc >= 0x958a && c->pc <= 0x9599) {
