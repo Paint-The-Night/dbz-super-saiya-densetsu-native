@@ -11489,6 +11489,22 @@ static bool actor_status_ceac_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $00:BC3E–BC54 (M1X0): eight-byte indexed copy with a 16-bit loop body. */
+static void ora16_constant_local(Cpu *c, uint16_t value) {
+  uint16_t low = c->pc++, high = c->pc++;
+  (void)c->read(c->mem, ((uint32_t)c->k << 16) | low); sample_interrupt(c);
+  (void)c->read(c->mem, ((uint32_t)c->k << 16) | high);
+  c->a |= value; zn(c,c->a,false);
+}
+static bool actor_counter_bc3e_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 0 || c->e || c->xf || c->d) return false;
+  switch(pc) { case 0xbc3e: case 0xbc40: case 0xbc43: case 0xbc47: case 0xbc4a: case 0xbc4e: case 0xbc4f: case 0xbc50: case 0xbc52: case 0xbc54: break; default: return false; }
+  if(pc == 0xbc3e ? !c->mf : (pc != 0xbc54 && c->mf)) return false;
+  (void)fetch(c);
+  switch(pc) { case 0xbc3e: sep_rep_native(c,0x20,false); break; case 0xbc40: index_constant(c,false,0x07fe); break; case 0xbc43: lda_long_x16(c,0x7e9000); break; case 0xbc47: ora16_constant_local(c,0x1000); break; case 0xbc4a: store_a_long_x16(c,0x7e9000); break; case 0xbc4e: case 0xbc4f: implied(c); c->x--; zn(c,c->x,false); break; case 0xbc50: branch_to(c,!c->n,0xbc43); break; case 0xbc52: sep_rep_native(c,0x20,true); break; case 0xbc54: return_short(c); break; }
+  return true;
+}
+
 static void ldy16_constant(Cpu *c, uint16_t value) {
   uint16_t low = c->pc++, high = c->pc++;
   (void)c->read(c->mem, ((uint32_t)c->k << 16) | low); sample_interrupt(c);

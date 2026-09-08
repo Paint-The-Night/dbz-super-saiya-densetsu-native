@@ -853,6 +853,8 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
   }
   if(c->pc >= 0x8000 && c->pc <= 0x800d) {
     done = reset_step(c, c->pc); x->reset_steps += done;
+  } else if(c->pc >= 0xbc3e && c->pc <= 0xbc54) {
+    done = actor_counter_bc3e_step(c, c->pc); x->display_control_steps += done;
   } else if(c->pc >= 0x828f && c->pc <= 0x82a2) {
     done = display_step(c, c->pc); x->display_steps += done;
   } else if(c->pc >= 0x82a3 && c->pc <= 0x82c6) {
