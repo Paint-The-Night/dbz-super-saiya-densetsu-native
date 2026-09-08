@@ -538,3 +538,6 @@ instruction sites and 8 ROM bytes.
 The bank-3 selector load at `$03:E8AA` is also native, with a direct CPU and
 bus-equivalence test before its still-interpreted setup call. This adds 1 site
 and 3 ROM bytes.
+
+The bank-3 `$F246` leaf return now shares the verified RTL handler used by the
+neighboring scene exits, adding 1 site and 1 ROM byte.

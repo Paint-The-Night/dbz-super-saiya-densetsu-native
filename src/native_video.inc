@@ -445,7 +445,6 @@ static bool palette_clear_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
-
 static void load_dp_y16(Cpu *c, uint8_t offset) {
   uint16_t address = dp_address(c, offset);
   c->y = read16(c, address); zn(c, c->y, false);
@@ -6512,10 +6511,10 @@ static bool actor_return_2f463_step(Cpu *c, uint16_t pc) {
   (void)fetch(c); return_long(c); return true;
 }
 
-/* $03:F39E/$F39F/$F3A0/$F4AD/$F560/$F582/$F5A2: leaf returns. */
+/* $03:F246/$F39E/$F39F/$F3A0/$F4AD/$F560/$F582/$F5A2: leaf returns. */
 static bool scene_return_bank3_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 3 || c->e || c->xf || c->d || !c->mf) return false;
-  switch(pc) { case 0xf39e: case 0xf39f: case 0xf3a0: case 0xf4ad: case 0xf560: case 0xf582: case 0xf5a2: break; default: return false; }
+  switch(pc) { case 0xf246: case 0xf39e: case 0xf39f: case 0xf3a0: case 0xf4ad: case 0xf560: case 0xf582: case 0xf5a2: break; default: return false; }
   (void)fetch(c); return_long(c); return true;
 }
 
@@ -11328,6 +11327,7 @@ static bool actor_return_edf9_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf || pc != 0xedf9) return false;
   (void)fetch(c); return_long(c); return true;
 }
+
 
 /* $00:FCD8: scene call stub. */
 static bool scene_call_fcd8_step(Cpu *c, uint16_t pc) {
