@@ -11229,9 +11229,14 @@ static bool scene_status_9569_step(Cpu *c, uint16_t pc) {
 
 /* $00:9579: scene-table handler enters the shared preset helper. */
 static bool scene_entry_9579_step(Cpu *c, uint16_t pc) {
-  if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf || pc != 0x9579) return false;
+  if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf || (pc != 0x9579 && pc != 0x957c && pc != 0x957f && pc != 0x9581)) return false;
   (void)fetch(c);
-  jsr_abs_native(c, 0x9485);
+  switch(pc) {
+    case 0x9579: jsr_abs_native(c, 0x9485); break;
+    case 0x957c: video_load(c, 0x2140, false); break;
+    case 0x957f: cmp_constant8(c, 0x04); break;
+    case 0x9581: branch_to(c, c->z, 0x9589); break;
+  }
   return true;
 }
 

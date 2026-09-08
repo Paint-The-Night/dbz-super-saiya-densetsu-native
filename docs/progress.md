@@ -38,6 +38,7 @@ It now also calls `$00:A568` and clears `$071B`/`$1648` at `$9559–$9560`, addi
 The tail now adds the second clear at `$9563` and jumps back to `$8000` at `$9566`, adding 2 sites and 6 bytes.
 The `$9569–$9578` scene-status helper is now native, including sign/equality branches and both carry-return paths; this adds 9 sites and 16 bytes.
 The scene-table entry at `$9579` now natively enters the shared `$9485` preset helper, adding 1 verified site and 3 bytes.
+Its next mode check at `$957C–$9581` is now native, including the compare and conditional branch; this adds 3 sites and 7 bytes.
 
 
 The `$00:98D5–990E` actor-slot loop adds 27 instruction sites and 58 bytes.
