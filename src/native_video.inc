@@ -11262,6 +11262,14 @@ static bool scene_cleanup_9599_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $00:9251: scene-mode handler reads the active scene flag. */
+static bool scene_entry_9251_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf || pc != 0x9251) return false;
+  (void)fetch(c);
+  video_load(c, 0x01a1, false);
+  return true;
+}
+
 /* $00:95A9-$95B6: scene-mode[15] setup around the native $8E96 path. */
 static bool scene_thunk_95a9_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf) return false;
