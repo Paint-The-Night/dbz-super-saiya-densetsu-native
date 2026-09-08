@@ -622,6 +622,11 @@ The bank-1 `$D433–D438` status prefix now includes the mask and shared-helper
 call after the existing `$072E` load. Differential tests add 2 verified sites
 and 8 ROM bytes while leaving the helper continuation interpreter-backed.
 
+The bank-1 `$073C` entry-prefix family now covers all 24 manifest-listed
+entries through their shared `$BF44` helper calls. Differential tests cover 48
+instruction sites, adding 35 sites and 105 ROM bytes beyond the original
+13-entry load-only coverage.
+
 The bank-3 `$F7DE–F7E6` phase marker leaf is native, covering both status stores,
 the `$80` phase value, and RTL. Differential tests cover all 4 manifest-listed
 sites, adding 4 verified sites and 9 ROM bytes.
