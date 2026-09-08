@@ -111,17 +111,26 @@ static uint32_t checkpoint_load(const char *path,Snes *game,Snes *reference,int 
     die("Checkpoint core format mismatch");
   uint32_t phase=little32(data+136);free(data);return phase;
 }
+static void raw_state_load(const char *path,Snes *game,Snes *reference,int size) {
+  FILE *f=fopen(path,"rb");if(!f) die("Cannot open raw state");
+  uint8_t *data=malloc((size_t)size);if(!data) die("Raw state allocation failed");
+  bool valid=fread(data,1,(size_t)size,f)==(size_t)size && fgetc(f)==EOF && !ferror(f);fclose(f);
+  if(!valid || !snes_loadState(game,data,size) || (reference&&!snes_loadState(reference,data,size)))
+    die("Invalid or incompatible raw state");
+  free(data);
+}
 static void usage(void) {
   puts("dbz-port --rom GAME.sfc [--headless --frames N] [--verify] [--no-native]\n"
        "         [--inputs replay.txt] [--dump-dir existing-directory] [--capture-every N]\n"
        "         [--save-dir existing-directory] [--load-checkpoint file.dbzstate]\n"
+       "         [--load-state raw.state]\n"
        "Controls: arrows, Z/B, X/A, A/Y, S/X, Enter/Start, Right Shift/Select, D/L, C/R.\n"
        "P pauses, Tab accelerates, Escape quits. Only the pinned Japanese Rev 1 ROM is accepted.");
 }
 
 int main(int argc,char **argv) {
   const char *rom_path=NULL,*input_path=NULL,*dump_dir=NULL,*save_dir=NULL;
-  const char *checkpoint_path=NULL;
+  const char *checkpoint_path=NULL,*state_path=NULL;
   bool headless=false,verify=false,native=true;
   unsigned frame_limit=0,capture_every=300;
   for(int i=1;i<argc;i++) {
@@ -132,6 +141,7 @@ int main(int argc,char **argv) {
     else if(i+1<argc && !strcmp(argv[i],"--rom")) rom_path=argv[++i];
     else if(i+1<argc && !strcmp(argv[i],"--inputs")) input_path=argv[++i];
     else if(i+1<argc && !strcmp(argv[i],"--load-checkpoint")) checkpoint_path=argv[++i];
+    else if(i+1<argc && !strcmp(argv[i],"--load-state")) state_path=argv[++i];
     else if(i+1<argc && !strcmp(argv[i],"--dump-dir")) dump_dir=argv[++i];
     else if(i+1<argc && !strcmp(argv[i],"--save-dir")) save_dir=argv[++i];
     else if(i+1<argc && (!strcmp(argv[i],"--frames") || !strcmp(argv[i],"--capture-every"))) {
@@ -194,7 +204,10 @@ int main(int argc,char **argv) {
   }
   execution.cpu=game->cpu;execution.enabled=native;dbz_set_execution(&execution);
   int state_size=snes_saveState(game,NULL);
-  uint32_t sample_phase=checkpoint_path?checkpoint_load(checkpoint_path,game,reference,state_size):0;
+  uint32_t sample_phase=0;
+  if(checkpoint_path && state_path) die("Choose only one state loader");
+  if(checkpoint_path) sample_phase=checkpoint_load(checkpoint_path,game,reference,state_size);
+  if(state_path) raw_state_load(state_path,game,reference,state_size);
   uint8_t *state=malloc((size_t)state_size),*reference_state=verify?malloc((size_t)state_size):NULL;
   if(!state || (verify&&!reference_state)) die("State allocation failed");
   snes_saveState(game,state);

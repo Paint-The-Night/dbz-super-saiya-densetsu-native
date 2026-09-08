@@ -80,8 +80,11 @@ at 1 relative to that checkpoint. Both verification instances load the same
 state. The versioned checkpoint includes the ROM identity, a SHA-256 checksum,
 machine state, and exact audio sample phase. The core state also preserves the
 DSP output history, which is needed for identical resumed PCM. Raw `final.state`
-is a diagnostic artifact and is not accepted by this option. Older raw states
-predating the DSP state fix are incompatible; regenerate checkpoints by replaying.
+is a diagnostic artifact and is not accepted by this option. Entry-trace
+snapshots can instead be loaded with `--load-state
+path/to/entry-snapshot-reference.state` for exact-state differential probes.
+Older raw states predating the DSP state fix are incompatible; regenerate
+checkpoints by replaying.
 
 The `checkpoint_equivalence` CTest compares a 360-frame run with a 211+149-frame
 split, checks every resumed state/video/audio hash, and rejects seven malformed

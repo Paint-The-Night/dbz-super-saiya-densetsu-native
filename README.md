@@ -104,6 +104,17 @@ Set `DBZ_TRACE_REFERENCE=1` alongside it to label snapshots from the reference
 interpreter as well as the native run.
 The first matching entry in each mode also writes a complete local emulator
 state to `entry-snapshot-native.state` and `entry-snapshot-reference.state`.
+Those raw snapshots can be replayed directly for a short, exact-state probe:
+
+```sh
+build/dbz-port --rom "$DBZ_ROM" --headless --verify --frames 1 \
+  --load-state entry-snapshot-reference.state
+```
+
+`--load-state` is intended for local differential diagnosis. It requires a
+raw state produced by this build and loads the same bytes into both the native
+and reference instances; it does not include ROM data or create a portable
+save format.
 
 For an interactive window, omit `--headless --frames`:
 
@@ -134,7 +145,8 @@ build/dbz-port --rom "$DBZ_ROM" \
 
 The checkpoint is bound to the ROM hash and includes a checksum, machine state,
 audio phase, and DSP output history. Raw diagnostic `final.state` files are not
-accepted as checkpoints.
+accepted as checkpoints; use `--load-state` only for the exact-state probes
+described above.
 
 ## Native macOS bundle
 
