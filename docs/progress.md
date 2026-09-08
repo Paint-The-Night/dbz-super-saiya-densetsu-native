@@ -577,3 +577,7 @@ second table lookup, `$0D5E` result store, and RTL. Differential coverage adds
 The bank-1 `$BBF7–BC03` actor-table resolver is native, including indexed
 long-ROM lookup, Y result transfer, and RTL. Differential coverage adds 7
 verified sites and 13 ROM bytes.
+
+The bank-3 `$958A–9599` actor-coordinate prefix is native, covering coordinate
+copies, compact table selection, and its local JSR boundary. Differential tests
+cover the six data-moving boundaries; this adds 7 verified sites and 20 ROM bytes.

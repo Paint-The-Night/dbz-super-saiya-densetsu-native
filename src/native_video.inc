@@ -11414,6 +11414,15 @@ static bool actor_index_bbf7_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $03:958A–9599: copy actor coordinates and select the compact table bank. */
+static bool scene_actor_958a_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 3 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0x958a: case 0x958d: case 0x958f: case 0x9592: case 0x9594: case 0x9597: case 0x9599: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) { case 0x958a: load_y_abs16(c,0x01a2); break; case 0x958d: sty_dp16(c,0x00); break; case 0x958f: load_y_abs16(c,0x01a4); break; case 0x9592: sty_dp16(c,0x02); break; case 0x9594: video_load(c,0x0d59,false); break; case 0x9597: and_constant8(c,0x03); break; case 0x9599: jsr_abs_native(c,0x8000); break; }
+  return true;
+}
+
 /* $01:EDF9: actor leaf return. */
 static bool actor_return_edf9_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf || pc != 0xedf9) return false;

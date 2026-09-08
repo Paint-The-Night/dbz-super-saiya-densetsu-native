@@ -633,6 +633,14 @@ int main(int argc,char **argv) {
     require(ca.pc==0x9000,"bbf7 return");
   }
   {
+    const uint16_t sites[] = {0x958a,0x958d,0x958f,0x9592,0x9594,0x9597};
+    for(unsigned i=0;i<6;i++) {
+      memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+      Cpu ca=make_cpu(a,sites[i],0), cb=make_cpu(b,sites[i],0); ca.k=cb.k=3; ca.xf=cb.xf=false; ca.sp=cb.sp=0x1ff; a->ram[0x01a2]=0x34; a->ram[0x01a3]=0x12; a->ram[0x01a4]=0x78; a->ram[0x01a5]=0x56; b->ram[0x01a2]=0x34; b->ram[0x01a3]=0x12; b->ram[0x01a4]=0x78; b->ram[0x01a5]=0x56; a->count=b->count=0;
+      require(dbz_native_step(&ca,stats),"expected 958a prefix"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+  }
+  {
     memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
     Cpu ca=make_cpu(a,0xf463,0), cb=make_cpu(b,0xf463,0); ca.k=cb.k=2; ca.xf=cb.xf=false; ca.sp=cb.sp=0x1ff;
     word(a,0x200,0x8fff); word(b,0x200,0x8fff); a->count=b->count=0;

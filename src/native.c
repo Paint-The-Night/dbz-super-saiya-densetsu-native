@@ -368,7 +368,9 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
     return done;
   }
   if(bank == 3) {
-    if(c->pc >= 0xfb8d && c->pc <= 0xfbd9) {
+    if(c->pc >= 0x958a && c->pc <= 0x9599) {
+      done = scene_actor_958a_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xfb8d && c->pc <= 0xfbd9) {
       done = early_exit_fb8d_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xfbda && c->pc <= 0xfc32) {
       done = scene_entry_fbda_step(c, c->pc); x->display_control_steps += done;
