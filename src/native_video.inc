@@ -9,6 +9,8 @@ static void sbc_abs16(Cpu *c, uint16_t address);
 static void ldy_dp16(Cpu *c, uint8_t offset);
 static void cmp_dp16(Cpu *c, uint8_t offset);
 static void cmp_long_x8(Cpu *c, uint32_t base);
+static void php_native(Cpu *c);
+static void jsl_to(Cpu *c, uint16_t dest);
 static void branch_to(Cpu *c, bool take, uint16_t target) {
   if(!take) sample_interrupt(c);
   (void)fetch(c);
