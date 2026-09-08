@@ -10,6 +10,30 @@
 #include "native.h"
 #include "snes.h"
 #include <inttypes.h>
+#include <stdlib.h>
+
+static FILE *entry_trace_file;
+static uint32_t entry_trace_pc;
+static bool entry_trace_initialized;
+static void trace_entry(const Cpu *c) {
+  if(!entry_trace_initialized) {
+    entry_trace_initialized = true;
+    const char *spec = getenv("DBZ_ENTRY_TRACE");
+    if(spec) {
+      unsigned bank, pc;
+      if(sscanf(spec, "%x:%x", &bank, &pc) == 2 && bank < 0x80 && pc >= 0x8000 && pc <= 0xffff) {
+        entry_trace_pc = (bank << 16) | pc;
+        entry_trace_file = fopen("entry-snapshots.csv", "w");
+        if(entry_trace_file) fputs("bank,pc,a,x,y,sp,dp,k,db,c,z,v,n,i,d,xf,mf,e\n", entry_trace_file);
+      }
+    }
+  }
+  if(entry_trace_file && (((uint32_t)(c->k & 0x7f) << 16) | c->pc) == entry_trace_pc)
+    fprintf(entry_trace_file, "%02x,%04x,%04x,%04x,%04x,%04x,%04x,%02x,%02x,%d,%d,%d,%d,%d,%d,%d,%d,%d\n",
+            c->k & 0x7f, c->pc, c->a, c->x, c->y, c->sp, c->dp, c->k, c->db,
+            c->c, c->z, c->v, c->n, c->i, c->d, c->xf, c->mf, c->e);
+  if(entry_trace_file) fflush(entry_trace_file);
+}
 
 static DbzExecution *active;
 void dbz_set_execution(DbzExecution *execution) { active = execution; }
@@ -1115,6 +1139,7 @@ void cpu_runOpcode(Cpu *cpu) {
   Snes *snes = cpu->mem;
   uint64_t before = snes->cycles;
   uint32_t pc = ((uint32_t)cpu->k << 16) | cpu->pc;
+  trace_entry(cpu);
   active->recent_pc[active->recent_index++ & 31u] = pc;
   if(!cpu->resetWanted && !cpu->intWanted && !cpu->waiting && !cpu->stopped &&
       (pc & 0xffffu) >= 0x8000 && (pc >> 16 & 0x7fu) < 0x20)
