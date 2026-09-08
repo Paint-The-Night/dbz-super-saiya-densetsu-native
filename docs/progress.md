@@ -131,7 +131,7 @@ the upload call at `$00:85F5`.
 | 02:D812–D843 | Conditional scroll snapshot into $01C0–$01CE | 50 | 20 |
 | 00:9BBF–9C4A | Tiled VRAM queue enqueue from [DP+$00] via $0A00 | 140 | 70 |
 | 06:F14D–F1EB | Scroll clamp from $0702/$0703; loop $06EF11 + $8324 | 159 | 78 |
-| 06:EE42 | Actor setup PHP entry prefix | 1 | 1 |
+| 06:EE42–EE46 | Actor setup PHP and 16-bit X initialization | 4 | 2 |
 | 00:89B8–8A06 | Actor-field accumulate from [DP+$00],Y into $0B07,X | 79 | 40 |
 | 06:EF11–EF9A | VRAM queue fill from scroll; loop $06F089 ×32 | 138 | 66 |
 | 06:F082–F14C | Tile-word fetch ($F089) with $F082 bounds early-exit | 203 | 107 |
