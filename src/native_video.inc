@@ -11175,6 +11175,28 @@ static bool scene_thunk_952b_9530_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $03:952E-$953D: initialize the actor-slot index, advance through the
+ * shared $8B0E helper, and dispatch to the scene actor loop. */
+static bool scene_actor_dispatch_952e_step(Cpu *c, uint16_t pc) {
+  if(c->e || c->xf || c->d) return false;
+  switch(pc) {
+    case 0x952e: case 0x9530: case 0x9534: case 0x9535:
+    case 0x9538: case 0x953a: case 0x953d: break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0x952e: set_m(c, true); break;
+    case 0x9530: jsl_to(c, 0x8b0e); break;
+    case 0x9534: implied(c); c->x++; zn(c, c->x, false); break;
+    case 0x9535: cpx16_constant(c, 0x0070); break;
+    case 0x9538: branch_to(c, c->c, 0x953d); break;
+    case 0x953a: jmp_abs_native(c, 0x94aa); break;
+    case 0x953d: return_long(c); break;
+  }
+  return true;
+}
+
 /* $00:9535: scene-table continuation begins by reading the scene mode. */
 static bool scene_read_9535_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf) return false;

@@ -396,6 +396,7 @@ the upload call at `$00:85F5`.
 | 00:943F–9443 | Scene-table leaf delegating to bank-04 PPU preset | 5 | 2 |
 | 00:952B–952F | Scene-table leaf delegating to bank-02 handler | 5 | 2 |
 | 00:9530–9534 | Scene-table leaf delegating to bank-04 handler | 5 | 2 |
+| 03:952E–953D | Actor-slot index dispatch through shared increment helper | 16 | 7 |
 | 00:95A9–95B6 | Scene-mode[15] flag setup and bank-00:8E96 delegation | 14 | 6 |
 | 00:9444–9458 | Scene-table PPU preset wrapper and bank-04 delegation | 21 | 9 |
 | 00:9459–946E | Scene-table reset wrapper with dual bank calls | 22 | 8 |
