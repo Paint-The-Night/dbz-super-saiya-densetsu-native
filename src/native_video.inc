@@ -11584,6 +11584,15 @@ static bool actor_phase_f7de_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $03:F5F6–F5FD: call the actor helper, load its status, and enter setup. */
+static bool actor_setup_f5f6_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 3 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0xf5f6: case 0xf5fa: case 0xf5fd: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) { case 0xf5f6: jsl_to(c,0xb588); break; case 0xf5fa: video_load(c,0x01da,false); break; case 0xf5fd: jsr_abs_native(c,0x8000); break; }
+  return true;
+}
+
 /* $01:EDF9: actor leaf return. */
 static bool actor_return_edf9_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf || pc != 0xedf9) return false;

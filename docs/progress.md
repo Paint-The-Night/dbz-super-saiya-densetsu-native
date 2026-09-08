@@ -613,6 +613,10 @@ The bank-3 `$E8AA–E8AF` setup wrapper now covers both manifest sites: selector
 load and the shared `$8000` subroutine call. Differential tests add 2 verified
 sites and 6 ROM bytes.
 
+The bank-3 `$F5F6–F5FD` setup prefix is native across its three assigned sites:
+helper call, status load, and shared `$8000` call. Differential tests add 3
+verified sites and 10 ROM bytes.
+
 The bank-3 `$E655–E66A` bounded copy loop is native, including its indexed
 span, `BNE` exit, `BCC` repeat, and both long-return paths. Differential tests
 cover all 10 manifest-listed sites, adding 10 verified sites and 22 ROM bytes.
