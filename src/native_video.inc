@@ -11178,12 +11178,14 @@ static bool scene_thunk_952b_9530_step(Cpu *c, uint16_t pc) {
 /* $00:9535: scene-table continuation begins by reading the scene mode. */
 static bool scene_read_9535_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf) return false;
-  if(pc != 0x9535 && pc != 0x9538 && pc != 0x953a) return false;
+  if(pc != 0x9535 && pc != 0x9538 && pc != 0x953a && pc != 0x953c && pc != 0x953e) return false;
   (void)fetch(c);
   switch(pc) {
     case 0x9535: video_load(c, 0x01e7, false); break;
     case 0x9538: and_constant8(c, 0x10); break;
     case 0x953a: branch_to(c, c->z, 0x9540); break;
+    case 0x953c: byte_constant(c, 0x02); break;
+    case 0x953e: branch_to(c, true, 0x954e); break;
   }
   return true;
 }

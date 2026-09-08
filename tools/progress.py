@@ -20,8 +20,8 @@ README = ROOT / "README.md"
 
 # These are the fixed, reviewed regions listed in docs/progress.md. Keeping the
 # inventory here makes the percentage auditable without parsing generated C.
-NATIVE_SITES = 12537
-NATIVE_BYTES = 28201
+NATIVE_SITES = 12539
+NATIVE_BYTES = 28205
 NATIVE_ENTRIES = 430
 
 

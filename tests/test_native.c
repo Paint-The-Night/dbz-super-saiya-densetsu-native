@@ -3192,8 +3192,8 @@ int main(int argc,char **argv) {
     require(a->ram[0x01e3]==0x08,"8cb0 01E3 from 8DF6");
   }
   {
-    const uint16_t sites[] = {0x9535,0x9538,0x953a};
-    for(unsigned n=0;n<3;n++) {
+    const uint16_t sites[] = {0x9535,0x9538,0x953a,0x953c,0x953e};
+    for(unsigned n=0;n<5;n++) {
       memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
       Cpu ca=make_cpu(a,sites[n],0), cb=make_cpu(b,sites[n],0); ca.k=cb.k=0; ca.db=cb.db=0; ca.xf=cb.xf=false; ca.mf=cb.mf=true;
       a->ram[0x01e7]=b->ram[0x01e7]=0x10; ca.a=cb.a=(n==2 ? 0 : 0x10); a->count=b->count=0;
