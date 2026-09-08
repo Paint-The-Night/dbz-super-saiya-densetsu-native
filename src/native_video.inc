@@ -11241,6 +11241,27 @@ static bool scene_entry_9579_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $00:9599-$95A8: scene-table cleanup values and return. */
+static bool scene_cleanup_9599_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) {
+    case 0x9599: case 0x959b: case 0x959d: case 0x959f: case 0x95a2: case 0x95a4: case 0x95a6: case 0x95a8: break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0x9599: byte_constant(c, 0x0e); break;
+    case 0x959b: store_dp(c, 0x27, true); break;
+    case 0x959d: byte_constant(c, 0x61); break;
+    case 0x959f: store_register8(c, 0x0716); break;
+    case 0x95a2: stz_dp8(c, 0x29); break;
+    case 0x95a4: byte_constant(c, 0x03); break;
+    case 0x95a6: store_dp(c, 0x25, true); break;
+    case 0x95a8: return_long(c); break;
+  }
+  return true;
+}
+
 /* $00:95A9-$95B6: scene-mode[15] setup around the native $8E96 path. */
 static bool scene_thunk_95a9_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf) return false;
