@@ -658,6 +658,13 @@ int main(int argc,char **argv) {
     }
   }
   {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0xce57,0), cb=make_cpu(b,0xce57,0); ca.k=cb.k=1; ca.xf=cb.xf=false; ca.sp=cb.sp=0x1ff; word(a,0x200,0x8fff); word(b,0x200,0x8fff); a->ram[0x071b]=0xf0; b->ram[0x071b]=0xf0;
+    const uint16_t sites[] = {0xce57,0xce5a,0xce5e,0xce62,0xce65,0xce67,0xce69,0xce6c};
+    for(unsigned i=0;i<8;i++) { if(i) ca.pc=cb.pc=sites[i]; a->count=b->count=0; require(dbz_native_step(&ca,stats),"expected ce57 status"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b); }
+    require(a->ram[0x071b]==0xf1,"ce57 active bit");
+  }
+  {
     const uint16_t sites[] = {0xf246,0xf39e,0xf39f,0xf3a0,0xf4ad,0xf560,0xf582,0xf5a2};
     for(unsigned n=0;n<8;n++) {
       memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));

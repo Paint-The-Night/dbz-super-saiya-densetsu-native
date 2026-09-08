@@ -585,3 +585,7 @@ cover the six data-moving boundaries; this adds 7 verified sites and 20 ROM byte
 The bank-1 `$BA10–BA29` flag gates are native, including both conditional
 helper calls and return paths. Differential tests cover all 12 instruction
 sites and branch conditions, adding 12 sites and 26 ROM bytes.
+
+The bank-1 `$CE57–CE6C` status-reset leaf is native, including both helper
+calls, masked active-bit update, and RTL. Differential tests cover all 8 sites,
+adding 8 verified sites and 22 ROM bytes.

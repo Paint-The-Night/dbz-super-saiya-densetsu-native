@@ -11442,6 +11442,15 @@ static bool actor_flag_ba10_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $01:CE57–CE6C: reset the actor status word and set its active bit. */
+static bool actor_status_ce57_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0xce57: case 0xce5a: case 0xce5e: case 0xce62: case 0xce65: case 0xce67: case 0xce69: case 0xce6c: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) { case 0xce57: stz_abs8(c,0x0725); break; case 0xce5a: jsl_to(c,0xd33a); break; case 0xce5e: jsl_to(c,0xb67a); break; case 0xce62: video_load(c,0x071b,false); break; case 0xce65: and_constant8(c,0xf0); break; case 0xce67: ora_constant8(c,1); break; case 0xce69: store_register8(c,0x071b); break; case 0xce6c: return_long(c); break; }
+  return true;
+}
+
 /* $01:EDF9: actor leaf return. */
 static bool actor_return_edf9_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf || pc != 0xedf9) return false;
