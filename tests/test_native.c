@@ -484,6 +484,13 @@ int main(int argc,char **argv) {
   }
   {
     memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+    Cpu ca=make_cpu(a,0x991d,0), cb=make_cpu(b,0x991d,0); ca.k=cb.k=0; ca.xf=cb.xf=false;
+    a->ram[0x0ea1]=b->ram[0x0ea1]=0x00; a->count=b->count=0;
+    for(unsigned i=0;i<2;i++) { require(dbz_native_step(&ca,stats),"expected 991d branch"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b); }
+    require(ca.pc==0x9926 && ca.k==0,"991d branch boundary");
+  }
+  {
+    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
     Cpu ca=make_cpu(a,0x987a,0), cb=make_cpu(b,0x987a,0); ca.k=cb.k=0; ca.xf=cb.xf=false;
     a->ram[0x7af]=b->ram[0x7af]=0x00; a->count=b->count=0;
     for(unsigned i=0;i<2;i++) { require(dbz_native_step(&ca,stats),"expected 987a branch"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b); }
