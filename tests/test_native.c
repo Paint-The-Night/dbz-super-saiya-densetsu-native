@@ -613,6 +613,18 @@ int main(int argc,char **argv) {
     }
   }
   {
+    const uint16_t sites[] = {0xd3c0,0xd3c3,0xd3c5,0xd3c7,0xd3ca,0xd3cb,0xd3cc,0xd3cf,
+                              0xd3d1,0xd3d3,0xd3d5,0xd3d8,0xd3d9,0xd3da,0xd3dc};
+    for(unsigned n=0;n<15;n++) {
+      memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+      Cpu ca=make_cpu(a,sites[n],0), cb=make_cpu(b,sites[n],0);
+      ca.k=cb.k=1; ca.xf=cb.xf=false; ca.mf=cb.mf=(n<=1 || n>=14); ca.sp=cb.sp=0x1ff;
+      word(a,0x072c,0x0010); word(b,0x072c,0x0010); word(a,0x0738,0x0004); word(b,0x0738,0x0004);
+      word(a,0x073a,0x0002); word(b,0x073a,0x0002); a->count=b->count=0;
+      require(dbz_native_step(&ca,stats),"expected d3c0 actor pointer"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+  }
+  {
     const uint16_t sites[] = {0x863a,0x863c,0x863f,0x8640,0x8643,0x8645,0x8648,0x864a,0x864c,0x8650};
     for(unsigned n=0;n<10;n++) {
       memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));

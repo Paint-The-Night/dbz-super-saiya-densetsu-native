@@ -11519,6 +11519,38 @@ static bool actor_table_c902_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $01:D3C0–D3DC: resolve an actor pointer and derive the secondary table
+ * index across the routine's REP/SEP boundary. */
+static bool actor_pointer_d3c0_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 1 || c->e || c->xf || c->d) return false;
+  switch(pc) {
+    case 0xd3c0: case 0xd3c3: case 0xd3c5: case 0xd3c7: case 0xd3ca:
+    case 0xd3cb: case 0xd3cc: case 0xd3cf: case 0xd3d1: case 0xd3d3:
+    case 0xd3d5: case 0xd3d8: case 0xd3d9: case 0xd3da: case 0xd3dc: break;
+    default: return false;
+  }
+  if((pc <= 0xd3c3 || pc >= 0xd3dc) ? !c->mf : c->mf) return false;
+  (void)fetch(c);
+  switch(pc) {
+    case 0xd3c0: video_load(c, 0x073a, false); break;
+    case 0xd3c3: store_dp(c, 0x02, true); break;
+    case 0xd3c5: set_m(c, false); break;
+    case 0xd3c7: load_a_abs16(c, 0x072c); break;
+    case 0xd3ca: asl_a16(c); break;
+    case 0xd3cb: implied(c); c->c = false; break;
+    case 0xd3cc: adc_abs16(c, 0x0738); break;
+    case 0xd3cf: store_dp(c, 0x00, false); break;
+    case 0xd3d1: lda_indirect_long16(c, 0x00); break;
+    case 0xd3d3: store_dp(c, 0x00, false); break;
+    case 0xd3d5: load_a_abs16(c, 0x072a); break;
+    case 0xd3d8: asl_a16(c); break;
+    case 0xd3d9: tay16(c); break;
+    case 0xd3da: set_m(c, true); break;
+    case 0xd3dc: return_long(c); break;
+  }
+  return true;
+}
+
 /* $01:863A–8650: widen the accumulator, compute the actor pointer, then
  * dispatch to the shared table helper. */
 static bool actor_pointer_863a_step(Cpu *c, uint16_t pc) {

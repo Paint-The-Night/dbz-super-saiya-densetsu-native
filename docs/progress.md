@@ -650,6 +650,11 @@ assigned instructions, including its 8-bit pre-shift, REP/SEP boundary, indexed
 lookup, shared dispatch, and RTL. Differential tests add 15 sites and 29 ROM
 bytes.
 
+The bank-1 `$D3C0–D3DC` actor-pointer routine is native across all fifteen
+assigned instructions, including the 16-bit pointer arithmetic, indirect table
+load, secondary index derivation, width boundary, and RTL. Differential tests
+add 15 sites and 29 ROM bytes.
+
 The bank-1 `$863A–8650` actor-pointer prefix is native across all ten assigned
 instructions, including the M/X width transitions, 16-bit pointer arithmetic,
 WRAM stores, shared dispatch, and RTL. Differential tests add 10 sites and 23
