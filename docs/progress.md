@@ -618,6 +618,10 @@ The bank-2 `$D37D–D38A` actor gate is native across its five assigned sites,
 including the status flag, both bank-2 dispatch calls, and RTL. Differential
 tests add 5 verified sites and 14 ROM bytes.
 
+The bank-1 `$D433–D438` status prefix now includes the mask and shared-helper
+call after the existing `$072E` load. Differential tests add 2 verified sites
+and 8 ROM bytes while leaving the helper continuation interpreter-backed.
+
 The bank-3 `$F7DE–F7E6` phase marker leaf is native, covering both status stores,
 the `$80` phase value, and RTL. Differential tests cover all 4 manifest-listed
 sites, adding 4 verified sites and 9 ROM bytes.

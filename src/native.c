@@ -334,7 +334,7 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
               c->pc == 0xe066 || c->pc == 0xe0b7 || c->pc == 0xe0f9 || c->pc == 0xe124 || c->pc == 0xe14f ||
               c->pc == 0xe1d3 || c->pc == 0xeb48 || c->pc == 0xec9d || c->pc == 0xed2e) {
       done = actor_load_073c_prefix_step(c, c->pc); x->display_control_steps += done;
-    } else if(c->pc == 0xd433) {
+    } else if(c->pc == 0xd433 || c->pc == 0xd436 || c->pc == 0xd438) {
       done = actor_load_072e_prefix_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xa3db && c->pc <= 0xa3e2) {
       done = actor_init_a3db_step(c, c->pc); x->display_control_steps += done;

@@ -544,11 +544,15 @@ int main(int argc,char **argv) {
     }
   }
   {
-    memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
-    Cpu ca=make_cpu(a,0xd433,0), cb=make_cpu(b,0xd433,0); ca.k=cb.k=1; ca.xf=cb.xf=false;
-    a->ram[0x072e]=0x6c; b->ram[0x072e]=0x6c; a->count=b->count=0;
-    require(dbz_native_step(&ca,stats),"expected d433 status prefix"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
-    require((ca.a&0xff)==0x6c,"d433 status load");
+    const uint16_t sites[] = {0xd433,0xd436,0xd438};
+    for(unsigned n=0;n<3;n++) {
+      memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+      Cpu ca=make_cpu(a,sites[n],0), cb=make_cpu(b,sites[n],0);
+      ca.k=cb.k=1; ca.xf=cb.xf=false; ca.sp=cb.sp=0x1ff;
+      ca.a=cb.a=0xff; a->ram[0x072e]=0x6c; b->ram[0x072e]=0x6c;
+      a->count=b->count=0;
+      require(dbz_native_step(&ca,stats),"expected d433 status prefix"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
   }
   {
     memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));

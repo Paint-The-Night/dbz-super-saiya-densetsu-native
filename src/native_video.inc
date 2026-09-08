@@ -11347,10 +11347,18 @@ static bool actor_load_073c_prefix_step(Cpu *c, uint16_t pc) {
   (void)fetch(c); video_load(c, 0x073c, false); return true;
 }
 
-/* $01:D433: load the shared map/status word before the local continuation. */
+/* $01:D433–D438: load and mask the shared map/status word before the local
+ * continuation, then enter the shared actor helper. */
 static bool actor_load_072e_prefix_step(Cpu *c, uint16_t pc) {
-  if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf || pc != 0xd433) return false;
-  (void)fetch(c); video_load(c, 0x072e, false); return true;
+  if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf) return false;
+  if(pc != 0xd433 && pc != 0xd436 && pc != 0xd438) return false;
+  (void)fetch(c);
+  switch(pc) {
+    case 0xd433: video_load(c, 0x072e, false); break;
+    case 0xd436: and_constant8(c, 0x7f); break;
+    case 0xd438: jsr_abs_native(c, 0xbf44); break;
+  }
+  return true;
 }
 
 /* $01:A3DB–A3E2: initialize the actor upload flag and clear its first slot. */
