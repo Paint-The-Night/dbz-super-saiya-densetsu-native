@@ -11341,6 +11341,24 @@ static bool actor_load_072e_prefix_step(Cpu *c, uint16_t pc) {
   (void)fetch(c); video_load(c, 0x072e, false); return true;
 }
 
+/* $01:A3DB–A3E2: initialize the actor upload flag and clear its first slot. */
+static bool actor_init_a3db_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0xa3db: case 0xa3dd: case 0xa3df: case 0xa3e2: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) { case 0xa3db: byte_constant(c, 1); break; case 0xa3dd: store_dp(c, 0x51, true); break; case 0xa3df: stz_abs8(c, 0x0800); break; case 0xa3e2: return_long(c); break; }
+  return true;
+}
+
+/* $01:D00B–D012: advance the actor timer pair and return. */
+static bool actor_timer_d00b_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0xd00b: case 0xd00c: case 0xd00f: case 0xd012: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) { case 0xd00b: implied(c); c->x++; zn(c, c->x, false); break; case 0xd00c: inc_abs8_native(c, 0x071d); break; case 0xd00f: inc_abs8_native(c, 0x071f); break; case 0xd012: return_long(c); break; }
+  return true;
+}
+
 /* $01:EDF9: actor leaf return. */
 static bool actor_return_edf9_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf || pc != 0xedf9) return false;
