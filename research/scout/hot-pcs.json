@@ -19,10 +19,10 @@
       }
     ],
     "native_filter": "Bank $00 ranges from docs/progress.md / native.c dispatch excluded",
-    "combined_interpreted_unique_pcs": 5629,
-    "combined_interpreted_hits": 7449358,
-    "start_interpreted_hits": 4494308,
-    "battle_interpreted_hits": 2955050
+    "combined_interpreted_unique_pcs": 5579,
+    "combined_interpreted_hits": 7445291,
+    "start_interpreted_hits": 4492185,
+    "battle_interpreted_hits": 2953106
   },
   "top_interpreted_pcs": [
     {
@@ -598,11 +598,6 @@
       "size": 131
     },
     {
-      "range": "00:97BC\u2013988E",
-      "hits": 41292,
-      "size": 211
-    },
-    {
       "range": "01:816F\u201381F4",
       "hits": 40896,
       "size": 134
@@ -618,9 +613,9 @@
       "size": 16
     },
     {
-      "range": "00:9735\u20139747",
-      "hits": 34988,
-      "size": 19
+      "range": "00:9736\u20139747",
+      "hits": 34155,
+      "size": 18
     },
     {
       "range": "01:802A\u20138067",
@@ -651,6 +646,11 @@
       "range": "01:C8C8\u2013C8E4",
       "hits": 24345,
       "size": 29
+    },
+    {
+      "range": "00:97FD\u20139873",
+      "hits": 23178,
+      "size": 119
     },
     {
       "range": "01:B82D\u2013B87F",
@@ -754,16 +754,12 @@
       "hits": 21057
     },
     {
-      "range": "00:97BC\u2013988E",
-      "hits": 19000
-    },
-    {
       "range": "03:99A6\u20139A26",
       "hits": 18396
     },
     {
-      "range": "00:9735\u20139747",
-      "hits": 13987
+      "range": "00:9736\u20139747",
+      "hits": 13509
     },
     {
       "range": "01:81FD\u2013821C",
@@ -784,6 +780,10 @@
     {
       "range": "01:F8FA\u2013F97F",
       "hits": 9813
+    },
+    {
+      "range": "00:97FD\u20139873",
+      "hits": 9662
     },
     {
       "range": "01:82E3\u20138320",

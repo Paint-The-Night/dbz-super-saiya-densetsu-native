@@ -16,16 +16,16 @@ Already-native ranges excluded. Sizes approximate.
 | 8 | `00:91B6` | 7 | n | scene-mode table $8B54[4] (JMP from native 8B51) |
 | 9 | `03:972D` | 16 | ~ | hot interpreted cluster 03:972D–973C (57155 hits) (replay range hits≈57155) |
 | 10 | `00:9A3B` | 60 | ~ | hot interpreted cluster 00:9A3B–9A71 (53795 hits) (replay range hits≈53795) |
-| 11 | `00:9735` | 1 | Y | hot interpreted cluster 00:9735–9747 (34988 hits) (replay range hits≈833) |
-| 12 | `03:93F7` | 3 | Y | hot interpreted cluster 03:93F7–94D3 (155576 hits) (replay range hits≈6) |
-| 13 | `03:9158` | 164 | n | hot interpreted cluster 03:9158–9192 (642808 hits) (replay range hits≈673448) |
-| 14 | `01:C885` | 190 | n | hot interpreted cluster 01:C885–C8AA (232089 hits) (replay range hits≈282402) |
-| 15 | `03:94DC` | 158 | n | hot interpreted cluster 03:94DC–9504 (51744 hits) (replay range hits≈295346) |
-| 16 | `03:957A` | 16 | ~ | hot interpreted cluster 03:957A–9589 (35488 hits) (replay range hits≈35488) |
-| 17 | `01:816F` | 100 | ~ | hot interpreted cluster 01:816F–81F4 (40896 hits) (replay range hits≈31363) |
-| 18 | `03:91D4` | 40 | ~ | hot interpreted cluster 03:91D4–9254 (31218 hits) (replay range hits≈30640) |
-| 19 | `00:AB00` | 44 | ~ | hot interpreted cluster 00:AB00–AD3E (190137 hits) (replay range hits≈6822) |
-| 20 | `01:8250` | 52 | ~ | hot interpreted cluster 01:8250–82CF (97088 hits) (replay range hits≈1160) |
+| 11 | `03:93F7` | 3 | Y | hot interpreted cluster 03:93F7–94D3 (155576 hits) (replay range hits≈6) |
+| 12 | `03:9158` | 164 | n | hot interpreted cluster 03:9158–9192 (642808 hits) (replay range hits≈673448) |
+| 13 | `01:C885` | 190 | n | hot interpreted cluster 01:C885–C8AA (232089 hits) (replay range hits≈282402) |
+| 14 | `03:94DC` | 158 | n | hot interpreted cluster 03:94DC–9504 (51744 hits) (replay range hits≈295346) |
+| 15 | `03:957A` | 16 | ~ | hot interpreted cluster 03:957A–9589 (35488 hits) (replay range hits≈35488) |
+| 16 | `01:816F` | 100 | ~ | hot interpreted cluster 01:816F–81F4 (40896 hits) (replay range hits≈31363) |
+| 17 | `03:91D4` | 40 | ~ | hot interpreted cluster 03:91D4–9254 (31218 hits) (replay range hits≈30640) |
+| 18 | `00:AB00` | 44 | ~ | hot interpreted cluster 00:AB00–AD3E (190137 hits) (replay range hits≈6822) |
+| 19 | `01:8250` | 52 | ~ | hot interpreted cluster 01:8250–82CF (97088 hits) (replay range hits≈1160) |
+| 20 | `00:8113` | 54 | n | hot interpreted cluster 00:8113–8153 (95172 hits) (replay range hits≈94929) |
 
 ## Top 10 quick list
 

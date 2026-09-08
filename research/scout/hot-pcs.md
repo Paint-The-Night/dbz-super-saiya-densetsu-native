@@ -9,9 +9,9 @@ ROM SHA-256 `962aa7a09765a97164af67098877a8fe5b7f1ea9db738561eb466b7600fd241c` (
 
 Coverage counts every visited ROM PC while natives run (visited increments before native/interpret dispatch). Hits below exclude already-native bank `$00` ranges.
 
-- Combined interpreted hits: **7,449,358** across **5629** unique PCs
-- Start-game interpreted hits: 4,494,308
-- Battle-route interpreted hits: 2,955,050
+- Combined interpreted hits: **7,445,291** across **5579** unique PCs
+- Start-game interpreted hits: 4,492,185
+- Battle-route interpreted hits: 2,953,106
 
 ## Top 40 interpreted PC hits (combined)
 
@@ -80,17 +80,17 @@ Coverage counts every visited ROM PC while natives run (visited increments befor
 | 16 | `03:94DC–9504` | 51744 | 41 |
 | 17 | `03:994C–9961` | 49392 | 22 |
 | 18 | `04:816B–81ED` | 42468 | 131 |
-| 19 | `00:97BC–988E` | 41292 | 211 |
-| 20 | `01:816F–81F4` | 40896 | 134 |
-| 21 | `03:99A6–9A26` | 40294 | 129 |
-| 22 | `03:957A–9589` | 35488 | 16 |
-| 23 | `00:9735–9747` | 34988 | 19 |
-| 24 | `01:802A–8067` | 31704 | 62 |
-| 25 | `03:91D4–9254` | 31218 | 129 |
-| 26 | `04:8118–8162` | 27912 | 75 |
-| 27 | `00:A153–A392` | 26872 | 576 |
-| 28 | `04:A074–A0E3` | 26671 | 112 |
-| 29 | `01:C8C8–C8E4` | 24345 | 29 |
+| 19 | `01:816F–81F4` | 40896 | 134 |
+| 20 | `03:99A6–9A26` | 40294 | 129 |
+| 21 | `03:957A–9589` | 35488 | 16 |
+| 22 | `00:9736–9747` | 34155 | 18 |
+| 23 | `01:802A–8067` | 31704 | 62 |
+| 24 | `03:91D4–9254` | 31218 | 129 |
+| 25 | `04:8118–8162` | 27912 | 75 |
+| 26 | `00:A153–A392` | 26872 | 576 |
+| 27 | `04:A074–A0E3` | 26671 | 112 |
+| 28 | `01:C8C8–C8E4` | 24345 | 29 |
+| 29 | `00:97FD–9873` | 23178 | 119 |
 | 30 | `01:B82D–B87F` | 22334 | 83 |
 
 ## Battle-route-only hot clusters
@@ -108,12 +108,12 @@ Coverage counts every visited ROM PC while natives run (visited increments befor
 | 9 | `03:94DC–9504` | 23606 |
 | 10 | `03:994C–9961` | 22533 |
 | 11 | `00:98A1–98DB` | 21057 |
-| 12 | `00:97BC–988E` | 19000 |
-| 13 | `03:99A6–9A26` | 18396 |
-| 14 | `00:9735–9747` | 13987 |
-| 15 | `01:81FD–821C` | 11640 |
-| 16 | `01:8668–86D7` | 11472 |
-| 17 | `01:B82D–B87F` | 10148 |
-| 18 | `01:883C–886F` | 9963 |
-| 19 | `01:F8FA–F97F` | 9813 |
+| 12 | `03:99A6–9A26` | 18396 |
+| 13 | `00:9736–9747` | 13509 |
+| 14 | `01:81FD–821C` | 11640 |
+| 15 | `01:8668–86D7` | 11472 |
+| 16 | `01:B82D–B87F` | 10148 |
+| 17 | `01:883C–886F` | 9963 |
+| 18 | `01:F8FA–F97F` | 9813 |
+| 19 | `00:97FD–9873` | 9662 |
 | 20 | `01:82E3–8320` | 9233 |
