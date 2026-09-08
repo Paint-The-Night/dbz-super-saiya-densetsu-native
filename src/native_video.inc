@@ -5,6 +5,7 @@
  * Entry layout: VMAIN, VMADD word, source word, source bank, length word.
  */
 static void ldy_dp16(Cpu *c, uint8_t offset);
+static void cmp_dp16(Cpu *c, uint8_t offset);
 static void branch_to(Cpu *c, bool take, uint16_t target) {
   if(!take) sample_interrupt(c);
   (void)fetch(c);
@@ -461,6 +462,13 @@ static void load_y_abs16(Cpu *c, uint16_t address) {
   uint16_t value = c->read(c->mem, low); sample_interrupt(c);
   value |= (uint16_t)c->read(c->mem, (low + 1) & 0xffffffu) << 8;
   c->y = value; zn(c, c->y, false);
+}
+static void load_a_abs16(Cpu *c, uint16_t address) {
+  (void)fetch(c); (void)fetch(c);
+  uint32_t low = ((uint32_t)c->db << 16) | address;
+  uint16_t value = c->read(c->mem, low); sample_interrupt(c);
+  value |= (uint16_t)c->read(c->mem, (low + 1) & 0xffffffu) << 8;
+  c->a = value; zn(c, c->a, false);
 }
 static void stz_abs16(Cpu *c, uint16_t address) {
   (void)fetch(c); (void)fetch(c);
@@ -11491,6 +11499,15 @@ static bool actor_scratch_b7f4_step(Cpu *c, uint16_t pc) {
   switch(pc) { case 0xb7f4: case 0xb7f7: case 0xb7f9: case 0xb7fb: case 0xb7ff: break; default: return false; }
   (void)fetch(c);
   switch(pc) { case 0xb7f4: ldy16_constant(c,0x05f4); break; case 0xb7f7: store_dp_y16(c,0x10); break; case 0xb7f9: byte_constant(c,0x2e); break; case 0xb7fb: jsl_to(c,0xa74e); break; case 0xb7ff: return_long(c); break; }
+  return true;
+}
+
+/* $04:8E3C–8E49: clamp the 16-bit actor counter and return. */
+static bool actor_counter_8e3c_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 4 || c->e || c->xf || c->d || c->mf) return false;
+  switch(pc) { case 0x8e3c: case 0x8e3f: case 0x8e42: case 0x8e44: case 0x8e46: case 0x8e49: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) { case 0x8e3c: load_a_abs16(c,0x0200); break; case 0x8e3f: and_constant16(c,0x001f); break; case 0x8e42: cmp_dp16(c,0x00); break; case 0x8e44: branch_to(c,c->c,0x8e49); break; case 0x8e46: inc_abs16(c,0x0200); break; case 0x8e49: return_short(c); break; }
   return true;
 }
 

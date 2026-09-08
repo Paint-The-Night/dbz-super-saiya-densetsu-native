@@ -711,6 +711,15 @@ int main(int argc,char **argv) {
     }
   }
   {
+    const uint16_t sites[] = {0x8e3c,0x8e3f,0x8e42,0x8e44,0x8e46,0x8e49};
+    for(unsigned i=0;i<6;i++) {
+      memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+      Cpu ca=make_cpu(a,sites[i],0), cb=make_cpu(b,sites[i],0); ca.k=cb.k=4; ca.xf=cb.xf=false; ca.mf=cb.mf=false; ca.sp=cb.sp=0x1ff;
+      word(a,0x200,0x8fff); word(b,0x200,0x8fff); a->ram[0x0000]=b->ram[0x0000]=0x20; a->ram[0x0001]=b->ram[0x0001]=0; a->count=b->count=0;
+      require(dbz_native_step(&ca,stats),"expected 8e3c counter"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+  }
+  {
     memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
     Cpu ca=make_cpu(a,0x991d,0), cb=make_cpu(b,0x991d,0); ca.k=cb.k=0; ca.xf=cb.xf=false;
     a->ram[0x0ea1]=b->ram[0x0ea1]=0x00; a->count=b->count=0;
