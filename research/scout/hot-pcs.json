@@ -19,10 +19,10 @@
       }
     ],
     "native_filter": "Bank $00 ranges from docs/progress.md / native.c dispatch excluded",
-    "combined_interpreted_unique_pcs": 6119,
-    "combined_interpreted_hits": 7865470,
-    "start_interpreted_hits": 4746854,
-    "battle_interpreted_hits": 3118616
+    "combined_interpreted_unique_pcs": 5911,
+    "combined_interpreted_hits": 7771461,
+    "start_interpreted_hits": 4664052,
+    "battle_interpreted_hits": 3107409
   },
   "top_interpreted_pcs": [
     {
@@ -266,18 +266,6 @@
       "battle_hits": 8318
     },
     {
-      "cpu_address": "03:968D",
-      "hits": 11360,
-      "start_hits": 11360,
-      "battle_hits": 0
-    },
-    {
-      "cpu_address": "03:9690",
-      "hits": 11360,
-      "start_hits": 11360,
-      "battle_hits": 0
-    },
-    {
       "cpu_address": "03:9730",
       "hits": 11360,
       "start_hits": 11360,
@@ -305,12 +293,6 @@
       "cpu_address": "03:972D",
       "hits": 11005,
       "start_hits": 11005,
-      "battle_hits": 0
-    },
-    {
-      "cpu_address": "03:9692",
-      "hits": 7810,
-      "start_hits": 7810,
       "battle_hits": 0
     },
     {
@@ -434,12 +416,6 @@
       "battle_hits": 6052
     },
     {
-      "cpu_address": "03:954B",
-      "hits": 5696,
-      "start_hits": 5696,
-      "battle_hits": 0
-    },
-    {
       "cpu_address": "03:954E",
       "hits": 5696,
       "start_hits": 5696,
@@ -504,6 +480,30 @@
       "hits": 5075,
       "start_hits": 5075,
       "battle_hits": 0
+    },
+    {
+      "cpu_address": "00:9A45",
+      "hits": 5075,
+      "start_hits": 5075,
+      "battle_hits": 0
+    },
+    {
+      "cpu_address": "00:9A46",
+      "hits": 5075,
+      "start_hits": 5075,
+      "battle_hits": 0
+    },
+    {
+      "cpu_address": "03:9954",
+      "hits": 4704,
+      "start_hits": 2558,
+      "battle_hits": 2146
+    },
+    {
+      "cpu_address": "03:9956",
+      "hits": 4704,
+      "start_hits": 2558,
+      "battle_hits": 2146
     }
   ],
   "top_interpreted_clusters": [
@@ -518,14 +518,14 @@
       "size": 59
     },
     {
-      "range": "03:952E\u20139561",
-      "hits": 243602,
-      "size": 52
-    },
-    {
       "range": "01:C885\u2013C8AA",
       "hits": 232089,
       "size": 38
+    },
+    {
+      "range": "03:952E\u2013953D",
+      "hits": 225792,
+      "size": 16
     },
     {
       "range": "00:AB00\u2013AD3E",
@@ -568,11 +568,6 @@
       "size": 242
     },
     {
-      "range": "03:967E\u201396A6",
-      "hits": 67123,
-      "size": 41
-    },
-    {
       "range": "00:98A1\u201398E5",
       "hits": 64424,
       "size": 69
@@ -603,11 +598,6 @@
       "size": 22
     },
     {
-      "range": "03:957A\u20139599",
-      "hits": 43811,
-      "size": 32
-    },
-    {
       "range": "04:816B\u201381ED",
       "hits": 42468,
       "size": 131
@@ -633,19 +623,24 @@
       "size": 145
     },
     {
+      "range": "03:957A\u20139589",
+      "hits": 35488,
+      "size": 16
+    },
+    {
       "range": "00:9735\u20139747",
       "hits": 34988,
       "size": 19
     },
     {
-      "range": "03:91D4\u2013926F",
-      "hits": 32128,
-      "size": 156
-    },
-    {
       "range": "01:802A\u20138067",
       "hits": 31704,
       "size": 62
+    },
+    {
+      "range": "03:91D4\u20139254",
+      "hits": 31218,
+      "size": 129
     },
     {
       "range": "04:8118\u20138162",
@@ -706,6 +701,11 @@
       "range": "00:976A\u201397AB",
       "hits": 15827,
       "size": 66
+    },
+    {
+      "range": "01:CBE0\u2013CBF9",
+      "hits": 15491,
+      "size": 26
     }
   ],
   "battle_route_top_clusters": [
@@ -722,8 +722,8 @@
       "hits": 143290
     },
     {
-      "range": "03:952E\u20139542",
-      "hits": 104442
+      "range": "03:952E\u2013953D",
+      "hits": 103008
     },
     {
       "range": "03:93F7\u201394D3",
