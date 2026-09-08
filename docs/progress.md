@@ -640,6 +640,11 @@ instructions, including selector setup, 16-bit table-pointer formation, indexed
 lookup, width transitions, shared dispatch, and RTL. Differential tests add 15
 sites and 29 ROM bytes.
 
+The adjacent bank-1 `$C8E5–C901` actor-table variant is native across all fifteen
+assigned instructions, using its verified alternate table base and the same
+width-preserving dispatch protocol. Differential tests add 15 sites and 29 ROM
+bytes.
+
 The bank-1 `$863A–8650` actor-pointer prefix is native across all ten assigned
 instructions, including the M/X width transitions, 16-bit pointer arithmetic,
 WRAM stores, shared dispatch, and RTL. Differential tests add 10 sites and 23
