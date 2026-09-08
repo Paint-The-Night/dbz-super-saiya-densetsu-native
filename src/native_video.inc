@@ -11343,6 +11343,14 @@ static bool scene_read_92bf_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $03:9752: actor helper entry preserves X on the native stack. */
+static bool actor_entry_9752_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 3 || c->e || c->xf || c->d || !c->mf || pc != 0x9752) return false;
+  (void)fetch(c);
+  phx16(c);
+  return true;
+}
+
 /* $00:95A9-$95B6: scene-mode[15] setup around the native $8E96 path. */
 static bool scene_thunk_95a9_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf) return false;

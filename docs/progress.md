@@ -52,6 +52,7 @@ The snapshot path now ends with the `$9299` jump into native `$8B7A`, adding 1 s
 The `$9295` same-bank long-call boundary is now native and differentially verified, adding 1 site and 4 bytes while leaving `$929C` interpreter-backed.
 The `$929C–$92A1` callee entry gate is now native, including its sign branch and jump into the existing body; this adds 3 sites and 8 bytes.
 The independent `$92BF` status read is now native and differentially verified, adding 1 site and 3 bytes; its later carry comparison remains interpreter-backed.
+The bank-3 actor helper entry at `$03:9752` now has a native `PHX` prologue, adding 1 site and 1 byte with stack-state verification.
 The alternate initialization path `$92A4–$92BD` is now native through its long table read and sign gate, adding 10 sites and 16 bytes.
 
 
