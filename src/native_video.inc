@@ -11570,6 +11570,22 @@ static bool actor_counter_8e3c_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $04:8E4A–8E5E: compare the masked actor counter and add one tile when it
+ * has not reached the requested threshold. */
+static bool actor_counter_8e4a_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 4 || c->e || c->xf || c->d || c->mf) return false;
+  switch(pc) { case 0x8e4a: case 0x8e4d: case 0x8e50: case 0x8e52: case 0x8e54: case 0x8e57: case 0x8e58: case 0x8e5b: case 0x8e5e: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) {
+    case 0x8e4a: load_a_abs16(c,0x0200); break; case 0x8e4d: and_constant16(c,0x03e0); break;
+    case 0x8e50: cmp_dp16(c,0x00); break; case 0x8e52: branch_to(c,c->c,0x8e5e); break;
+    case 0x8e54: load_a_abs16(c,0x0200); break; case 0x8e57: implied(c); c->c=false; break;
+    case 0x8e58: adc16_constant(c,0x0020); break; case 0x8e5b: store_a_abs16(c,0x0200); break;
+    case 0x8e5e: return_short(c); break;
+  }
+  return true;
+}
+
 /* $04:8E74–8E83: decrement the 16-bit actor counter when its mask is clear. */
 static bool actor_counter_8e74_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 4 || c->e || c->xf || c->d || c->mf) return false;
