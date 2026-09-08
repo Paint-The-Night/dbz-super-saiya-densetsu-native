@@ -30,22 +30,6 @@ Native HDMA/queue wipe ends in `JMP ($8B54,X)` with X = (DP+$24 & $7F) * 2.
 
 ## Notable bank `$00` leaves / near-leaves near hot PCs & native frontiers
 
-### `00:8E76` — CANDIDATE
-
-- Range ≈ `00:8E76–00:8E95` (~32 bytes)
-- Nested: [('JSL', '00:8D2B'), ('JSL', '02:D812')]; exits: [('JMP', 35706)]
-- Callers (static sample): n/a
-- Rationale: scene-mode table $8B54[1] (JMP from native 8B51); falls after native scene pointer build 8E26–8E75; also scene table[1]
-- Hits entry/range: 0/0
-
-### `00:9BBF` — NEAR-LEAF
-
-- Range ≈ `00:9BBF–00:9C4A` (~140 bytes)
-- Nested: [('JSL', '00:8711'), ('JSL', '00:8724')]; exits: [('RTL', 40010)]
-- Callers (static sample): n/a
-- Rationale: falls after native VRAM enqueue producers 9B36–9BBE
-- Hits entry/range: 0/0
-
 ### `00:8B7A` — CANDIDATE
 
 - Range ≈ `00:8B7A–00:8D2A` (~433 bytes)
@@ -53,30 +37,6 @@ Native HDMA/queue wipe ends in `JMP ($8B54,X)` with X = (DP+$24 & $7F) * 2.
 - Callers (static sample): 02:F0B2/JSL
 - Rationale: scene-mode table $8B54[0] (JMP from native 8B51); scene table[0]; first mode handler after HDMA wipe
 - Hits entry/range: 2/830
-
-### `00:8E96` — CANDIDATE
-
-- Range ≈ `00:8E96–00:8FAF` (~282 bytes)
-- Nested: [('JSL', '03:EF29'), ('JSR', '00:94B2'), ('JSR', '00:0284'), ('JSL', '00:8887'), ('JSL', '00:C559'), ('JSL', '00:C68C'), ('JSL', '00:90E6'), ('JSL', '00:90C1'), ('JSL', '06:EAD4'), ('JSL', '06:EB52'), ('JSL', '01:B61E'), ('JSL', '03:F06F'), ('JSL', '00:8FB2'), ('JSL', '01:C535'), ('JSL', '00:8AFC')]; exits: [('RTI', 36783)]
-- Callers (static sample): 00:95AE/JSL
-- Rationale: scene-mode table $8B54[2] (JMP from native 8B51); scene table[2]
-- Hits entry/range: 1/138
-
-### `00:89B8` — NEAR-LEAF
-
-- Range ≈ `00:89B8–00:8A06` (~79 bytes)
-- Nested: [('JSL', '00:8A28'), ('JSL', '00:8A69')]; exits: [('RTL', 35334)]
-- Callers (static sample): 02:F405/JSL, 03:B22A/JSL
-- Rationale: after WRAM cursor helper 89AC–89B7
-- Hits entry/range: 2/80
-
-### `00:849C` — LEAF
-
-- Range ≈ `00:849C–00:84D5` (~58 bytes)
-- Nested: none; exits: [('RTL', 34005)]
-- Callers (static sample): 00:A879/JSL, 00:A8E6/JSL, 00:AC37/JSL, 00:AD28/JSL, 00:B167/JSL, 00:B196/JSL, 00:B230/JSL, 00:B5F1/JSL, 00:C1BB/JSL, 00:C254/JSL
-- Rationale: after mosaic/window 8471–849B; hot interpreted cluster 00:849C–84DA (365252 hits)
-- Hits entry/range: 6124/297305
 
 ### `00:8AE5` — NEAR-LEAF
 
@@ -86,54 +46,6 @@ Native HDMA/queue wipe ends in `JMP ($8B54,X)` with X = (DP+$24 & $7F) * 2.
 - Rationale: actor-type table / fallthrough after 8AD6–8AE4
 - Hits entry/range: 0/1421
 
-### `00:85EF` — LEAF
-
-- Range ≈ `00:85EF–00:8616` (~40 bytes)
-- Nested: none; exits: [('RTL', 34326)]
-- Callers (static sample): 13:EB90/JSL
-- Rationale: hot interpreted cluster 00:85EF–865B (3550038 hits)
-- Hits entry/range: 3608/668535
-
-### `00:877E` — NEAR-LEAF
-
-- Range ≈ `00:877E–00:87D8` (~91 bytes)
-- Nested: [('JSL', '00:87E9'), ('JSL', '00:87F1')]; exits: [('RTL', 34776)]
-- Callers (static sample): 00:8C88/JSL, 04:A6A1/JSL, 04:AA56/JSL
-- Rationale: after VRAM CPU copy 8732–877D
-- Hits entry/range: 2/44
-
-### `00:9444` — NEAR-LEAF
-
-- Range ≈ `00:9444–00:9458` (~21 bytes)
-- Nested: [('JSL', '04:8EBA')]; exits: [('RTL', 37976)]
-- Callers (static sample): n/a
-- Rationale: scene-mode table $8B54[9] (JMP from native 8B51)
-- Hits entry/range: 0/0
-
-### `00:9459` — NEAR-LEAF
-
-- Range ≈ `00:9459–00:946E` (~22 bytes)
-- Nested: [('JSL', '03:EF1A'), ('JSL', '02:EFE1')]; exits: [('RTL', 37998)]
-- Callers (static sample): n/a
-- Rationale: scene-mode table $8B54[10] (JMP from native 8B51)
-- Hits entry/range: 0/0
-
-### `00:95A9` — NEAR-LEAF
-
-- Range ≈ `00:95A9–00:95B6` (~14 bytes)
-- Nested: [('JSL', '00:8E96')]; exits: [('RTL', 38326)]
-- Callers (static sample): n/a
-- Rationale: scene-mode table $8B54[15] (JMP from native 8B51)
-- Hits entry/range: 0/0
-
-### `00:C559` — LEAF
-
-- Range ≈ `00:C559–00:C5EC` (~148 bytes)
-- Nested: none; exits: [('RTL', 50668)]
-- Callers (static sample): 00:8844/JSL, 00:8C72/JSL, 00:8F34/JSL, 00:90CF/JSL, 00:9FE2/JSL, 00:A1B5/JSL, 00:AE2D/JSL, 00:B2D9/JSL, 00:BBE1/JSL, 01:CAA2/JSL
-- Rationale: hot interpreted cluster 00:C559–C7D9 (2658191 hits)
-- Hits entry/range: 81/1941624
-
 ### `03:9752` — LEAF
 
 - Range ≈ `03:9752–03:977B` (~42 bytes)
@@ -141,38 +53,6 @@ Native HDMA/queue wipe ends in `JMP ($8B54,X)` with X = (DP+$24 & $7F) * 2.
 - Callers (static sample): 03:9606/JSL, 03:9695/JSL
 - Rationale: hot interpreted cluster 03:9752–977B (85200 hits)
 - Hits entry/range: 3550/85200
-
-### `00:943F` — NEAR-LEAF
-
-- Range ≈ `00:943F–00:9443` (~5 bytes)
-- Nested: [('JSL', '04:D85B')]; exits: [('RTL', 37955)]
-- Callers (static sample): n/a
-- Rationale: scene-mode table $8B54[8] (JMP from native 8B51)
-- Hits entry/range: 0/0
-
-### `00:952B` — NEAR-LEAF
-
-- Range ≈ `00:952B–00:952F` (~5 bytes)
-- Nested: [('JSL', '02:F462')]; exits: [('RTL', 38191)]
-- Callers (static sample): n/a
-- Rationale: scene-mode table $8B54[11] (JMP from native 8B51)
-- Hits entry/range: 0/0
-
-### `00:9530` — NEAR-LEAF
-
-- Range ≈ `00:9530–00:9534` (~5 bytes)
-- Nested: [('JSL', '04:8674')]; exits: [('RTL', 38196)]
-- Callers (static sample): n/a
-- Rationale: scene-mode table $8B54[12] (JMP from native 8B51)
-- Hits entry/range: 0/0
-
-### `00:98F2` — NEAR-LEAF
-
-- Range ≈ `00:98F2–00:990E` (~29 bytes)
-- Nested: [('JSL', '01:C95A'), ('JSL', '01:C91F')]; exits: [('RTL', 39182)]
-- Callers (static sample): n/a
-- Rationale: hot interpreted cluster 00:98F2–995E (154628 hits)
-- Hits entry/range: 1623/145817
 
 ### `04:8550` — LEAF
 
@@ -182,14 +62,6 @@ Native HDMA/queue wipe ends in `JMP ($8B54,X)` with X = (DP+$24 & $7F) * 2.
 - Rationale: hot interpreted cluster 04:8550–869D (4336327 hits)
 - Hits entry/range: 3858/26663
 
-### `00:82C7` — NEAR-LEAF
-
-- Range ≈ `00:82C7–00:82D3` (~13 bytes)
-- Nested: [('JSL', '00:82A3')]; exits: [('RTL', 33491)]
-- Callers (static sample): 01:F8FE/JSL, 03:8105/JSL
-- Rationale: gap after RNG 82A3–82C6 before controller
-- Hits entry/range: 1/6
-
 ### `01:8401` — LEAF
 
 - Range ≈ `01:8401–01:842D` (~45 bytes)
@@ -197,6 +69,14 @@ Native HDMA/queue wipe ends in `JMP ($8B54,X)` with X = (DP+$24 & $7F) * 2.
 - Callers (static sample): 00:976E/JSL, 00:9A19/JSL
 - Rationale: hot interpreted cluster 01:8401–84CE (85438 hits)
 - Hits entry/range: 833/11309
+
+### `04:8EF7` — LEAF
+
+- Range ≈ `04:8EF7–04:8F1D` (~39 bytes)
+- Nested: none; exits: [('RTS', 36637)]
+- Callers (static sample): n/a
+- Rationale: hot interpreted cluster 04:8EF7–8F61 (52409 hits)
+- Hits entry/range: 1/18
 
 ### `13:EB47` — NEAR-LEAF
 
@@ -222,6 +102,22 @@ Native HDMA/queue wipe ends in `JMP ($8B54,X)` with X = (DP+$24 & $7F) * 2.
 - Rationale: hot interpreted cluster 04:889E–88C5 (81930 hits)
 - Hits entry/range: 1/81930
 
+### `03:972D` — NEAR-LEAF
+
+- Range ≈ `03:972D–03:973C` (~16 bytes)
+- Nested: [('JSL', '00:8B0E')]; exits: [('RTL', 38716)]
+- Callers (static sample): n/a
+- Rationale: hot interpreted cluster 03:972D–973C (57155 hits)
+- Hits entry/range: 11005/57155
+
+### `00:9A3B` — NEAR-LEAF
+
+- Range ≈ `00:9A3B–00:9A76` (~60 bytes)
+- Nested: [('JSL', '04:A074')]; exits: [('RTL', 39542)]
+- Callers (static sample): n/a
+- Rationale: hot interpreted cluster 00:9A3B–9A71 (53795 hits)
+- Hits entry/range: 1015/53795
+
 ### `03:93F7` — LEAF
 
 - Range ≈ `03:93F7–03:93F9` (~3 bytes)
@@ -229,6 +125,54 @@ Native HDMA/queue wipe ends in `JMP ($8B54,X)` with X = (DP+$24 & $7F) * 2.
 - Callers (static sample): n/a
 - Rationale: hot interpreted cluster 03:93F7–94D3 (155576 hits)
 - Hits entry/range: 2/6
+
+### `01:C91F` — NEAR-LEAF
+
+- Range ≈ `01:C91F–01:C942` (~36 bytes)
+- Nested: [('JSR', '01:C943'), ('JSL', '00:85F5')]; exits: [('RTL', 51522)]
+- Callers (static sample): 00:9901/JSL
+- Rationale: hot interpreted cluster 01:C91F–C968 (60051 hits)
+- Hits entry/range: 1623/25968
+
+### `00:98A1` — NEAR-LEAF
+
+- Range ≈ `00:98A1–00:98B8` (~24 bytes)
+- Nested: [('JSL', '01:C987'), ('JSL', '01:B6BF')]; exits: [('RTL', 39096)]
+- Callers (static sample): n/a
+- Rationale: hot interpreted cluster 00:98A1–98E5 (64424 hits)
+- Hits entry/range: 1390/9641
+
+### `00:AB00` — NEAR-LEAF
+
+- Range ≈ `00:AB00–00:AB2B` (~44 bytes)
+- Nested: [('JSR', '00:82FB')]; exits: [('RTS', 43819)]
+- Callers (static sample): 00:A99B/JSR, 00:B420/JSR, 00:B6D8/JSR
+- Rationale: hot interpreted cluster 00:AB00–AD3E (190137 hits)
+- Hits entry/range: 379/6822
+
+### `01:8250` — NEAR-LEAF
+
+- Range ≈ `01:8250–01:8283` (~52 bytes)
+- Nested: [('JSL', '01:8292'), ('JSL', '01:8284')]; exits: [('RTL', 33411)]
+- Callers (static sample): n/a
+- Rationale: hot interpreted cluster 01:8250–82CF (97088 hits)
+- Hits entry/range: 58/1160
+
+### `01:B55A` — NEAR-LEAF
+
+- Range ≈ `01:B55A–01:B61D` (~196 bytes)
+- Nested: [('JSR', '01:1064'), ('JSR', '01:B480')]; exits: [('RTL', 46621)]
+- Callers (static sample): 01:B74C/JSL, 01:B77D/JSL
+- Rationale: hot interpreted cluster 01:B55A–B65C (68671 hits)
+- Hits entry/range: 16/35489
+
+### `03:967E` — NEAR-LEAF
+
+- Range ≈ `03:967E–03:9689` (~12 bytes)
+- Nested: [('JSL', '03:958A')]; exits: [('RTL', 38537)]
+- Callers (static sample): 00:977E/JSL
+- Rationale: hot interpreted cluster 03:967E–96A6 (67123 hits)
+- Hits entry/range: 833/4288
 
 ## Good next-native heuristics
 
