@@ -11706,6 +11706,26 @@ static bool actor_gate_f583_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $03:F5CB–F5F5: second actor phase gate, with alternate thresholds and the
+ * same shared phase/fallback handlers. */
+static bool actor_gate_f5cb_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 3 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0xf5cb: case 0xf5ce: case 0xf5d0: case 0xf5d2: case 0xf5d6: case 0xf5d9: case 0xf5db: case 0xf5dd: case 0xf5e0: case 0xf5e2: case 0xf5e4: case 0xf5e6: case 0xf5e8: case 0xf5eb: case 0xf5ed: case 0xf5ef: case 0xf5f1: case 0xf5f5: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) {
+    case 0xf5cb: video_load(c,0x1648,false); break; case 0xf5ce: branch_to(c,c->n,0xf5f5); break;
+    case 0xf5d0: byte_constant(c,0x02); break; case 0xf5d2: jsl_to(c,0xaeac); break;
+    case 0xf5d6: load_a_abs_x8(c,0x0170); break; case 0xf5d9: and_dp8(c,0x11); break;
+    case 0xf5db: branch_to(c,!c->z,0xf5f5); break; case 0xf5dd: video_load(c,0x01a2,false); break;
+    case 0xf5e0: cmp_constant8(c,0x78); break; case 0xf5e2: branch_to(c,!c->c,0xf5f5); break;
+    case 0xf5e4: cmp_constant8(c,0x88); break; case 0xf5e6: branch_to(c,c->c,0xf5f5); break;
+    case 0xf5e8: video_load(c,0x01a4,false); break; case 0xf5eb: cmp_constant8(c,0x7a); break;
+    case 0xf5ed: branch_to(c,c->c,0xf5f5); break; case 0xf5ef: byte_constant(c,0x2d); break;
+    case 0xf5f1: jsl_to(c,0xf7de); break; case 0xf5f5: return_long(c); break;
+  }
+  return true;
+}
+
 /* $03:953E–954B: status gate and setup prefix before the shared actor loop. */
 static bool actor_prefix_953e_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 3 || c->e || c->xf || c->d || !c->mf) return false;
