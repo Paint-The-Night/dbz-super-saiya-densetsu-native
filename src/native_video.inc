@@ -11181,6 +11181,12 @@ static bool scene_trampoline_99c3_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $01:EDF9: actor leaf return. */
+static bool actor_return_edf9_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf || pc != 0xedf9) return false;
+  (void)fetch(c); return_long(c); return true;
+}
+
 /* $00:FCD8: scene call stub. */
 static bool scene_call_fcd8_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf || pc != 0xfcd8) return false;
