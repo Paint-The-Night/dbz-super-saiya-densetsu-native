@@ -844,7 +844,9 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
     return done;
   }
   if(bank == 2) {
-    if(c->pc == 0xf463) {
+    if(c->pc >= 0xd37d && c->pc <= 0xd38a) {
+      done = actor_gate_d37d_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc == 0xf463) {
       done = actor_return_2f463_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xd812 && c->pc <= 0xd843) {
       done = scroll_snapshot_d812_step(c, c->pc); x->scroll_steps += done;

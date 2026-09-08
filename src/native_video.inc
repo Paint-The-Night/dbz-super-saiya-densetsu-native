@@ -11505,6 +11505,15 @@ static bool actor_counter_bc3e_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $02:D37D–D38A: gate the actor helper calls on the status flag. */
+static bool actor_gate_d37d_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 2 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0xd37d: case 0xd380: case 0xd382: case 0xd386: case 0xd38a: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) { case 0xd37d: video_load(c,0x01a1,false); break; case 0xd380: branch_to(c,c->n,0xd38a); break; case 0xd382: jsl_to(c,0xd38b); break; case 0xd386: jsl_to(c,0xd428); break; case 0xd38a: return_long(c); break; }
+  return true;
+}
+
 static void ldy16_constant(Cpu *c, uint16_t value) {
   uint16_t low = c->pc++, high = c->pc++;
   (void)c->read(c->mem, ((uint32_t)c->k << 16) | low); sample_interrupt(c);

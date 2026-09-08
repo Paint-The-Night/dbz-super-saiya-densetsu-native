@@ -614,6 +614,10 @@ The bank-0 `$BC3E–BC54` `M1X0` mode-transition loop is native across its ten
 assigned sites, including the 16-bit indexed copy, loop counter, `SEP`, and
 RTS. Differential tests add 10 verified sites and 24 ROM bytes.
 
+The bank-2 `$D37D–D38A` actor gate is native across its five assigned sites,
+including the status flag, both bank-2 dispatch calls, and RTL. Differential
+tests add 5 verified sites and 14 ROM bytes.
+
 The bank-3 `$F7DE–F7E6` phase marker leaf is native, covering both status stores,
 the `$80` phase value, and RTL. Differential tests cover all 4 manifest-listed
 sites, adding 4 verified sites and 9 ROM bytes.
