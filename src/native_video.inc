@@ -6528,10 +6528,12 @@ static bool scene_return_bank3_step(Cpu *c, uint16_t pc) {
   (void)fetch(c); return_long(c); return true;
 }
 
-/* $03:E8AA: load the actor selector before the shared bank-3 setup call. */
+/* $03:E8AA–E8AF: load the actor selector before the shared setup call. */
 static bool scene_actor_e8aa_step(Cpu *c, uint16_t pc) {
-  if((c->k & 0x7f) != 3 || c->e || c->xf || c->d || !c->mf || pc != 0xe8aa) return false;
-  (void)fetch(c); video_load(c, 0x0d8d, false); return true;
+  if((c->k & 0x7f) != 3 || c->e || c->xf || c->d || !c->mf || (pc != 0xe8aa && pc != 0xe8ad)) return false;
+  (void)fetch(c);
+  if(pc == 0xe8aa) video_load(c, 0x0d8d, false); else jsr_abs_native(c,0x8000);
+  return true;
 }
 
 static bool scene_gate_f375_step(Cpu *c, uint16_t pc) {

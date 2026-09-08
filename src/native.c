@@ -420,7 +420,7 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = scene_return_bank3_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xf375 && c->pc <= 0xf39d) {
       done = scene_gate_f375_step(c, c->pc); x->display_control_steps += done;
-    } else if(c->pc == 0xe8aa) {
+    } else if(c->pc == 0xe8aa || c->pc == 0xe8ad) {
       done = scene_actor_e8aa_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xe757 && c->pc <= 0xe768) {
       done = copy_span_e757_step(c, c->pc); x->display_control_steps += done;
