@@ -11178,7 +11178,7 @@ static bool scene_thunk_952b_9530_step(Cpu *c, uint16_t pc) {
 /* $00:9535: scene-table continuation begins by reading the scene mode. */
 static bool scene_read_9535_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 0 || c->e || c->xf || c->d || !c->mf) return false;
-  if(pc != 0x9535 && pc != 0x9538 && pc != 0x953a && pc != 0x953c && pc != 0x953e && pc != 0x9540 && pc != 0x9543 && pc != 0x9544 && pc != 0x9546) return false;
+  if(pc != 0x9535 && pc != 0x9538 && pc != 0x953a && pc != 0x953c && pc != 0x953e && pc != 0x9540 && pc != 0x9543 && pc != 0x9544 && pc != 0x9546 && pc != 0x954c && pc != 0x954e && pc != 0x9550) return false;
   (void)fetch(c);
   switch(pc) {
     case 0x9535: video_load(c, 0x01e7, false); break;
@@ -11190,6 +11190,9 @@ static bool scene_read_9535_step(Cpu *c, uint16_t pc) {
     case 0x9543: lsr_a8(c); break;
     case 0x9544: branch_to(c, !c->c, 0x954c); break;
     case 0x9546: jsl_to(c, 0xd9d9); break;
+    case 0x954c: byte_constant(c, 0x00); break;
+    case 0x954e: store_dp(c, 0x82, true); break;
+    case 0x9550: jsl_to(c, 0x9569); break;
   }
   return true;
 }
