@@ -11352,7 +11352,7 @@ static bool actor_entry_9752_step(Cpu *c, uint16_t pc) {
       pc != 0x9758 && pc != 0x975a && pc != 0x975c && pc != 0x975e &&
       pc != 0x9760 && pc != 0x9761 && pc != 0x9763 && pc != 0x9764 && pc != 0x9765 &&
       pc != 0x9767 && pc != 0x976b && pc != 0x976d && pc != 0x976e && pc != 0x9770 &&
-      pc != 0x9771 && pc != 0x9775 && pc != 0x9777 && pc != 0x9778)) return false;
+      pc != 0x9771 && pc != 0x9775 && pc != 0x9777 && pc != 0x9778 && pc != 0x977a && pc != 0x977b)) return false;
   (void)fetch(c);
   switch(pc) {
     case 0x9752: phx16(c); break;
@@ -11374,6 +11374,8 @@ static bool actor_entry_9752_step(Cpu *c, uint16_t pc) {
     case 0x9770: implied(c); c->x++; zn(c, c->x, false); break;
     case 0x9775: store_dp(c, 0x06); break;
     case 0x9778: store_dp(c, 0x16); break;
+    case 0x977a: plx16(c); break;
+    case 0x977b: return_long(c); break;
   }
   return true;
 }

@@ -407,7 +407,7 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
     return done;
   }
   if(bank == 3) {
-    if(c->pc == 0x9752 || c->pc == 0x9753 || c->pc == 0x9755 || c->pc == 0x9756 || c->pc == 0x9758 || c->pc == 0x975a || c->pc == 0x975c || c->pc == 0x975e || c->pc == 0x9760 || c->pc == 0x9761 || c->pc == 0x9763 || c->pc == 0x9764 || c->pc == 0x9765 || c->pc == 0x9767 || c->pc == 0x976b || c->pc == 0x976d || c->pc == 0x976e || c->pc == 0x9770 || c->pc == 0x9771 || c->pc == 0x9775 || c->pc == 0x9777 || c->pc == 0x9778) {
+    if(c->pc == 0x9752 || c->pc == 0x9753 || c->pc == 0x9755 || c->pc == 0x9756 || c->pc == 0x9758 || c->pc == 0x975a || c->pc == 0x975c || c->pc == 0x975e || c->pc == 0x9760 || c->pc == 0x9761 || c->pc == 0x9763 || c->pc == 0x9764 || c->pc == 0x9765 || c->pc == 0x9767 || c->pc == 0x976b || c->pc == 0x976d || c->pc == 0x976e || c->pc == 0x9770 || c->pc == 0x9771 || c->pc == 0x9775 || c->pc == 0x9777 || c->pc == 0x9778 || c->pc == 0x977a || c->pc == 0x977b) {
       done = actor_entry_9752_step(c, c->pc); x->display_control_steps += done;
     } else 
     if(c->pc >= 0x958a && c->pc <= 0x9599) {
