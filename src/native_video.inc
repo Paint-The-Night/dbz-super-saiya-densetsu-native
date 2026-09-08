@@ -11181,6 +11181,12 @@ static bool scene_trampoline_99c3_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $01:8481: actor long-jump stub. */
+static bool actor_jump_8481_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf || pc != 0x8481) return false;
+  (void)fetch(c); jml_to(c,0x8627,0x01); return true;
+}
+
 /* $05:9390: actor leaf return (M/X variants). */
 static bool actor_return_9390_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 5 || c->e || c->d || !c->mf || pc != 0x9390) return false;
