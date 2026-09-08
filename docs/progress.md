@@ -534,3 +534,7 @@ match the interpreter exactly: the first calls the shared `$00:9735` return leaf
 and the continuation calls bank-3 `$E8AA`. Differential tests cover both entry
 sites and preserve the ROM's stack and bank transitions. This adds 2 verified
 instruction sites and 8 ROM bytes.
+
+The bank-3 selector load at `$03:E8AA` is also native, with a direct CPU and
+bus-equivalence test before its still-interpreted setup call. This adds 1 site
+and 3 ROM bytes.
