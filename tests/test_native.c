@@ -784,6 +784,15 @@ int main(int argc,char **argv) {
     }
   }
   {
+    const uint16_t sites[] = {0xf583,0xf585,0xf589,0xf58c,0xf58e,0xf590,0xf593,0xf595,0xf597,0xf599,0xf59c,0xf59e,0xf5a1};
+    for(unsigned i=0;i<13;i++) {
+      memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+      Cpu ca=make_cpu(a,sites[i],0), cb=make_cpu(b,sites[i],0); ca.k=cb.k=3; ca.xf=cb.xf=false; ca.mf=cb.mf=true; ca.sp=cb.sp=0x1ff;
+      a->ram[0x0170]=b->ram[0x0170]=0x20; a->ram[0x01a4]=b->ram[0x01a4]=0x10; a->ram[0x11]=b->ram[0x11]=0xff; a->count=b->count=0;
+      require(dbz_native_step(&ca,stats),"expected f583 actor gate"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+  }
+  {
     const uint16_t sites[] = {0xe769,0xe76c,0xe770,0xe774,0xe775,0xe778,0xe77a,0xe77b,0xe77e,0xe782,0xe786,0xe787,0xe78a,0xe78c};
     for(unsigned i=0;i<14;i++) {
       memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));

@@ -483,6 +483,11 @@ static void store_a_abs16(Cpu *c, uint16_t address) {
   c->write(c->mem, low, (uint8_t)c->a); sample_interrupt(c);
   c->write(c->mem, (low + 1) & 0xffffffu, (uint8_t)(c->a >> 8));
 }
+static void store_a_abs8(Cpu *c, uint16_t address) {
+  (void)fetch(c); (void)fetch(c);
+  uint32_t low = ((uint32_t)c->db << 16) | address;
+  sample_interrupt(c); c->write(c->mem, low, (uint8_t)c->a);
+}
 
 static void stx_abs16(Cpu *c, uint16_t address) {
   (void)fetch(c); (void)fetch(c);
@@ -11679,6 +11684,24 @@ static bool actor_gate_f561_step(Cpu *c, uint16_t pc) {
     case 0xf573: branch_to(c,!c->z,0xf581); break; case 0xf575: byte_constant(c,0x40); break;
     case 0xf577: jsl_to(c,0xf7de); break; case 0xf57b: stz_abs8(c,0x01d9); break;
     case 0xf57e: stz_abs8(c,0x1661); break; case 0xf581: return_long(c); break;
+  }
+  return true;
+}
+
+/* $03:F583–F5A1: dispatch the actor phase helper, inspect the indexed actor
+ * type, and publish the fallback markers before RTL. */
+static bool actor_gate_f583_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 3 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0xf583: case 0xf585: case 0xf589: case 0xf58c: case 0xf58e: case 0xf590: case 0xf593: case 0xf595: case 0xf597: case 0xf599: case 0xf59c: case 0xf59e: case 0xf5a1: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) {
+    case 0xf583: byte_constant(c,0x03); break; case 0xf585: jsl_to(c,0xaeac); break;
+    case 0xf589: load_a_abs_x8(c,0x0170); break; case 0xf58c: and_dp8(c,0x11); break;
+    case 0xf58e: branch_to(c,!c->z,0xf5a1); break; case 0xf590: video_load(c,0x01a4,false); break;
+    case 0xf593: cmp_constant8(c,0xc8); break; case 0xf595: branch_to(c,c->c,0xf5a1); break;
+    case 0xf597: byte_constant(c,0x29); break; case 0xf599: store_a_abs8(c,0x01d8); break;
+    case 0xf59c: byte_constant(c,0x80); break; case 0xf59e: store_a_abs8(c,0x1648); break;
+    case 0xf5a1: return_long(c); break;
   }
   return true;
 }
