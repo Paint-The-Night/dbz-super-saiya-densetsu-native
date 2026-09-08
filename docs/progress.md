@@ -33,6 +33,7 @@ It now covers the `$953C` immediate mode value and `$953E` unconditional branch 
 The continuation now also reads the mode at `$9540` and shifts it at `$9543`, adding 2 sites and 5 bytes before the carry-dependent branch.
 The carry-dependent portion now includes `$9544` BCC and `$9546` JSL, adding 2 sites and 6 bytes; tests cover the branch boundary and long-call frame.
 The `$954C` landing path now loads zero, stores it to `$82`, and calls `$9569`, adding 3 sites and 8 bytes with direct-page and long-call checks.
+The return tail now covers `$9554` BCC and `$9556` JMP into native `$8B7A`, adding 2 sites and 4 bytes.
 
 
 The `$00:98D5–990E` actor-slot loop adds 27 instruction sites and 58 bytes.
