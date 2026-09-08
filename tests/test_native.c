@@ -5487,6 +5487,18 @@ int main(int argc,char **argv) {
     }
   }
   {
+    const uint16_t sites[] = {0xe6f0,0xe6f2,0xe6f4,0xe6f7,0xe6f9,0xe6fd,0xe6fe,0xe700,
+                              0xe702,0xe703,0xe704,0xe705,0xe706,0xe709,0xe70b,0xe70d};
+    for(unsigned n=0;n<16;n++) {
+      memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+      Cpu ca=make_cpu(a,sites[n],0), cb=make_cpu(b,sites[n],0);
+      ca.k=cb.k=3; ca.xf=cb.xf=false; ca.mf=cb.mf=(n==0 || n>=14); ca.sp=cb.sp=0x1ff;
+      word(a,0x00,0x0010); word(b,0x00,0x0010); word(a,0x10,0x0020); word(b,0x10,0x0020);
+      ca.x=cb.x=0; ca.y=cb.y=0; a->count=b->count=0;
+      require(dbz_native_step(&ca,stats),"expected e6f0 actor fill"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+  }
+  {
     memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
     Cpu ca=make_cpu(a,0x9aff,0), cb=make_cpu(b,0x9aff,0);
     ca.k=cb.k=5; ca.db=cb.db=0; ca.xf=cb.xf=false;

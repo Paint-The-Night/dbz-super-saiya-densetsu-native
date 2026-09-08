@@ -11999,6 +11999,42 @@ static bool actor_selector_9b7f_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $03:E6F0–E70D: clear and fill the 16-bit actor accumulator table. */
+static void stz_dp16_native(Cpu *c, uint8_t offset) {
+  uint16_t address = dp_address(c, offset);
+  c->write(c->mem, address, 0); sample_interrupt(c);
+  c->write(c->mem, (uint16_t)(address + 1), 0);
+}
+static bool actor_fill_e6f0_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 3 || c->e || c->xf || c->d) return false;
+  switch(pc) {
+    case 0xe6f0: case 0xe6f2: case 0xe6f4: case 0xe6f7: case 0xe6f9:
+    case 0xe6fd: case 0xe6fe: case 0xe700: case 0xe702: case 0xe703:
+    case 0xe704: case 0xe705: case 0xe706: case 0xe709: case 0xe70b:
+    case 0xe70d: break;
+    default: return false;
+  }
+  if((pc == 0xe6f0 || pc >= 0xe70b) ? !c->mf : c->mf) return false;
+  (void)fetch(c);
+  switch(pc) {
+    case 0xe6f0: set_m(c, false); break;
+    case 0xe6f2: ldx_dp16(c, 0x00); break;
+    case 0xe6f4: index_constant(c, true, 0); break;
+    case 0xe6f7: stz_dp16_native(c, 0x10); break;
+    case 0xe6f9: lda_long_x16(c, 0x700000); break;
+    case 0xe6fd: implied(c); c->c = false; break;
+    case 0xe6fe: adc_dp16(c, 0x10); break;
+    case 0xe700: store_dp(c, 0x10, false); break;
+    case 0xe702: case 0xe703: implied(c); c->x++; zn(c, c->x, false); break;
+    case 0xe704: case 0xe705: implied(c); c->y++; zn(c, c->y, false); break;
+    case 0xe706: cpx16_constant(c, 0x04ee); break;
+    case 0xe709: branch_to(c, !c->c, 0xe6f9); break;
+    case 0xe70b: set_m(c, true); break;
+    case 0xe70d: return_long(c); break;
+  }
+  return true;
+}
+
 static bool actor_gate_f5a3_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 3 || c->e || c->xf || c->d || !c->mf) return false;
   switch(pc) { case 0xf5a3: case 0xf5a6: case 0xf5a8: case 0xf5aa: case 0xf5ac: case 0xf5ae: case 0xf5b1: case 0xf5b3: case 0xf5b5: case 0xf5b7: case 0xf5b9: case 0xf5bc: case 0xf5be: case 0xf5c0: case 0xf5c2: case 0xf5c5: case 0xf5c7: case 0xf5ca: break; default: return false; }

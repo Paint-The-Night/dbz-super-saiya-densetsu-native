@@ -660,6 +660,11 @@ instructions, reducing the selector, fetching its banked table byte, and leaving
 the resulting index in the expected scratch registers. Differential tests add
 16 sites and 28 ROM bytes.
 
+The bank-3 `$E6F0–E70D` actor-fill loop is native across all sixteen assigned
+instructions, including its 16-bit table accumulation, indexed long load, loop
+counter updates, bound check, and REP/SEP return boundary. Differential tests
+add 16 sites and 30 ROM bytes.
+
 The bank-1 `$863A–8650` actor-pointer prefix is native across all ten assigned
 instructions, including the M/X width transitions, 16-bit pointer arithmetic,
 WRAM stores, shared dispatch, and RTL. Differential tests add 10 sites and 23
