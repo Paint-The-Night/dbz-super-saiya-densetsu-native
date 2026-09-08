@@ -600,6 +600,10 @@ nibble gate, conditional helper path, dispatch calls, and RTL. Differential
 tests cover all 8 manifest-listed sites, adding 8 verified sites and 22 ROM
 bytes.
 
+The bank-4 `$8E74–8E83` masked counter decrement is native, covering its
+absolute load, mask, zero/carry gates, decrement, and RTS. Differential tests
+cover all 7 manifest-listed sites, adding 7 verified sites and 16 ROM bytes.
+
 The bank-3 `$B7CB–B7D6` scratch-index wrapper is native, covering the 16-bit
 index load, direct-page store, helper call, and RTL. Differential tests cover
 all 5 manifest-listed sites, adding 5 verified sites and 12 ROM bytes.

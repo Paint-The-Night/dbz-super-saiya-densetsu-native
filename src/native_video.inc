@@ -11511,6 +11511,15 @@ static bool actor_counter_8e3c_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $04:8E74–8E83: decrement the 16-bit actor counter when its mask is clear. */
+static bool actor_counter_8e74_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 4 || c->e || c->xf || c->d || c->mf) return false;
+  switch(pc) { case 0x8e74: case 0x8e77: case 0x8e7a: case 0x8e7c: case 0x8e7e: case 0x8e80: case 0x8e83: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) { case 0x8e74: load_a_abs16(c,0x0200); break; case 0x8e77: and_constant16(c,0x001f); break; case 0x8e7a: branch_to(c,c->z,0x8e83); break; case 0x8e7c: cmp_dp16(c,0x00); break; case 0x8e7e: branch_to(c,!c->c,0x8e83); break; case 0x8e80: dec_abs16(c,0x0200); break; case 0x8e83: return_short(c); break; }
+  return true;
+}
+
 /* $01:EDF9: actor leaf return. */
 static bool actor_return_edf9_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf || pc != 0xedf9) return false;

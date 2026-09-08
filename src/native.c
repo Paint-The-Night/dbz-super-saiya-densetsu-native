@@ -820,6 +820,8 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = mode7_ppu_89e2_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0x8e3c && c->pc <= 0x8e49) {
       done = actor_counter_8e3c_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0x8e74 && c->pc <= 0x8e83) {
+      done = actor_counter_8e74_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc == 0x8c4f) {
       done = audio_return_8c4f_step(c, c->pc); x->display_control_steps += done;
     }
