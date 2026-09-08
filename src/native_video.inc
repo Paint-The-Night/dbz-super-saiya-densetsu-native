@@ -44,14 +44,6 @@ static void index_constant(Cpu *c, bool y, uint16_t value) {
 static void byte_constant(Cpu *c, uint8_t value) {
   sample_interrupt(c); (void)fetch(c); set_a8(c, value);
 }
-
-/* $06:EE42 entry prefix: preserve processor flags before actor setup. */
-static bool actor_setup_ee42_step(Cpu *c, uint16_t pc) {
-  if((c->k & 0x7f) != 6 || c->e) return false;
-  if(pc != 0xee42) return false;
-  (void)fetch(c); php_native(c);
-  return true;
-}
 static void xba_native(Cpu *c) {
   uint8_t low = (uint8_t)c->a, high = (uint8_t)(c->a >> 8);
   c->a = (uint16_t)((low << 8) | high); zn(c, high, true);
