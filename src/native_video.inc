@@ -11523,6 +11523,29 @@ static bool actor_table_c902_step(Cpu *c, uint16_t pc) {
 
 /* $01:D3C0–D3DC: resolve an actor pointer and derive the secondary table
  * index across the routine's REP/SEP boundary. */
+/* $01:C236–C256: copy the actor scratch pair into the indexed table. */
+static bool actor_copy_c236_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 1 || c->e || c->xf || c->d) return false;
+  switch(pc) {
+    case 0xc236: case 0xc239: case 0xc23d: case 0xc23f: case 0xc242: case 0xc244:
+    case 0xc246: case 0xc249: case 0xc24b: case 0xc24c: case 0xc24d: case 0xc24e:
+    case 0xc24f: case 0xc250: case 0xc251: case 0xc254: case 0xc256: break;
+    default: return false;
+  }
+  if((pc <= 0xc242 || pc >= 0xc249) ? !c->mf : c->mf) return false;
+  (void)fetch(c);
+  switch(pc) {
+    case 0xc236: index_constant(c, true, 0); break; case 0xc239: jsl_to(c, 0xc257); break;
+    case 0xc23d: load_dp8(c, 0x12); break; case 0xc23f: store_a_abs_y8(c, 0x0145); break;
+    case 0xc242: set_m(c, false); break; case 0xc244: load_dp16_to_a(c, 0x10); break;
+    case 0xc246: store_a_abs_y16(c, 0x0143); break; case 0xc249: set_m(c, true); break;
+    case 0xc24b: case 0xc24c: case 0xc24d: case 0xc24e: case 0xc24f: case 0xc250: implied(c); c->y++; zn(c, c->y, false); break;
+    case 0xc251: cpy16_constant(c, 0x001e); break; case 0xc254: branch_to(c, !c->c, 0xc239); break;
+    case 0xc256: return_long(c); break;
+  }
+  return true;
+}
+
 static bool actor_pointer_d3c0_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 1 || c->e || c->xf || c->d) return false;
   switch(pc) {
