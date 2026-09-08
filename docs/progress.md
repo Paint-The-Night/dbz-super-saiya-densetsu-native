@@ -581,3 +581,7 @@ verified sites and 13 ROM bytes.
 The bank-3 `$958A–9599` actor-coordinate prefix is native, covering coordinate
 copies, compact table selection, and its local JSR boundary. Differential tests
 cover the six data-moving boundaries; this adds 7 verified sites and 20 ROM bytes.
+
+The bank-1 `$BA10–BA29` flag gates are native, including both conditional
+helper calls and return paths. Differential tests cover all 12 instruction
+sites and branch conditions, adding 12 sites and 26 ROM bytes.

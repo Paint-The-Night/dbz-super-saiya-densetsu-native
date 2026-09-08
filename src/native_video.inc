@@ -11423,6 +11423,25 @@ static bool scene_actor_958a_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $01:BA10–BA29: update the two actor flag classes through $0485B6. */
+static bool actor_flag_ba10_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0xba10: case 0xba12: case 0xba14: case 0xba16: case 0xba18: case 0xba1c:
+    case 0xba1d: case 0xba1f: case 0xba21: case 0xba23: case 0xba25: case 0xba29: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) {
+    case 0xba10: case 0xba1d: load_dp8(c,0x48); break;
+    case 0xba12: and_constant8(c,0x0c); break;
+    case 0xba14: branch_to(c,c->z,0xba1c); break;
+    case 0xba16: case 0xba23: byte_constant(c,1); break;
+    case 0xba18: case 0xba25: jsl_to(c,0x85b6); break;
+    case 0xba1f: and_constant8(c,0x03); break;
+    case 0xba21: branch_to(c,c->z,0xba29); break;
+    case 0xba1c: case 0xba29: return_long(c); break;
+  }
+  return true;
+}
+
 /* $01:EDF9: actor leaf return. */
 static bool actor_return_edf9_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf || pc != 0xedf9) return false;

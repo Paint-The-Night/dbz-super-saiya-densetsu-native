@@ -648,6 +648,16 @@ int main(int argc,char **argv) {
     require(ca.pc==0x9000 && ca.k==0 && ca.sp==0x202,"2f463 return");
   }
   {
+    const uint16_t sites[] = {0xba10,0xba12,0xba14,0xba16,0xba18,0xba1c,0xba1d,0xba1f,0xba21,0xba23,0xba25,0xba29};
+    for(unsigned i=0;i<12;i++) {
+      memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+      Cpu ca=make_cpu(a,sites[i],0), cb=make_cpu(b,sites[i],0); ca.k=cb.k=1; ca.xf=cb.xf=false; ca.sp=cb.sp=0x1ff; word(a,0x200,0x8fff); word(b,0x200,0x8fff); a->count=b->count=0;
+      if(sites[i]==0xba10 || sites[i]==0xba1d) a->ram[0x48]=b->ram[0x48]=0;
+      if(sites[i]==0xba14 || sites[i]==0xba21) ca.z=cb.z=true;
+      require(dbz_native_step(&ca,stats),"expected ba10 flag step"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+  }
+  {
     const uint16_t sites[] = {0xf246,0xf39e,0xf39f,0xf3a0,0xf4ad,0xf560,0xf582,0xf5a2};
     for(unsigned n=0;n<8;n++) {
       memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
