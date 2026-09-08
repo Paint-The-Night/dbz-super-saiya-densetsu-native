@@ -655,6 +655,11 @@ assigned instructions, including the 16-bit pointer arithmetic, indirect table
 load, secondary index derivation, width boundary, and RTL. Differential tests
 add 15 sites and 29 ROM bytes.
 
+The bank-3 `$9B7F–9B9A` selector routine is native across all sixteen assigned
+instructions, reducing the selector, fetching its banked table byte, and leaving
+the resulting index in the expected scratch registers. Differential tests add
+16 sites and 28 ROM bytes.
+
 The bank-1 `$863A–8650` actor-pointer prefix is native across all ten assigned
 instructions, including the M/X width transitions, 16-bit pointer arithmetic,
 WRAM stores, shared dispatch, and RTL. Differential tests add 10 sites and 23

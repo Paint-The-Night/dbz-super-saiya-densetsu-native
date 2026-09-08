@@ -11969,6 +11969,36 @@ static bool actor_gate_f5cb_step(Cpu *c, uint16_t pc) {
 
 /* $03:F5A3–F5CA: actor fallback selector with the remaining phase thresholds
  * and marker publication before RTL. */
+/* $03:9B7F–9B9A: reduce the actor selector and fetch its banked byte. */
+static bool actor_selector_9b7f_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 3 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) {
+    case 0x9b7f: case 0x9b81: case 0x9b83: case 0x9b84: case 0x9b85:
+    case 0x9b86: case 0x9b88: case 0x9b8a: case 0x9b8c: case 0x9b8d:
+    case 0x9b8f: case 0x9b91: case 0x9b92: case 0x9b96: case 0x9b98:
+    case 0x9b9a: break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0x9b7f: and_constant8(c, 0x1f); break;
+    case 0x9b81: store_dp(c, 0x10, true); break;
+    case 0x9b83: case 0x9b84: case 0x9b85: lsr_a8(c); break;
+    case 0x9b86: store_dp(c, 0x12, true); break;
+    case 0x9b88: stz_dp8(c, 0x13); break;
+    case 0x9b8a: byte_constant(c, 0); break;
+    case 0x9b8c: xba_native(c); break;
+    case 0x9b8d: load_dp8(c, 0x10); break;
+    case 0x9b8f: and_constant8(c, 0x07); break;
+    case 0x9b91: tax16_from_a8(c); break;
+    case 0x9b92: load_a_long_x8(c, 0x039b9b); break;
+    case 0x9b96: store_dp(c, 0x11, true); break;
+    case 0x9b98: ldx_dp16(c, 0x12); break;
+    case 0x9b9a: return_long(c); break;
+  }
+  return true;
+}
+
 static bool actor_gate_f5a3_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 3 || c->e || c->xf || c->d || !c->mf) return false;
   switch(pc) { case 0xf5a3: case 0xf5a6: case 0xf5a8: case 0xf5aa: case 0xf5ac: case 0xf5ae: case 0xf5b1: case 0xf5b3: case 0xf5b5: case 0xf5b7: case 0xf5b9: case 0xf5bc: case 0xf5be: case 0xf5c0: case 0xf5c2: case 0xf5c5: case 0xf5c7: case 0xf5ca: break; default: return false; }

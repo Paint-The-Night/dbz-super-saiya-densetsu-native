@@ -5474,6 +5474,18 @@ int main(int argc,char **argv) {
     require(ca.pc==0xf9a0 && ca.k==1 && ca.y==0,"c243 reached F9A0");
   }
   /* $059AFF: BMI type → early RTL without BECB */
+  /* $039B7F: selector reduction and banked table-byte fetch */
+  {
+    const uint16_t sites[] = {0x9b7f,0x9b81,0x9b83,0x9b84,0x9b85,0x9b86,0x9b88,0x9b8a,
+                              0x9b8c,0x9b8d,0x9b8f,0x9b91,0x9b92,0x9b96,0x9b98,0x9b9a};
+    for(unsigned n=0;n<16;n++) {
+      memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+      Cpu ca=make_cpu(a,sites[n],0), cb=make_cpu(b,sites[n],0);
+      ca.k=cb.k=3; ca.xf=cb.xf=false; ca.mf=cb.mf=true; ca.sp=cb.sp=0x1ff;
+      ca.a=cb.a=0xa53c; ca.x=cb.x=0x0012; word(a,0x12,0x0010); word(b,0x12,0x0010); a->count=b->count=0;
+      require(dbz_native_step(&ca,stats),"expected 9b7f selector"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+  }
   {
     memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
     Cpu ca=make_cpu(a,0x9aff,0), cb=make_cpu(b,0x9aff,0);
