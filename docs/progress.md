@@ -42,6 +42,7 @@ Its next mode check at `$957C–$9581` is now native, including the compare and 
 The fall-through load at `$9583` is now native, adding 1 verified site and 2 bytes; the following banked call remains interpreter-backed pending a fuller call-context fixture.
 The deterministic cleanup tail at `$9599–$95A8` is now native: constants, PPU/direct-page stores, and RTL add 8 sites and 16 bytes.
 The `$00:9251` scene-mode entry read is now native and differentially verified, adding 1 site and 3 bytes before its remaining branch body.
+Its first gate now includes `$9254` BMI and `$9256` STZ `$0D59`, adding 2 sites and 5 bytes with taken-branch coverage.
 
 
 The `$00:98D5–990E` actor-slot loop adds 27 instruction sites and 58 bytes.
