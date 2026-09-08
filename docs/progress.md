@@ -600,6 +600,11 @@ nibble gate, conditional helper path, dispatch calls, and RTL. Differential
 tests cover all 8 manifest-listed sites, adding 8 verified sites and 22 ROM
 bytes.
 
+The bank-3 `$E757–E768` eight-byte long-memory copy loop is native, including
+the indexed loads/stores, 16-bit loop counter, carry gate, and RTS. Differential
+tests cover all 7 manifest-listed sites, adding 7 verified sites and 18 ROM
+bytes.
+
 The bank-4 `$8E74–8E83` masked counter decrement is native, covering its
 absolute load, mask, zero/carry gates, decrement, and RTS. Differential tests
 cover all 7 manifest-listed sites, adding 7 verified sites and 16 ROM bytes.

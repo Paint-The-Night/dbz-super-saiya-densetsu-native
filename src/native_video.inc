@@ -11520,6 +11520,15 @@ static bool actor_counter_8e74_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
+/* $03:E757–E768: copy an eight-byte long-memory span and return. */
+static bool copy_span_e757_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7f) != 3 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) { case 0xe757: case 0xe75a: case 0xe75e: case 0xe762: case 0xe763: case 0xe766: case 0xe768: break; default: return false; }
+  (void)fetch(c);
+  switch(pc) { case 0xe757: index_constant(c,false,0); break; case 0xe75a: load_a_long_x8(c,0x7004e0); break; case 0xe75e: store_a_long_x8(c,0x7e2be0); break; case 0xe762: implied(c); c->x++; zn(c,c->x,false); break; case 0xe763: cpx16_constant(c,0x0008); break; case 0xe766: branch_to(c,!c->c,0xe75a); break; case 0xe768: return_short(c); break; }
+  return true;
+}
+
 /* $01:EDF9: actor leaf return. */
 static bool actor_return_edf9_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf || pc != 0xedf9) return false;
