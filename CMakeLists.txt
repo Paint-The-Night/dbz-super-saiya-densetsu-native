@@ -23,12 +23,33 @@ if(NOT MSVC)
     COMPILE_OPTIONS "-Wall;-Wextra;-Werror")
 endif()
 
-find_package(SDL2 CONFIG REQUIRED)
-add_executable(dbz-port src/main.c)
-target_link_libraries(dbz-port PRIVATE dbz_core SDL2::SDL2)
-target_compile_definitions(dbz-port PRIVATE SDL_MAIN_HANDLED)
-if(NOT MSVC)
-  target_compile_options(dbz-port PRIVATE -Wall -Wextra -Werror)
+if(EMSCRIPTEN)
+  add_executable(dbz-port src/web_main.c)
+  target_link_libraries(dbz-port PRIVATE dbz_core)
+  target_compile_definitions(dbz-port PRIVATE SDL_MAIN_HANDLED)
+  target_compile_options(dbz-port PRIVATE -Wall -Wextra -Werror "SHELL:-sUSE_SDL=2")
+  set_target_properties(dbz-port PROPERTIES OUTPUT_NAME "dbz" SUFFIX ".js")
+  target_link_options(dbz-port PRIVATE
+    "SHELL:-sUSE_SDL=2"
+    "SHELL:-sALLOW_MEMORY_GROWTH=1"
+    "SHELL:-sINITIAL_MEMORY=67108864"
+    "SHELL:-sSTACK_SIZE=1048576"
+    "SHELL:-sFORCE_FILESYSTEM=1"
+    "SHELL:-lidbfs.js"
+    "SHELL:-sEXPORTED_FUNCTIONS=['_main','_malloc','_free','_dbz_web_load_rom','_dbz_web_expected_sha256']"
+    "SHELL:-sEXPORTED_RUNTIME_METHODS=['ccall','cwrap','UTF8ToString','HEAPU8','FS']"
+    "SHELL:-sNO_EXIT_RUNTIME=1"
+    "SHELL:-sENVIRONMENT=web"
+    "SHELL:-sASSERTIONS=0"
+  )
+else()
+  find_package(SDL2 CONFIG REQUIRED)
+  add_executable(dbz-port src/main.c)
+  target_link_libraries(dbz-port PRIVATE dbz_core SDL2::SDL2)
+  target_compile_definitions(dbz-port PRIVATE SDL_MAIN_HANDLED)
+  if(NOT MSVC)
+    target_compile_options(dbz-port PRIVATE -Wall -Wextra -Werror)
+  endif()
 endif()
 enable_testing()
 add_executable(test-native tests/test_native.c)

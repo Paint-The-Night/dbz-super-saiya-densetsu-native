@@ -41,6 +41,24 @@ void dbz_sha256(const uint8_t *data, size_t size, char result[65]) {
   for(unsigned i=0;i<8;i++) snprintf(result+i*8,9,"%08x",h[i]);
 }
 
+uint8_t *dbz_load_rom_bytes(const uint8_t *data, size_t length, size_t *size) {
+  if(!data || (length!=1048576 && length!=1049088)) {
+    fprintf(stderr,"Expected Japanese Rev 1, 1 MiB ROM (optional 512-byte header).\n");
+    return NULL;
+  }
+  const uint8_t *payload = data;
+  if(length==1049088) payload = data + 512;
+  char digest[65]; dbz_sha256(payload,1048576,digest);
+  if(strcmp(digest,DBZ_ROM_SHA256)) {
+    fprintf(stderr,"ROM hash mismatch: expected unmodified Japanese Rev 1. Got %s\n",digest);
+    return NULL;
+  }
+  uint8_t *buffer=malloc(1048576);
+  if(!buffer) return NULL;
+  memcpy(buffer,payload,1048576);
+  *size=1048576;return buffer;
+}
+
 uint8_t *dbz_read_rom(const char *path, size_t *size) {
   FILE *f=fopen(path,"rb");
   if(!f) { perror(path); return NULL; }
@@ -51,16 +69,12 @@ uint8_t *dbz_read_rom(const char *path, size_t *size) {
     fclose(f);return NULL;
   }
   rewind(f);
-  uint8_t *buffer=malloc((size_t)length);
-  if(!buffer) { fclose(f);return NULL; }
-  bool ok=fread(buffer,1,(size_t)length,f)==(size_t)length;
+  uint8_t *raw=malloc((size_t)length);
+  if(!raw) { fclose(f);return NULL; }
+  bool ok=fread(raw,1,(size_t)length,f)==(size_t)length;
   fclose(f);
-  if(!ok) { free(buffer);return NULL; }
-  if(length==1049088) memmove(buffer,buffer+512,1048576);
-  char digest[65]; dbz_sha256(buffer,1048576,digest);
-  if(strcmp(digest,DBZ_ROM_SHA256)) {
-    fprintf(stderr,"ROM hash mismatch: expected unmodified Japanese Rev 1. Got %s\n",digest);
-    free(buffer);return NULL;
-  }
-  *size=1048576;return buffer;
+  if(!ok) { free(raw);return NULL; }
+  uint8_t *buffer=dbz_load_rom_bytes(raw,(size_t)length,size);
+  free(raw);
+  return buffer;
 }

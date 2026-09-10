@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Browser playable native port of Dragon Ball Z: Super Saiya Densetsu. Bring your own Japanese Rev 1 ROM — nothing is embedded.">
+  <title>Dragon Ball Z — Super Saiya Densetsu (Web)</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page">
+    <header>
+      <h1>Dragon Ball Z: Super Saiya Densetsu</h1>
+      <p class="tagline">Native reconstruction · browser (Emscripten/WASM) · densetsu.garyperrigo.com</p>
+    </header>
+
+    <section id="loader" class="panel">
+      <h2>Load Japanese Rev 1 ROM</h2>
+      <p class="legal">
+        This site does <strong>not</strong> include, host, or distribute the commercial game ROM.
+        You must supply a <strong>legally obtained, unmodified</strong>
+        <em>Dragon Ball Z — Super Saiya Densetsu (Japan) (Rev&nbsp;1)</em>
+        <code>.sfc</code> / <code>.smc</code> file. The engine verifies SHA-256 before play.
+      </p>
+      <p class="hash">Expected SHA-256:
+        <code id="expected-hash">962aa7a09765a97164af67098877a8fe5b7f1ea9db738561eb466b7600fd241c</code>
+      </p>
+      <label class="file-btn">
+        <input type="file" id="rom-input" accept=".sfc,.smc,application/octet-stream" hidden>
+        Choose ROM file…
+      </label>
+      <button type="button" id="play-remembered" class="file-btn secondary hidden">Play remembered ROM</button>
+      <button type="button" id="clear-remembered" class="linkish hidden">Forget remembered ROM</button>
+      <p id="status" class="status" role="status">Loading engine…</p>
+      <p id="error" class="error" hidden></p>
+    </section>
+
+    <div class="stage">
+      <canvas id="canvas" tabindex="0" width="960" height="720" aria-label="Game display"></canvas>
+    </div>
+
+    <section class="panel controls">
+      <h2>Controls</h2>
+      <ul>
+        <li><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> — D-pad</li>
+        <li><kbd>Z</kbd> B · <kbd>X</kbd> A · <kbd>A</kbd> Y · <kbd>S</kbd> X</li>
+        <li><kbd>Enter</kbd> Start · <kbd>Right&nbsp;Shift</kbd> Select</li>
+        <li><kbd>D</kbd> L · <kbd>C</kbd> R</li>
+        <li><kbd>P</kbd> pause · <kbd>Tab</kbd> turbo</li>
+      </ul>
+      <p class="note">Game text is Japanese; no translation patch is applied. Audio uses SDL2 → Web Audio after you load a ROM (user gesture).</p>
+    </section>
+
+    <footer>
+      <p>Hybrid LakeSnes + verified native replacements. ROM never leaves your browser except into WASM memory for this session (optional IndexedDB remember stays local).</p>
+    </footer>
+  </div>
+
+  <script>
+    var Module = {
+      canvas: (function() { return document.getElementById('canvas'); })(),
+      locateFile: function(path) { return path; },
+      print: function(t) { console.log(t); },
+      printErr: function(t) { console.error(t); },
+      onRuntimeInitialized: function() {
+        window.dispatchEvent(new Event('dbz-ready'));
+      }
+    };
+
+    (function() {
+      const DB_NAME = 'dbz-densetsu-web';
+      const STORE = 'rom';
+      const KEY = 'rev1';
+      const statusEl = document.getElementById('status');
+      const errorEl = document.getElementById('error');
+      const loader = document.getElementById('loader');
+      const input = document.getElementById('rom-input');
+      const clearBtn = document.getElementById('clear-remembered');
+      const expected = '962aa7a09765a97164af67098877a8fe5b7f1ea9db738561eb466b7600fd241c';
+
+      function setError(msg) {
+        if(!msg) { errorEl.hidden = true; errorEl.textContent = ''; return; }
+        errorEl.hidden = false;
+        errorEl.textContent = msg;
+      }
+
+      function openDb() {
+        return new Promise(function(resolve, reject) {
+          const req = indexedDB.open(DB_NAME, 1);
+          req.onupgradeneeded = function() {
+            const db = req.result;
+            if(!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
+          };
+          req.onsuccess = function() { resolve(req.result); };
+          req.onerror = function() { reject(req.error); };
+        });
+      }
+
+      async function rememberRom(bytes) {
+        try {
+          const db = await openDb();
+          await new Promise(function(resolve, reject) {
+            const tx = db.transaction(STORE, 'readwrite');
+            tx.objectStore(STORE).put(bytes, KEY);
+            tx.oncomplete = function() { resolve(); };
+            tx.onerror = function() { reject(tx.error); };
+          });
+          clearBtn.classList.remove('hidden');
+        } catch (e) {
+          console.warn('Could not remember ROM', e);
+        }
+      }
+
+      async function loadRemembered() {
+        try {
+          const db = await openDb();
+          const bytes = await new Promise(function(resolve, reject) {
+            const tx = db.transaction(STORE, 'readonly');
+            const req = tx.objectStore(STORE).get(KEY);
+            req.onsuccess = function() { resolve(req.result || null); };
+            req.onerror = function() { reject(req.error); };
+          });
+          if(bytes) clearBtn.classList.remove('hidden');
+          return bytes ? new Uint8Array(bytes) : null;
+        } catch (e) {
+          return null;
+        }
+      }
+
+      async function forgetRom() {
+        try {
+          const db = await openDb();
+          await new Promise(function(resolve, reject) {
+            const tx = db.transaction(STORE, 'readwrite');
+            tx.objectStore(STORE).delete(KEY);
+            tx.oncomplete = function() { resolve(); };
+            tx.onerror = function() { reject(tx.error); };
+          });
+        } catch (e) {}
+        clearBtn.classList.add('hidden');
+        document.getElementById('play-remembered').classList.add('hidden');
+        window.__dbzRemembered = null;
+        statusEl.textContent = 'Forgotten. Choose a ROM file to play.';
+      }
+
+      function feedRom(u8) {
+        setError('');
+        if(typeof Module._dbz_web_load_rom !== 'function') {
+          setError('Engine is not ready yet.');
+          return;
+        }
+        const ptr = Module._malloc(u8.length);
+        if(!ptr) { setError('Out of memory allocating ROM buffer.'); return; }
+        Module.HEAPU8.set(u8, ptr);
+        const rc = Module._dbz_web_load_rom(ptr, u8.length);
+        Module._free(ptr);
+        if(rc === 0) {
+          rememberRom(u8);
+          document.getElementById('canvas').focus();
+        } else if(rc === 1) {
+          setError('Wrong file size. Need 1,048,576 bytes (or +512-byte copier header).');
+          statusEl.textContent = 'ROM rejected.';
+        } else if(rc === 2) {
+          setError('SHA-256 mismatch. Only unmodified Japanese Rev 1 (hash above) is accepted.');
+          statusEl.textContent = 'ROM rejected.';
+        } else {
+          setError('Could not start the game with this file.');
+          statusEl.textContent = 'ROM rejected.';
+        }
+      }
+
+      input.addEventListener('change', async function() {
+        const file = input.files && input.files[0];
+        if(!file) return;
+        statusEl.textContent = 'Reading ' + file.name + '…';
+        try {
+          const buf = new Uint8Array(await file.arrayBuffer());
+          feedRom(buf);
+        } catch (e) {
+          setError('Failed to read file: ' + e);
+        }
+        input.value = '';
+      });
+
+      clearBtn.addEventListener('click', forgetRom);
+      document.getElementById('play-remembered').addEventListener('click', function() {
+        if(window.__dbzRemembered) feedRom(window.__dbzRemembered);
+      });
+
+      window.addEventListener('dbz-ready', async function() {
+        statusEl.textContent = 'Engine ready. Load your Japanese Rev 1 .sfc to start.';
+        try {
+          if(Module._dbz_web_expected_sha256) {
+            const p = Module._dbz_web_expected_sha256();
+            const s = Module.UTF8ToString(p);
+            if(s) document.getElementById('expected-hash').textContent = s;
+          }
+        } catch (e) {}
+        const remembered = await loadRemembered();
+        if(remembered) {
+          window.__dbzRemembered = remembered;
+          document.getElementById('play-remembered').classList.remove('hidden');
+          statusEl.textContent = 'Remembered ROM available — click “Play remembered ROM” (needed for audio unlock).';
+        }
+      });
+
+      // Drag-and-drop onto the page
+      ['dragenter','dragover','dragleave','drop'].forEach(function(ev) {
+        document.body.addEventListener(ev, function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+        });
+      });
+      document.body.addEventListener('drop', async function(e) {
+        const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if(!file) return;
+        statusEl.textContent = 'Reading ' + file.name + '…';
+        try {
+          feedRom(new Uint8Array(await file.arrayBuffer()));
+        } catch (err) {
+          setError('Failed to read dropped file: ' + err);
+        }
+      });
+    })();
+  </script>
+  <script async src="dbz.js"></script>
+</body>
+</html>

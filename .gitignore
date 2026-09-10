@@ -11,3 +11,5 @@ artifacts/
 entry-snapshots.csv
 build-*/
 dist/
+build-web/
+web/dist/
