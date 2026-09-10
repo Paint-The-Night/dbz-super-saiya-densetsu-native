@@ -429,7 +429,14 @@ the upload call at `$00:85F5`.
 | 05:D1E1–D1F3 | ($CAFA,9A) DP+$B7==#$4D & $15F1 BMI → $D4E7 else #1→$CA8D | 19 | 8 |
 | 05:D1F4–D25F | ($CAFA,96@$D1F4)/(,94@$D209) face-class gates via $B6B2/$B6C0/$B582 → $D4E7/$CA8D | 108 | 51 |
 | 05:D260–D273 | ($CAFA,92) #$80 → $14D7/$0020,Y; ORA DP+$B8; LDA #0 / JMP $CA8D | 20 | 8 |
-| **Total** | **Three hundred twenty-seven complete routines plus a reset prefix** | **26927** | **12009** |
+| 05:D1D6–D1E0 | ($CAFA,BE) $071B gate → RTS or #0→$CA8D | 11 | 5 |
+| 05:D05A–D06C | ($CAFA,B0) $B0BE/$B0F9; #$80 → $1480/$14A0; JMP $CA8D | 19 | 7 |
+| 05:D06D–D094 | ($CAFA,A8) dual-slot face/coord seed → JMP $CA8D | 40 | 14 |
+| 05:D095–D0B9 | ($CAFA,A2) m16 $24/$26-#$40 → $1484/$1486; face seeds → $CA8D | 37 | 15 |
+| 05:D038–D059 | ($CAFA,AE) $1426→Y; pinch $1484/$14A4; ≥#$C8 → $CA8D else RTS | 34 | 13 |
+| 05:D118–D13D | ($CAFA,CA) $B572 class; JSL $0593A9; JMP $CA8D | 38 | 16 |
+| 05:D0BA–D117 | ($CAFA,A0) BMI copy / BPL pinch/finish → RTS or JMP $CA8D | 94 | 40 |
+| **Total** | **Four hundred forty-one complete routines plus a reset prefix** | **28867** | **12827** |
 
 
 
@@ -472,8 +479,8 @@ independent hardware-fidelity comparison with another emulator is still needed.
 ## How far from complete?
 
 The project now has a reproducible scoped tracker. The pinned static-analysis
-worklist contains 13,237 instruction variants. Of those, 12717 instruction sites
-are covered by reviewed C replacements: **96.07% of the discovered worklist**.
+worklist contains 13,237 instruction variants. Of those, 12827 instruction sites
+are covered by reviewed C replacements: **96.90% of the discovered worklist**.
 Run `python3 tools/progress.py` to recalculate this figure. If the local
 SNESRecomp manifest exists, the script sums it directly; a public clone uses the
 same checked-in probe total.
@@ -542,7 +549,7 @@ Next work is a reproducible actual battle and larger game-logic translations.
 `src/native_video.inc` reconstructs the complete frame graphics upload routine,
 unused-sprite hiding, and palette-shadow clearing. The new `ram-map.md` records
 the verified shadow buffers, flags, and eight-byte VRAM queue entry layout.
-The current inventory is 28594 ROM bytes / 12717 instruction sites.
+The current inventory is 28867 ROM bytes / 12827 instruction sites.
 
 The isolated suite now also covers interrupt-enable, VRAM queue find/mark,
 PPU multiply, DMA1 setup, pointer resolve, palette-shadow copy, actor-table

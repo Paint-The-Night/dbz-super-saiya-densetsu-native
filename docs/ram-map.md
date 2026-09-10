@@ -564,6 +564,10 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | DP+$B7 / $15F1 | bytes | $D1E1 ($CAFA,9A) class/BMI gate before $D4E7/$CA8D | 05:D1E1 |
 | DP+$B7 / $0034,Y / $001B,Y | bytes | $D1F4/$D209 ($CAFA,96/94) face-class accept → $D4E7 | 05:D1F4 |
 | $14D7 / $0020,Y / DP+$B8 | bytes | $D260 ($CAFA,92) #$80 face flag seed | 05:D260 |
+| $071B | byte | $D1D6 ($CAFA,BE) nonzero → RTS else #0→$CA8D | 05:D1D6 |
+| $1480–$14A9 | bytes | $D05A/$D06D/$D095/$D038/$D0BA dual face-slot seeds | 05:D05A |
+| DP+$04 / DP+$20 | bytes/word | $D118 ($CAFA,CA) class threshold + Y base before $B572/$93A9 | 05:D118 |
+
 
 
 | DP+$10/$11 / $1547..$154F / $1558..$155C | words/bytes | $EB36/$EC61 phase oscillator + seed | 05:EB36 |
