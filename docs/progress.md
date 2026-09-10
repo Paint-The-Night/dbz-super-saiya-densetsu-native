@@ -441,7 +441,8 @@ the upload call at `$00:85F5`.
 | 05:CF08–CF5F | ($CAFA,C6@$CF08)/(,B2@$CF0F) face copy; JSR $CF6F/$C07B; JMP $CA8D | 88 | 39 |
 | 05:CF60–CFB0 | ($CAFA,B4@$CF60)/(,B6@$CF65) + $CF6F coord helper via $D743/$D6E2 | 81 | 35 |
 | 05:D13E–D1D5 | ($CAFA,9E) JSL $0593A9; B7∈{62,67}→$0726; Y=$BD/$CA → $934B/$1C806C/$1C8136/$1C8044; else #2→$CA8D | 152 | 55 |
-| **Total** | **Four hundred forty-one complete routines plus a reset prefix** | **28867** | **12827** |
+| 05:CDE1–CF07 | ($CAFA,DA@$CDE1)/(,E2/$CDEE)/(,EE@$CDF7)/(,D8@$CE13)/(,D6@$CE60)/(,D4@$CE8B)+$CEFF/$CE4C; bit table $CE87–8A | 295 | 136 |
+| **Total** | **Four hundred forty-seven complete routines plus a reset prefix** | **29618** | **13146** |
 
 
 
@@ -481,11 +482,17 @@ Runtime artifacts are ignored by Git and can be regenerated using the commands
 in `prototype.md`. The reference instance shares the same hardware core; an
 independent hardware-fidelity comparison with another emulator is still needed.
 
+The `$05:CDE1–CF07` ($CAFA,DA)/(,E2)/(,EE)/(,D8)/(,D6)/(,D4) cluster is now native, including
+the shared `$CEFF` TAX helper, `$CE4C` m16 delta helper, `$CDEE`/`$CDF7` dual-DEC gate,
+`$CE60` bit-mask clear via `$05CE86,X`, and `$CE8B` face/slot seed through `$B572`/`$B6B2`
+into `$DD51`. Differential tests cover early-RTS, expire, mask, and full seed paths
+(136 sites / 295 ROM bytes).
+
 ## How far from complete?
 
 The project now has a reproducible scoped tracker. The pinned static-analysis
-worklist contains 13,237 instruction variants. Of those, 13010 instruction sites
-are covered by reviewed C replacements: **96.90% of the discovered worklist**.
+worklist contains 13,237 instruction variants. Of those, 13146 instruction sites
+are covered by reviewed C replacements: **99.31% of the discovered worklist**.
 Run `python3 tools/progress.py` to recalculate this figure. If the local
 SNESRecomp manifest exists, the script sums it directly; a public clone uses the
 same checked-in probe total.
@@ -554,7 +561,7 @@ Next work is a reproducible actual battle and larger game-logic translations.
 `src/native_video.inc` reconstructs the complete frame graphics upload routine,
 unused-sprite hiding, and palette-shadow clearing. The new `ram-map.md` records
 the verified shadow buffers, flags, and eight-byte VRAM queue entry layout.
-The current inventory is 29323 ROM bytes / 13010 instruction sites.
+The current inventory is 29618 ROM bytes / 13146 instruction sites.
 
 The isolated suite now also covers interrupt-enable, VRAM queue find/mark,
 PPU multiply, DMA1 setup, pointer resolve, palette-shadow copy, actor-table

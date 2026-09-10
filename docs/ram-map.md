@@ -562,6 +562,8 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $1558/$155A/$155C/$1546 | bytes/words | $EED4/$EF5A/$EFCC/$ECE4 ($E117) phase seeds | 05:EED4 |
 | $0D7A/$0D75/$0D01,Y/$0D02,Y/$0D03,Y | words/bytes | $1D8583/$859B face→queue before JML $01C987 | 1D:8583 |
 | DP+$B7 / $15F1 | bytes | $D1E1 ($CAFA,9A) class/BMI gate before $D4E7/$CA8D | 05:D1E1 |
+| DP+$04/$05/$06/$4F / $1507,$1509,$150B,$150D,$1560 | bytes/words | $CDE1/$CDEE/$CDF7/$CE13/$CE60/$CE8B ($CAFA,DA/E2/EE/D8/D6/D4) timer/slot seed; $CEFF TAX | 05:CDE1 |
+| DP+$B0 / $05CE87–8A | byte/table | $CE60 BMI path AND long,X bit-clear masks ($FE/$FD/$FB/$F7) | 05:CE60 |
 | DP+$B7 / $0034,Y / $001B,Y | bytes | $D1F4/$D209 ($CAFA,96/94) face-class accept → $D4E7 | 05:D1F4 |
 | $14D7 / $0020,Y / DP+$B8 | bytes | $D260 ($CAFA,92) #$80 face flag seed | 05:D260 |
 | $071B | byte | $D1D6 ($CAFA,BE) nonzero → RTS else #0→$CA8D | 05:D1D6 |
