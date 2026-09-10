@@ -749,6 +749,14 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = actor_op_da8d_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xda9c && c->pc <= 0xdb2a) {
       done = actor_op_da9c_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xcf08 && c->pc <= 0xcf5f) {
+      done = actor_op_cf08_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xcf60 && c->pc <= 0xcfb0) {
+      done = actor_op_cf60_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xcfb1 && c->pc <= 0xcfb8) {
+      done = actor_op_cfb1_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xcfb9 && c->pc <= 0xd037) {
+      done = actor_op_cfb9_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xd038 && c->pc <= 0xd059) {
       done = actor_op_d038_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xd05a && c->pc <= 0xd06c) {
@@ -761,6 +769,8 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = actor_op_d0ba_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xd118 && c->pc <= 0xd13d) {
       done = actor_op_d118_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xd13e && c->pc <= 0xd1d5) {
+      done = actor_op_d13e_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xd1d6 && c->pc <= 0xd1e0) {
       done = actor_op_d1d6_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xd1e1 && c->pc <= 0xd1f3) {

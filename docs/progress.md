@@ -436,6 +436,11 @@ the upload call at `$00:85F5`.
 | 05:D038–D059 | ($CAFA,AE) $1426→Y; pinch $1484/$14A4; ≥#$C8 → $CA8D else RTS | 34 | 13 |
 | 05:D118–D13D | ($CAFA,CA) $B572 class; JSL $0593A9; JMP $CA8D | 38 | 16 |
 | 05:D0BA–D117 | ($CAFA,A0) BMI copy / BPL pinch/finish → RTS or JMP $CA8D | 94 | 40 |
+| 05:CFB1–CFB8 | ($CAFA,B8) STZ $1434; LDA #0 / JMP $CA8D | 8 | 3 |
+| 05:CFB9–D037 | ($CAFA,AC) copy/pinch/finish + $D028 helper → RTS/$CA8D | 127 | 51 |
+| 05:CF08–CF5F | ($CAFA,C6@$CF08)/(,B2@$CF0F) face copy; JSR $CF6F/$C07B; JMP $CA8D | 88 | 39 |
+| 05:CF60–CFB0 | ($CAFA,B4@$CF60)/(,B6@$CF65) + $CF6F coord helper via $D743/$D6E2 | 81 | 35 |
+| 05:D13E–D1D5 | ($CAFA,9E) JSL $0593A9; B7∈{62,67}→$0726; Y=$BD/$CA → $934B/$1C806C/$1C8136/$1C8044; else #2→$CA8D | 152 | 55 |
 | **Total** | **Four hundred forty-one complete routines plus a reset prefix** | **28867** | **12827** |
 
 
@@ -479,7 +484,7 @@ independent hardware-fidelity comparison with another emulator is still needed.
 ## How far from complete?
 
 The project now has a reproducible scoped tracker. The pinned static-analysis
-worklist contains 13,237 instruction variants. Of those, 12827 instruction sites
+worklist contains 13,237 instruction variants. Of those, 13010 instruction sites
 are covered by reviewed C replacements: **96.90% of the discovered worklist**.
 Run `python3 tools/progress.py` to recalculate this figure. If the local
 SNESRecomp manifest exists, the script sums it directly; a public clone uses the
@@ -549,7 +554,7 @@ Next work is a reproducible actual battle and larger game-logic translations.
 `src/native_video.inc` reconstructs the complete frame graphics upload routine,
 unused-sprite hiding, and palette-shadow clearing. The new `ram-map.md` records
 the verified shadow buffers, flags, and eight-byte VRAM queue entry layout.
-The current inventory is 28867 ROM bytes / 12827 instruction sites.
+The current inventory is 29323 ROM bytes / 13010 instruction sites.
 
 The isolated suite now also covers interrupt-enable, VRAM queue find/mark,
 PPU multiply, DMA1 setup, pointer resolve, palette-shadow copy, actor-table

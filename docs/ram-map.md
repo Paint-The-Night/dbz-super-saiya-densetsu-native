@@ -463,7 +463,7 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | DP+$AC / $0726 / $14E4 | bytes/words | $9115 phase + timer; $14E4 word gates $9488 early path | 05:9115 |
 | $14C2/$14FC / $0C40 | bytes | $9115 AC==1 special seeds after $AE81/$C07B | 05:9115 |
 
-| $17EA..$17F3 | bytes/words | $B00A seeds from #$0A / $0E03 / $0E0A around JSL $1C806C/$1C8136 | 05:B00A |
+| $17EA..$17F3 | bytes/words | $B00A seeds from #$0A / $0E03 / $0E0A around JSL $1C806C/$1C8136; also ($CAFA,9E) $D13E CA-path | 05:B00A / 05:D13E |
 | $17DD/$17E1/$14FF/$17E5 | words | $9886 clears/seeds from $01E7/$01D6/$17D2; DP+$B0 ← Y | 05:9886 |
 | DP+$24 / $14E8/$14C1 | bytes | $C41F indexes $05C450[$14C1−#$10]; optional $14E9→$14E8 | 05:C41F |
 | $15FA / $01E7 | bytes | $90A5 SEC predicate ($15FA==#$80 or LSR $01E7×2) | 05:90A5 |

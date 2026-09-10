@@ -35,7 +35,7 @@ and elimination of the remaining interpreter fallback are still unfinished.
 
 ### Progress tracker
 
-**96.90% — 12,827 / 13,237 discovered instruction sites reconstructed and verified**
+**98.29% — 13,010 / 13,237 discovered instruction sites reconstructed and verified**
 
 This percentage uses the pinned static-analysis worklist as its denominator.
 That worklist is incomplete, so it is a useful progress gauge for this project,

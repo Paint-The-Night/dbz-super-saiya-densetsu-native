@@ -20,9 +20,9 @@ README = ROOT / "README.md"
 
 # These are the fixed, reviewed regions listed in docs/progress.md. Keeping the
 # inventory here makes the percentage auditable without parsing generated C.
-NATIVE_SITES = 12827
-NATIVE_BYTES = 28867
-NATIVE_ENTRIES = 441
+NATIVE_SITES = 13010
+NATIVE_BYTES = 29323
+NATIVE_ENTRIES = 446
 
 
 def discovered_instruction_variants() -> tuple[int, str]:
