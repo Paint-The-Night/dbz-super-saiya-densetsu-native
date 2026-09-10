@@ -426,7 +426,10 @@ the upload call at `$00:85F5`.
 | 01:EDF9 | Actor leaf return | 1 | 1 |
 | 00:99C2 | Scene leaf return | 1 | 1 |
 | 00:99C3–99CB | Scene transition trampoline | 7 | 3 |
-| **Total** | **Three hundred twenty-four complete routines plus a reset prefix** | **26780** | **11942** |
+| 05:D1E1–D1F3 | ($CAFA,9A) DP+$B7==#$4D & $15F1 BMI → $D4E7 else #1→$CA8D | 19 | 8 |
+| 05:D1F4–D25F | ($CAFA,96@$D1F4)/(,94@$D209) face-class gates via $B6B2/$B6C0/$B582 → $D4E7/$CA8D | 108 | 51 |
+| 05:D260–D273 | ($CAFA,92) #$80 → $14D7/$0020,Y; ORA DP+$B8; LDA #0 / JMP $CA8D | 20 | 8 |
+| **Total** | **Three hundred twenty-seven complete routines plus a reset prefix** | **26927** | **12009** |
 
 
 
@@ -469,8 +472,8 @@ independent hardware-fidelity comparison with another emulator is still needed.
 ## How far from complete?
 
 The project now has a reproducible scoped tracker. The pinned static-analysis
-worklist contains 13,237 instruction variants. Of those, 11942 instruction sites
-are covered by reviewed C replacements: **89.54% of the discovered worklist**.
+worklist contains 13,237 instruction variants. Of those, 12717 instruction sites
+are covered by reviewed C replacements: **96.07% of the discovered worklist**.
 Run `python3 tools/progress.py` to recalculate this figure. If the local
 SNESRecomp manifest exists, the script sums it directly; a public clone uses the
 same checked-in probe total.
@@ -539,7 +542,7 @@ Next work is a reproducible actual battle and larger game-logic translations.
 `src/native_video.inc` reconstructs the complete frame graphics upload routine,
 unused-sprite hiding, and palette-shadow clearing. The new `ram-map.md` records
 the verified shadow buffers, flags, and eight-byte VRAM queue entry layout.
-The current inventory is 26780 ROM bytes / 11942 instruction sites.
+The current inventory is 28594 ROM bytes / 12717 instruction sites.
 
 The isolated suite now also covers interrupt-enable, VRAM queue find/mark,
 PPU multiply, DMA1 setup, pointer resolve, palette-shadow copy, actor-table
