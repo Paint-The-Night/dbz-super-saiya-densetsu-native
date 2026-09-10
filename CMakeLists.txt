@@ -36,7 +36,7 @@ if(EMSCRIPTEN)
     "SHELL:-sSTACK_SIZE=1048576"
     "SHELL:-sFORCE_FILESYSTEM=1"
     "SHELL:-lidbfs.js"
-    "SHELL:-sEXPORTED_FUNCTIONS=['_main','_malloc','_free','_dbz_web_load_rom','_dbz_web_expected_sha256']"
+    "SHELL:-sEXPORTED_FUNCTIONS=['_main','_malloc','_free','_dbz_web_load_rom','_dbz_web_expected_sha256','_dbz_web_set_button','_dbz_web_set_gesture_mask','_dbz_web_pulse_button','_dbz_web_set_turbo','_dbz_web_toggle_pause']"
     "SHELL:-sEXPORTED_RUNTIME_METHODS=['ccall','cwrap','UTF8ToString','HEAPU8','FS']"
     "SHELL:-sNO_EXIT_RUNTIME=1"
     "SHELL:-sENVIRONMENT=web"

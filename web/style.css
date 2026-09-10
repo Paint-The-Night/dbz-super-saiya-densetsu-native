@@ -35,8 +35,10 @@ header h1 { margin: 0 0 0.25rem; font-size: 1.65rem; letter-spacing: 0.02em; }
   background: var(--accent);
   color: #1a1200;
   font-weight: 700;
+  border: none;
   border-radius: 8px;
   cursor: pointer;
+  font-family: inherit;
 }
 .file-btn:hover { filter: brightness(1.05); }
 .linkish {
@@ -50,13 +52,17 @@ header h1 { margin: 0 0 0.25rem; font-size: 1.65rem; letter-spacing: 0.02em; }
 .status { color: var(--ok); min-height: 1.25em; }
 .error { color: var(--danger); font-weight: 600; }
 .stage {
+  position: relative;
   background: #000;
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid var(--border);
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
   display: flex;
   justify-content: center;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 #canvas {
   display: block;
@@ -66,6 +72,41 @@ header h1 { margin: 0 0 0.25rem; font-size: 1.65rem; letter-spacing: 0.02em; }
   image-rendering: pixelated;
   outline: none;
   touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.gesture-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(8, 12, 24, 0.88);
+  color: var(--text);
+  text-align: center;
+  z-index: 5;
+  touch-action: manipulation;
+}
+.gesture-hint ul {
+  text-align: left;
+  margin: 0.5rem auto 0.75rem;
+  padding-left: 1.2rem;
+  color: var(--muted);
+  max-width: 22rem;
+}
+.gesture-hint .hint-note {
+  font-size: 0.85rem;
+  color: var(--muted);
+  max-width: 24rem;
+  margin: 0 0 1rem;
+}
+.gesture-map {
+  color: var(--text);
+  margin: 0 0 0.6rem;
+  line-height: 1.4;
 }
 .controls ul { padding-left: 1.1rem; margin: 0.4rem 0; }
 .controls li { margin: 0.25rem 0; color: var(--muted); }
@@ -90,7 +131,59 @@ footer { color: var(--muted); font-size: 0.8rem; margin-top: 0.5rem; }
   font-weight: 600;
 }
 
-/* ---- On-screen touch pad (below stage; does not cover canvas) ---- */
+.classic-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0.6rem 0 0.4rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Minimal chrome strip outside canvas */
+.touch-chrome {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.15rem 0.35rem;
+  margin: 0 0 1rem;
+  padding: 0.35rem 0.5rem;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.chrome-btn {
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.45rem 0.55rem;
+  cursor: pointer;
+  border-radius: 6px;
+  -webkit-tap-highlight-color: transparent;
+}
+.chrome-btn:hover,
+.chrome-btn:focus-visible {
+  color: var(--accent);
+  outline: none;
+}
+.chrome-btn.active,
+.chrome-btn:active {
+  color: var(--accent);
+  background: rgba(245, 166, 35, 0.12);
+}
+.chrome-sep {
+  color: var(--border);
+  pointer-events: none;
+}
+
+/* ---- Optional classic pad (accessibility toggle) ---- */
 .touch-pad {
   touch-action: none;
   user-select: none;
@@ -220,11 +313,6 @@ footer { color: var(--muted); font-size: 0.8rem; margin-top: 0.5rem; }
 .pad-face .face.active,
 .pad-face .face:active { filter: brightness(1.25); }
 
-@media (pointer: fine) and (min-width: 721px) {
-  .touch-pad {
-    opacity: 0.92;
-  }
-}
 @media (max-width: 520px) {
   .pad-dpad, .pad-face { width: 120px; height: 120px; }
   .pad-dpad .dpad { width: 40px; height: 40px; }

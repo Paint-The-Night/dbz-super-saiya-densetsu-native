@@ -95,4 +95,42 @@ test -f web/dist/dbz.wasm && test -f web/dist/dbz.js
 
 ## Controls
 
-Same as desktop: arrows, Z/A/X/S/D/C, Enter, Right Shift; P pause; Tab turbo.
+### Keyboard (unchanged)
+
+Arrows, Z/A/X/S/D/C, Enter, Right Shift; P pause; Tab turbo.
+
+### Canvas-native touch (primary)
+
+The game canvas is the input surface. Gestures synthesize the same SNES bits
+0–11 that the keyboard uses (`snes_setButtonState`). No menu WRAM is poked.
+
+| Gesture | SNES bit(s) |
+|---------|-------------|
+| Finger drag (held &gt; ~280 ms past deadzone) | D-pad Up/Down/Left/Right (8-way hold) |
+| Quick tap | A (bit 8), ~3 frames |
+| Long-press (~350 ms, little move) | B (bit 0), ~3 frames |
+| Swipe flick | Single-step D-pad pulse (~2 frames) |
+| Two-finger tap | Start (bit 3) |
+| Three-finger tap | Select (bit 2) |
+
+Chrome strip below the canvas (text links, not a fake SNES pad):
+**Select · L · R · Pause · Turbo**.
+
+Optional **Show classic pad** checkbox in Controls is accessibility-only;
+default UX hides `#touch-pad`.
+
+C APIs (frame-synced in `web_main.c`):
+
+- `dbz_web_set_button` — classic pad hold mask (`keys_touch`)
+- `dbz_web_set_gesture_mask` — canvas virtual-stick hold (`keys_gesture`)
+- `dbz_web_pulse_button(button, frames)` — queued pulses OR’d each `frame_tick`
+- Each frame: `keys_kb | keys_touch | keys_gesture | pulse` → `snes_setButtonState`
+
+### Next: menu hit-test via cursor RAM
+
+Investigation of `docs/ram-map.md` / tests found **no** recovered battle or
+overworld **menu selection cursor** byte suitable for “tap this row to select
+it”. Existing “cursor” names are WRAM/OAM/script stream cursors, not UI index.
+**Do not invent RAM addresses.** When a menu cursor address is recovered,
+optional assist can queue N× Up/Down then A from tap Y without bypassing
+`snes_setButtonState`.

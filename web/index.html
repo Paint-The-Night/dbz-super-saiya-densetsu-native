@@ -36,11 +36,36 @@
     </section>
 
     <div class="stage">
-      <canvas id="canvas" tabindex="0" width="960" height="720" aria-label="Game display"></canvas>
+      <canvas id="canvas" tabindex="0" width="960" height="720" aria-label="Game display — touch to control"></canvas>
+      <div id="gesture-hint" class="gesture-hint hidden" role="dialog" aria-label="Touch gesture help">
+        <p><strong>Touch the game</strong></p>
+        <ul>
+          <li>Drag — move (D-pad)</li>
+          <li>Tap — A (confirm)</li>
+          <li>Long-press — B (cancel)</li>
+          <li>Swipe flick — step one tile / menu row</li>
+          <li>Two-finger tap — Start</li>
+        </ul>
+        <p class="hint-note">Pixel-perfect “tap this menu row” needs cursor RAM next — for now drive menus with flick + tap.</p>
+        <button type="button" id="gesture-hint-dismiss" class="file-btn">Got it</button>
+      </div>
     </div>
 
-    <!-- On-screen SNES pad: sets the same 12 controller bits as keyboard via dbz_web_set_button -->
-    <div id="touch-pad" class="touch-pad hidden" aria-label="Touch controls" role="group">
+    <!-- Minimal chrome outside canvas (not a fake SNES diagram) -->
+    <div id="touch-chrome" class="touch-chrome hidden" aria-label="Extra controls" role="group">
+      <button type="button" class="chrome-btn" data-pulse="2">Select</button>
+      <span class="chrome-sep" aria-hidden="true">·</span>
+      <button type="button" class="chrome-btn" data-pulse="10">L</button>
+      <span class="chrome-sep" aria-hidden="true">·</span>
+      <button type="button" class="chrome-btn" data-pulse="11">R</button>
+      <span class="chrome-sep" aria-hidden="true">·</span>
+      <button type="button" class="chrome-btn" data-action="pause">Pause</button>
+      <span class="chrome-sep" aria-hidden="true">·</span>
+      <button type="button" class="chrome-btn" data-action="turbo">Turbo</button>
+    </div>
+
+    <!-- Optional classic pad — hidden by default; accessibility toggle only -->
+    <div id="touch-pad" class="touch-pad hidden" aria-label="Classic SNES pad" role="group" hidden>
       <div class="pad-shoulder">
         <button type="button" class="pad-btn shoulder" data-btn="10" aria-label="L">L</button>
         <button type="button" class="pad-btn meta" data-action="pause" aria-label="Pause">Pause</button>
@@ -70,15 +95,19 @@
 
     <section class="panel controls">
       <h2>Controls</h2>
+      <p class="gesture-map"><strong>Canvas touch:</strong> Drag to move · Tap = A · Long-press = B · Swipe flick = step · Two-finger = Start</p>
       <ul>
         <li><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> — D-pad</li>
         <li><kbd>Z</kbd> B · <kbd>X</kbd> A · <kbd>A</kbd> Y · <kbd>S</kbd> X</li>
         <li><kbd>Enter</kbd> Start · <kbd>Right&nbsp;Shift</kbd> Select</li>
         <li><kbd>D</kbd> L · <kbd>C</kbd> R</li>
         <li><kbd>P</kbd> pause · <kbd>Tab</kbd> turbo</li>
-        <li>Touch / mouse: on-screen pad after ROM load (same SNES bits as keys)</li>
       </ul>
-      <p class="note">Game text is Japanese; no translation patch is applied. Audio uses SDL2 → Web Audio after you load a ROM (user gesture).</p>
+      <label class="classic-toggle">
+        <input type="checkbox" id="classic-pad-toggle">
+        Show classic pad (accessibility)
+      </label>
+      <p class="note">Game text is Japanese; no translation patch is applied. Audio uses SDL2 → Web Audio after you load a ROM (user gesture). Emulated input still only uses SNES controller bits 0–11 via <code>snes_setButtonState</code> — touch synthesizes those bits; no menu RAM poke.</p>
     </section>
 
     <footer>
@@ -103,10 +132,8 @@
       const KEY = 'rev1';
       const statusEl = document.getElementById('status');
       const errorEl = document.getElementById('error');
-      const loader = document.getElementById('loader');
       const input = document.getElementById('rom-input');
       const clearBtn = document.getElementById('clear-remembered');
-      const expected = '962aa7a09765a97164af67098877a8fe5b7f1ea9db738561eb466b7600fd241c';
 
       function setError(msg) {
         if(!msg) { errorEl.hidden = true; errorEl.textContent = ''; return; }
@@ -187,8 +214,6 @@
         if(rc === 0) {
           rememberRom(u8);
           document.getElementById('canvas').focus();
-          const pad = document.getElementById('touch-pad');
-          if(pad) pad.classList.remove('hidden');
         } else if(rc === 1) {
           setError('Wrong file size. Need 1,048,576 bytes (or +512-byte copier header).');
           statusEl.textContent = 'ROM rejected.';
@@ -236,7 +261,6 @@
         }
       });
 
-      // Drag-and-drop onto the page
       ['dragenter','dragover','dragleave','drop'].forEach(function(ev) {
         document.body.addEventListener(ev, function(e) {
           e.preventDefault();
@@ -254,12 +278,261 @@
         }
       });
 
-      /* Multi-touch friendly pad: Pointer Events, per-button press counts. */
-      (function setupTouchPad() {
+      /* ---- Canvas-native gestures → SNES bits via C pulse/gesture APIs ---- */
+      (function setupCanvasGestures() {
+        const canvas = document.getElementById('canvas');
+        const stage = canvas && canvas.parentElement;
+        if(!canvas) return;
+
+        const DEADZONE = 14;
+        const TAP_SLOP = 18;
+        const LONG_MS = 350;
+        const FLICK_MIN = 36;
+        const FLICK_MAX_MS = 280;
+        const PULSE_FRAMES = 3;
+        const DIR_UP = 4, DIR_DOWN = 5, DIR_LEFT = 6, DIR_RIGHT = 7;
+        const BTN_B = 0, BTN_A = 8, BTN_START = 3, BTN_SELECT = 2;
+
+        const pointers = new Map(); /* pointerId -> state */
+        let longTimer = null;
+        let startPulsed = false;
+
+        function pulse(btn, frames) {
+          if(typeof Module._dbz_web_pulse_button === 'function')
+            Module._dbz_web_pulse_button(btn, frames == null ? PULSE_FRAMES : frames);
+        }
+        function setGestureMask(mask) {
+          if(typeof Module._dbz_web_set_gesture_mask === 'function')
+            Module._dbz_web_set_gesture_mask(mask >>> 0);
+        }
+        function setTurbo(down) {
+          if(typeof Module._dbz_web_set_turbo === 'function')
+            Module._dbz_web_set_turbo(down ? 1 : 0);
+        }
+        function togglePause() {
+          if(typeof Module._dbz_web_toggle_pause === 'function')
+            Module._dbz_web_toggle_pause();
+        }
+
+        function dirsFromDelta(dx, dy) {
+          let m = 0;
+          const ax = Math.abs(dx), ay = Math.abs(dy);
+          if(ax < DEADZONE && ay < DEADZONE) return 0;
+          /* 8-way with slight axis bias */
+          if(ay >= DEADZONE && (ay >= ax * 0.4)) {
+            if(dy < 0) m |= 1 << DIR_UP;
+            else m |= 1 << DIR_DOWN;
+          }
+          if(ax >= DEADZONE && (ax >= ay * 0.4)) {
+            if(dx < 0) m |= 1 << DIR_LEFT;
+            else m |= 1 << DIR_RIGHT;
+          }
+          return m;
+        }
+
+        function primaryPointer() {
+          if(pointers.size !== 1) return null;
+          return pointers.values().next().value;
+        }
+
+        function clearLongTimer() {
+          if(longTimer) { clearTimeout(longTimer); longTimer = null; }
+        }
+
+        function scheduleLongPress(st) {
+          clearLongTimer();
+          longTimer = setTimeout(function() {
+            longTimer = null;
+            if(!pointers.has(st.id)) return;
+            const cur = pointers.get(st.id);
+            if(!cur || cur.moved || cur.consumed) return;
+            if(pointers.size !== 1) return;
+            cur.consumed = 'long';
+            pulse(BTN_B, PULSE_FRAMES);
+          }, LONG_MS);
+        }
+
+        function onDown(e) {
+          if(e.target !== canvas && !canvas.contains(e.target)) return;
+          /* Ignore if clicking hint buttons */
+          if(e.target.closest && e.target.closest('#gesture-hint')) return;
+          e.preventDefault();
+          if(pointers.has(e.pointerId)) return;
+
+          const st = {
+            id: e.pointerId,
+            x0: e.clientX,
+            y0: e.clientY,
+            x: e.clientX,
+            y: e.clientY,
+            t0: performance.now(),
+            moved: false,
+            consumed: null,
+            holdingStick: false
+          };
+          pointers.set(e.pointerId, st);
+
+          try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+
+          if(pointers.size === 2 && !startPulsed) {
+            /* Two-finger tap → Start; cancel stick/long on first finger */
+            startPulsed = true;
+            clearLongTimer();
+            pointers.forEach(function(p) { p.consumed = 'multitouch'; p.holdingStick = false; });
+            setGestureMask(0);
+            pulse(BTN_START, PULSE_FRAMES);
+            return;
+          }
+
+          if(pointers.size === 3) {
+            clearLongTimer();
+            pointers.forEach(function(p) { p.consumed = 'multitouch'; p.holdingStick = false; });
+            setGestureMask(0);
+            pulse(BTN_SELECT, PULSE_FRAMES);
+            return;
+          }
+
+          if(pointers.size === 1) scheduleLongPress(st);
+        }
+
+        function onMove(e) {
+          const st = pointers.get(e.pointerId);
+          if(!st) return;
+          e.preventDefault();
+          st.x = e.clientX;
+          st.y = e.clientY;
+          const dx = st.x - st.x0, dy = st.y - st.y0;
+          const dist = Math.hypot(dx, dy);
+          if(dist > TAP_SLOP) {
+            st.moved = true;
+            clearLongTimer();
+          }
+          if(st.consumed === 'multitouch' || st.consumed === 'long') return;
+          if(pointers.size === 1 && dist >= DEADZONE) {
+            /* Delay held stick so short swipes become single-step flicks (menus). */
+            const heldFor = performance.now() - st.t0;
+            if(heldFor > FLICK_MAX_MS) {
+              st.holdingStick = true;
+              st.consumed = 'stick';
+              setGestureMask(dirsFromDelta(dx, dy));
+            }
+          }
+        }
+
+        function onUp(e) {
+          const st = pointers.get(e.pointerId);
+          if(!st) return;
+          e.preventDefault();
+          pointers.delete(e.pointerId);
+          const dt = performance.now() - st.t0;
+          const dx = st.x - st.x0, dy = st.y - st.y0;
+          const dist = Math.hypot(dx, dy);
+
+          if(pointers.size === 0) {
+            clearLongTimer();
+            setGestureMask(0);
+            startPulsed = false;
+          } else if(pointers.size === 1) {
+            /* Remaining finger: re-arm long-press if still still */
+            const left = primaryPointer();
+            if(left && !left.moved && !left.consumed) scheduleLongPress(left);
+            else if(left && left.holdingStick) {
+              setGestureMask(dirsFromDelta(left.x - left.x0, left.y - left.y0));
+            }
+          }
+
+          if(st.consumed === 'multitouch' || st.consumed === 'long') return;
+
+          /* Held virtual stick: mask already cleared when last pointer lifted. */
+          if(st.holdingStick) return;
+
+          /* Quick tap → A */
+          if(!st.moved && dist <= TAP_SLOP && dt < LONG_MS) {
+            pulse(BTN_A, PULSE_FRAMES);
+            return;
+          }
+          /* Swipe flick → single-step D-pad pulse (menus / tiles) */
+          if(st.moved && dt <= FLICK_MAX_MS + 40 && dist >= FLICK_MIN) {
+            const m = dirsFromDelta(dx, dy);
+            if(m & (1 << DIR_UP)) pulse(DIR_UP, 2);
+            if(m & (1 << DIR_DOWN)) pulse(DIR_DOWN, 2);
+            if(m & (1 << DIR_LEFT)) pulse(DIR_LEFT, 2);
+            if(m & (1 << DIR_RIGHT)) pulse(DIR_RIGHT, 2);
+          }
+        }
+
+        canvas.addEventListener('pointerdown', onDown);
+        canvas.addEventListener('pointermove', onMove);
+        canvas.addEventListener('pointerup', onUp);
+        canvas.addEventListener('pointercancel', onUp);
+        canvas.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+        canvas.addEventListener('touchstart', function(e) { e.preventDefault(); }, { passive: false });
+        if(stage) {
+          stage.style.touchAction = 'none';
+          stage.addEventListener('touchstart', function(e) {
+            if(e.target === canvas || canvas.contains(e.target)) e.preventDefault();
+          }, { passive: false });
+        }
+      })();
+
+      /* Chrome strip: Select / L / R / Pause / Turbo */
+      (function setupChrome() {
+        const chrome = document.getElementById('touch-chrome');
+        if(!chrome) return;
+        chrome.addEventListener('pointerdown', function(e) {
+          const btn = e.target.closest('.chrome-btn');
+          if(!btn || !chrome.contains(btn)) return;
+          e.preventDefault();
+          const action = btn.getAttribute('data-action');
+          if(action === 'pause') {
+            if(typeof Module._dbz_web_toggle_pause === 'function')
+              Module._dbz_web_toggle_pause();
+            return;
+          }
+          if(action === 'turbo') {
+            btn.classList.add('active');
+            if(typeof Module._dbz_web_set_turbo === 'function')
+              Module._dbz_web_set_turbo(1);
+            const up = function(ev) {
+              if(ev.pointerId !== e.pointerId) return;
+              btn.classList.remove('active');
+              if(typeof Module._dbz_web_set_turbo === 'function')
+                Module._dbz_web_set_turbo(0);
+              window.removeEventListener('pointerup', up);
+              window.removeEventListener('pointercancel', up);
+            };
+            window.addEventListener('pointerup', up);
+            window.addEventListener('pointercancel', up);
+            return;
+          }
+          const pulseBtn = parseInt(btn.getAttribute('data-pulse'), 10);
+          if(!isNaN(pulseBtn) && typeof Module._dbz_web_pulse_button === 'function')
+            Module._dbz_web_pulse_button(pulseBtn, 3);
+        });
+      })();
+
+      /* Classic pad toggle (accessibility) */
+      (function setupClassicPad() {
         const pad = document.getElementById('touch-pad');
-        if(!pad) return;
-        const pressCount = Object.create(null); /* btn -> active pointer count */
-        const pointerMap = Object.create(null); /* pointerId -> {kind, id} */
+        const toggle = document.getElementById('classic-pad-toggle');
+        if(!pad || !toggle) return;
+
+        function applyVisible(on) {
+          if(on) {
+            pad.classList.remove('hidden');
+            pad.hidden = false;
+          } else {
+            pad.classList.add('hidden');
+            pad.hidden = true;
+          }
+        }
+        applyVisible(false);
+        toggle.addEventListener('change', function() {
+          applyVisible(toggle.checked);
+        });
+
+        const pressCount = Object.create(null);
+        const pointerMap = Object.create(null);
 
         function setButton(btn, down) {
           if(typeof Module._dbz_web_set_button === 'function')
@@ -273,7 +546,6 @@
           if(typeof Module._dbz_web_toggle_pause === 'function')
             Module._dbz_web_toggle_pause();
         }
-
         function pressKey(btn, el) {
           const k = String(btn);
           pressCount[k] = (pressCount[k] || 0) + 1;
@@ -292,14 +564,12 @@
             if(el) el.classList.remove('active');
           }
         }
-
         function onDown(e) {
           const el = e.target.closest('.pad-btn');
           if(!el || !pad.contains(el)) return;
           e.preventDefault();
           e.stopPropagation();
           if(pointerMap[e.pointerId]) return;
-
           const action = el.getAttribute('data-action');
           if(action === 'pause') {
             pointerMap[e.pointerId] = { kind: 'pause', el: el };
@@ -321,7 +591,6 @@
           pressKey(btn, el);
           try { el.setPointerCapture(e.pointerId); } catch (err) {}
         }
-
         function onUp(e) {
           const info = pointerMap[e.pointerId];
           if(!info) return;
@@ -338,16 +607,22 @@
           }
           releaseKey(info.id, info.el);
         }
-
         pad.addEventListener('pointerdown', onDown);
         pad.addEventListener('pointerup', onUp);
         pad.addEventListener('pointercancel', onUp);
-        pad.addEventListener('pointerout', function(e) {
-          /* Only release if we lost capture without up (rare); pointerup handles normal. */
-        });
         pad.addEventListener('contextmenu', function(e) { e.preventDefault(); });
-        /* Block scroll/zoom while dragging on pad */
         pad.addEventListener('touchstart', function(e) { e.preventDefault(); }, { passive: false });
+      })();
+
+      /* First-run gesture hint */
+      (function setupHint() {
+        const hint = document.getElementById('gesture-hint');
+        const dismiss = document.getElementById('gesture-hint-dismiss');
+        if(!hint || !dismiss) return;
+        dismiss.addEventListener('click', function() {
+          hint.classList.add('hidden');
+          try { localStorage.setItem('dbz-gesture-hint-dismissed', '1'); } catch (e) {}
+        });
       })();
     })();
   </script>

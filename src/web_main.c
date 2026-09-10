@@ -22,9 +22,11 @@ static SDL_Renderer *renderer;
 static SDL_Texture *texture;
 static SDL_AudioDeviceID audio;
 static Snes *game;
-/* Dual masks: keyboard and touch OR'd each frame so releasing one device
- * does not clear buttons still held on the other. */
-static unsigned keys_kb, keys_touch;
+/* Triple masks OR'd each frame: keyboard, optional classic pad, canvas gestures.
+ * Pulses (tap/long-press/flick) are queued separately so they last N frames. */
+static unsigned keys_kb, keys_touch, keys_gesture;
+enum { PULSE_SLOTS = 16 };
+static struct { unsigned mask; int remaining; } pulses[PULSE_SLOTS];
 static bool paused, turbo, loop_running;
 static uint32_t sample_phase;
 static uint64_t deadline, frequency;
@@ -124,7 +126,14 @@ static void frame_tick(void) {
     return;
   }
 
-  unsigned keys = keys_kb | keys_touch;
+  unsigned pulse = 0;
+  for(int i = 0; i < PULSE_SLOTS; i++) {
+    if(pulses[i].remaining > 0) {
+      pulse |= pulses[i].mask;
+      pulses[i].remaining--;
+    }
+  }
+  unsigned keys = keys_kb | keys_touch | keys_gesture | pulse;
   for(int b = 0; b < 12; b++) snes_setButtonState(game, 1, b, (keys >> b) & 1u);
   snes_runFrame(game);
   snes_setPixels(game, pixels);
@@ -150,12 +159,36 @@ static void frame_tick(void) {
   }
 }
 
-/* Touch / overlay: button 0..11 same mapping as key_button (B,Y,Select,Start,Up,Down,Left,Right,A,X,L,R). */
+/* Classic pad / chrome: button 0..11 = B,Y,Select,Start,Up,Down,Left,Right,A,X,L,R. */
 EMSCRIPTEN_KEEPALIVE
 void dbz_web_set_button(int button, int down) {
   if(button < 0 || button > 11) return;
   if(down) keys_touch |= 1u << button;
   else keys_touch &= ~(1u << button);
+}
+
+/* Held canvas virtual-stick mask (typically D-pad bits 4–7). */
+EMSCRIPTEN_KEEPALIVE
+void dbz_web_set_gesture_mask(unsigned mask) {
+  keys_gesture = mask & 0xFFFu;
+}
+
+/* Pulse a button for N frames (tap/flick/chrome). Survives across frame_tick. */
+EMSCRIPTEN_KEEPALIVE
+void dbz_web_pulse_button(int button, int frames) {
+  if(button < 0 || button > 11) return;
+  if(frames < 1) frames = 1;
+  if(frames > 30) frames = 30;
+  unsigned bit = 1u << button;
+  for(int i = 0; i < PULSE_SLOTS; i++) {
+    if(pulses[i].remaining <= 0) {
+      pulses[i].mask = bit;
+      pulses[i].remaining = frames;
+      return;
+    }
+  }
+  pulses[0].mask = bit;
+  pulses[0].remaining = frames;
 }
 
 EMSCRIPTEN_KEEPALIVE
@@ -203,6 +236,8 @@ int dbz_web_load_rom(const uint8_t *data, int length) {
   sample_phase = 0;
   keys_kb = 0;
   keys_touch = 0;
+  keys_gesture = 0;
+  for(int i = 0; i < PULSE_SLOTS; i++) { pulses[i].mask = 0; pulses[i].remaining = 0; }
   paused = false;
   turbo = false;
   loop_running = true;
@@ -214,10 +249,14 @@ int dbz_web_load_rom(const uint8_t *data, int length) {
     if(panel) panel.classList.add('hidden');
     const canvas = document.getElementById('canvas');
     if(canvas) { canvas.focus(); canvas.tabIndex = 0; }
-    const pad = document.getElementById('touch-pad');
-    if(pad) pad.classList.remove('hidden');
+    const chrome = document.getElementById('touch-chrome');
+    if(chrome) chrome.classList.remove('hidden');
+    const hint = document.getElementById('gesture-hint');
+    if(hint && !localStorage.getItem('dbz-gesture-hint-dismissed'))
+      hint.classList.remove('hidden');
+    if(typeof window.__dbzOnRomLoaded === 'function') window.__dbzOnRomLoaded();
   });
-  set_status("Playing — keyboard or on-screen pad. P pause, Tab turbo.");
+  set_status("Playing — drag/tap on canvas · keyboard still works. P pause, Tab turbo.");
   emscripten_set_main_loop(frame_tick, 0, 0);
   return 0;
 }
