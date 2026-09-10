@@ -22,7 +22,9 @@ static SDL_Renderer *renderer;
 static SDL_Texture *texture;
 static SDL_AudioDeviceID audio;
 static Snes *game;
-static unsigned keys;
+/* Dual masks: keyboard and touch OR'd each frame so releasing one device
+ * does not clear buttons still held on the other. */
+static unsigned keys_kb, keys_touch;
 static bool paused, turbo, loop_running;
 static uint32_t sample_phase;
 static uint64_t deadline, frequency;
@@ -103,14 +105,16 @@ static void frame_tick(void) {
       bool down = e.type == SDL_KEYDOWN;
       int button = key_button(e.key.keysym.sym);
       if(button >= 0) {
-        if(down) keys |= 1u << button;
-        else keys &= ~(1u << button);
+        if(down) keys_kb |= 1u << button;
+        else keys_kb &= ~(1u << button);
       }
       if(e.key.keysym.sym == SDLK_p && down && !e.key.repeat) paused = !paused;
       if(e.key.keysym.sym == SDLK_TAB) turbo = down;
     }
+    /* Focus-lost: clear keyboard (+ turbo) only. Touch buttons stay held so a
+     * soft-keyboard or browser chrome steal does not drop on-screen pad state. */
     if(e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
-      keys = 0;
+      keys_kb = 0;
       turbo = false;
     }
   }
@@ -120,6 +124,7 @@ static void frame_tick(void) {
     return;
   }
 
+  unsigned keys = keys_kb | keys_touch;
   for(int b = 0; b < 12; b++) snes_setButtonState(game, 1, b, (keys >> b) & 1u);
   snes_runFrame(game);
   snes_setPixels(game, pixels);
@@ -143,6 +148,24 @@ static void frame_tick(void) {
   } else {
     deadline = SDL_GetPerformanceCounter();
   }
+}
+
+/* Touch / overlay: button 0..11 same mapping as key_button (B,Y,Select,Start,Up,Down,Left,Right,A,X,L,R). */
+EMSCRIPTEN_KEEPALIVE
+void dbz_web_set_button(int button, int down) {
+  if(button < 0 || button > 11) return;
+  if(down) keys_touch |= 1u << button;
+  else keys_touch &= ~(1u << button);
+}
+
+EMSCRIPTEN_KEEPALIVE
+void dbz_web_set_turbo(int down) {
+  turbo = down != 0;
+}
+
+EMSCRIPTEN_KEEPALIVE
+void dbz_web_toggle_pause(void) {
+  paused = !paused;
 }
 
 /* Returns 0 on success, 1 bad size/header, 2 hash mismatch, 3 init failure. */
@@ -178,7 +201,8 @@ int dbz_web_load_rom(const uint8_t *data, int length) {
   execution.enabled = true;
   dbz_set_execution(&execution);
   sample_phase = 0;
-  keys = 0;
+  keys_kb = 0;
+  keys_touch = 0;
   paused = false;
   turbo = false;
   loop_running = true;
@@ -190,8 +214,10 @@ int dbz_web_load_rom(const uint8_t *data, int length) {
     if(panel) panel.classList.add('hidden');
     const canvas = document.getElementById('canvas');
     if(canvas) { canvas.focus(); canvas.tabIndex = 0; }
+    const pad = document.getElementById('touch-pad');
+    if(pad) pad.classList.remove('hidden');
   });
-  set_status("Playing — click the game if keys do not respond. P pause, Tab turbo.");
+  set_status("Playing — keyboard or on-screen pad. P pause, Tab turbo.");
   emscripten_set_main_loop(frame_tick, 0, 0);
   return 0;
 }

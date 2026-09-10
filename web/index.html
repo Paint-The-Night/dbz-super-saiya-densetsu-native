@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="description" content="Browser playable native port of Dragon Ball Z: Super Saiya Densetsu. Bring your own Japanese Rev 1 ROM — nothing is embedded.">
   <title>Dragon Ball Z — Super Saiya Densetsu (Web)</title>
   <link rel="stylesheet" href="style.css">
@@ -39,6 +39,35 @@
       <canvas id="canvas" tabindex="0" width="960" height="720" aria-label="Game display"></canvas>
     </div>
 
+    <!-- On-screen SNES pad: sets the same 12 controller bits as keyboard via dbz_web_set_button -->
+    <div id="touch-pad" class="touch-pad hidden" aria-label="Touch controls" role="group">
+      <div class="pad-shoulder">
+        <button type="button" class="pad-btn shoulder" data-btn="10" aria-label="L">L</button>
+        <button type="button" class="pad-btn meta" data-action="pause" aria-label="Pause">Pause</button>
+        <button type="button" class="pad-btn meta" data-action="turbo" aria-label="Turbo">Turbo</button>
+        <button type="button" class="pad-btn shoulder" data-btn="11" aria-label="R">R</button>
+      </div>
+      <div class="pad-main">
+        <div class="pad-dpad" aria-label="D-pad">
+          <button type="button" class="pad-btn dpad up" data-btn="4" aria-label="Up">↑</button>
+          <button type="button" class="pad-btn dpad left" data-btn="6" aria-label="Left">←</button>
+          <button type="button" class="pad-btn dpad right" data-btn="7" aria-label="Right">→</button>
+          <button type="button" class="pad-btn dpad down" data-btn="5" aria-label="Down">↓</button>
+          <span class="dpad-hub" aria-hidden="true"></span>
+        </div>
+        <div class="pad-center">
+          <button type="button" class="pad-btn small" data-btn="2" aria-label="Select">Select</button>
+          <button type="button" class="pad-btn small" data-btn="3" aria-label="Start">Start</button>
+        </div>
+        <div class="pad-face" aria-label="Face buttons">
+          <button type="button" class="pad-btn face y" data-btn="1" aria-label="Y">Y</button>
+          <button type="button" class="pad-btn face x" data-btn="9" aria-label="X">X</button>
+          <button type="button" class="pad-btn face b" data-btn="0" aria-label="B">B</button>
+          <button type="button" class="pad-btn face a" data-btn="8" aria-label="A">A</button>
+        </div>
+      </div>
+    </div>
+
     <section class="panel controls">
       <h2>Controls</h2>
       <ul>
@@ -47,6 +76,7 @@
         <li><kbd>Enter</kbd> Start · <kbd>Right&nbsp;Shift</kbd> Select</li>
         <li><kbd>D</kbd> L · <kbd>C</kbd> R</li>
         <li><kbd>P</kbd> pause · <kbd>Tab</kbd> turbo</li>
+        <li>Touch / mouse: on-screen pad after ROM load (same SNES bits as keys)</li>
       </ul>
       <p class="note">Game text is Japanese; no translation patch is applied. Audio uses SDL2 → Web Audio after you load a ROM (user gesture).</p>
     </section>
@@ -157,6 +187,8 @@
         if(rc === 0) {
           rememberRom(u8);
           document.getElementById('canvas').focus();
+          const pad = document.getElementById('touch-pad');
+          if(pad) pad.classList.remove('hidden');
         } else if(rc === 1) {
           setError('Wrong file size. Need 1,048,576 bytes (or +512-byte copier header).');
           statusEl.textContent = 'ROM rejected.';
@@ -221,6 +253,102 @@
           setError('Failed to read dropped file: ' + err);
         }
       });
+
+      /* Multi-touch friendly pad: Pointer Events, per-button press counts. */
+      (function setupTouchPad() {
+        const pad = document.getElementById('touch-pad');
+        if(!pad) return;
+        const pressCount = Object.create(null); /* btn -> active pointer count */
+        const pointerMap = Object.create(null); /* pointerId -> {kind, id} */
+
+        function setButton(btn, down) {
+          if(typeof Module._dbz_web_set_button === 'function')
+            Module._dbz_web_set_button(btn, down ? 1 : 0);
+        }
+        function setTurbo(down) {
+          if(typeof Module._dbz_web_set_turbo === 'function')
+            Module._dbz_web_set_turbo(down ? 1 : 0);
+        }
+        function togglePause() {
+          if(typeof Module._dbz_web_toggle_pause === 'function')
+            Module._dbz_web_toggle_pause();
+        }
+
+        function pressKey(btn, el) {
+          const k = String(btn);
+          pressCount[k] = (pressCount[k] || 0) + 1;
+          if(pressCount[k] === 1) {
+            setButton(btn, true);
+            if(el) el.classList.add('active');
+          }
+        }
+        function releaseKey(btn, el) {
+          const k = String(btn);
+          if(!pressCount[k]) return;
+          pressCount[k]--;
+          if(pressCount[k] <= 0) {
+            pressCount[k] = 0;
+            setButton(btn, false);
+            if(el) el.classList.remove('active');
+          }
+        }
+
+        function onDown(e) {
+          const el = e.target.closest('.pad-btn');
+          if(!el || !pad.contains(el)) return;
+          e.preventDefault();
+          e.stopPropagation();
+          if(pointerMap[e.pointerId]) return;
+
+          const action = el.getAttribute('data-action');
+          if(action === 'pause') {
+            pointerMap[e.pointerId] = { kind: 'pause', el: el };
+            el.classList.add('active');
+            togglePause();
+            try { el.setPointerCapture(e.pointerId); } catch (err) {}
+            return;
+          }
+          if(action === 'turbo') {
+            pointerMap[e.pointerId] = { kind: 'turbo', el: el };
+            el.classList.add('active');
+            setTurbo(true);
+            try { el.setPointerCapture(e.pointerId); } catch (err) {}
+            return;
+          }
+          const btn = parseInt(el.getAttribute('data-btn'), 10);
+          if(isNaN(btn)) return;
+          pointerMap[e.pointerId] = { kind: 'btn', id: btn, el: el };
+          pressKey(btn, el);
+          try { el.setPointerCapture(e.pointerId); } catch (err) {}
+        }
+
+        function onUp(e) {
+          const info = pointerMap[e.pointerId];
+          if(!info) return;
+          e.preventDefault();
+          delete pointerMap[e.pointerId];
+          if(info.kind === 'pause') {
+            if(info.el) info.el.classList.remove('active');
+            return;
+          }
+          if(info.kind === 'turbo') {
+            setTurbo(false);
+            if(info.el) info.el.classList.remove('active');
+            return;
+          }
+          releaseKey(info.id, info.el);
+        }
+
+        pad.addEventListener('pointerdown', onDown);
+        pad.addEventListener('pointerup', onUp);
+        pad.addEventListener('pointercancel', onUp);
+        pad.addEventListener('pointerout', function(e) {
+          /* Only release if we lost capture without up (rare); pointerup handles normal. */
+        });
+        pad.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+        /* Block scroll/zoom while dragging on pad */
+        pad.addEventListener('touchstart', function(e) { e.preventDefault(); }, { passive: false });
+      })();
     })();
   </script>
   <script async src="dbz.js"></script>

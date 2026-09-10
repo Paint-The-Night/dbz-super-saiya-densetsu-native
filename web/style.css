@@ -7,6 +7,8 @@
   --danger: #ff6b6b;
   --ok: #5bd69c;
   --border: #2a3555;
+  --pad: #1a233c;
+  --pad-active: #f5a623;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --sans: "Segoe UI", system-ui, -apple-system, sans-serif;
 }
@@ -63,6 +65,7 @@ header h1 { margin: 0 0 0.25rem; font-size: 1.65rem; letter-spacing: 0.02em; }
   height: auto;
   image-rendering: pixelated;
   outline: none;
+  touch-action: none;
 }
 .controls ul { padding-left: 1.1rem; margin: 0.4rem 0; }
 .controls li { margin: 0.25rem 0; color: var(--muted); }
@@ -85,4 +88,156 @@ footer { color: var(--muted); font-size: 0.8rem; margin-top: 0.5rem; }
   background: #2a3555;
   color: var(--text);
   font-weight: 600;
+}
+
+/* ---- On-screen touch pad (below stage; does not cover canvas) ---- */
+.touch-pad {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  margin: 0 0 1rem;
+  padding: 0.75rem 0.5rem 1rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  -webkit-tap-highlight-color: transparent;
+}
+.pad-shoulder {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+.pad-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+.pad-center {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  align-items: center;
+  flex: 0 0 auto;
+}
+.pad-btn {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: var(--pad);
+  color: var(--text);
+  font-weight: 700;
+  font-family: var(--sans);
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  min-width: 48px;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 0 #0a0e1a;
+}
+.pad-btn:active,
+.pad-btn.active {
+  background: var(--pad-active);
+  color: #1a1200;
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #0a0e1a;
+}
+.pad-btn.shoulder {
+  flex: 1;
+  border-radius: 10px;
+  min-height: 42px;
+  font-size: 0.95rem;
+}
+.pad-btn.meta {
+  flex: 0.85;
+  border-radius: 10px;
+  min-height: 42px;
+  font-size: 0.8rem;
+  background: #12182a;
+  color: var(--muted);
+}
+.pad-btn.small {
+  min-width: 64px;
+  min-height: 36px;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 8px;
+  color: var(--muted);
+}
+
+.pad-dpad {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  flex: 0 0 auto;
+}
+.pad-dpad .dpad {
+  position: absolute;
+  width: 46px;
+  height: 46px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+}
+.pad-dpad .up { top: 0; left: 47px; }
+.pad-dpad .down { bottom: 0; left: 47px; }
+.pad-dpad .left { left: 0; top: 47px; }
+.pad-dpad .right { right: 0; top: 47px; }
+.dpad-hub {
+  position: absolute;
+  left: 47px;
+  top: 47px;
+  width: 46px;
+  height: 46px;
+  background: #101628;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  pointer-events: none;
+}
+
+.pad-face {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  flex: 0 0 auto;
+}
+.pad-face .face {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  font-size: 0.95rem;
+}
+.pad-face .y { top: 0; left: 46px; background: #2a6b4a; }
+.pad-face .x { top: 46px; right: 0; background: #3a5a8a; }
+.pad-face .b { bottom: 0; left: 46px; background: #8a3a4a; }
+.pad-face .a { top: 46px; left: 0; background: #7a5a2a; }
+.pad-face .face.active,
+.pad-face .face:active { filter: brightness(1.25); }
+
+@media (pointer: fine) and (min-width: 721px) {
+  .touch-pad {
+    opacity: 0.92;
+  }
+}
+@media (max-width: 520px) {
+  .pad-dpad, .pad-face { width: 120px; height: 120px; }
+  .pad-dpad .dpad { width: 40px; height: 40px; }
+  .pad-dpad .up { left: 40px; }
+  .pad-dpad .down { left: 40px; }
+  .pad-dpad .left { top: 40px; }
+  .pad-dpad .right { top: 40px; }
+  .dpad-hub { left: 40px; top: 40px; width: 40px; height: 40px; }
+  .pad-face .face { width: 42px; height: 42px; }
+  .pad-face .y { left: 39px; }
+  .pad-face .b { left: 39px; }
+  .pad-face .x { top: 39px; }
+  .pad-face .a { top: 39px; }
+  .pad-btn.small { min-width: 52px; font-size: 0.65rem; }
+  header h1 { font-size: 1.35rem; }
 }
