@@ -563,6 +563,11 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $0D7A/$0D75/$0D01,Y/$0D02,Y/$0D03,Y | words/bytes | $1D8583/$859B face→queue before JML $01C987 | 1D:8583 |
 | DP+$B7 / $15F1 | bytes | $D1E1 ($CAFA,9A) class/BMI gate before $D4E7/$CA8D | 05:D1E1 |
 | DP+$04/$05/$06/$4F / $1507,$1509,$150B,$150D,$1560 | bytes/words | $CDE1/$CDEE/$CDF7/$CE13/$CE60/$CE8B ($CAFA,DA/E2/EE/D8/D6/D4) timer/slot seed; $CEFF TAX | 05:CDE1 |
+| $150B/$150C/$150D/$150F/$1512 / $14C9/$14CA / DP+$00/$02/$05/$06 | words/bytes | $CD02/$CD81/$CD96 ($CAFA,E6/E4/E0) scale timer via $DFF3/$86FC/$D566 | 05:CD02 |
+| $1540/$1542/$1544/$1545/$1546/$1502 | words/bytes | $CDB6/$CDCA ($CAFA,DC/DE) snapshot swap before $CA8D | 05:CDB6 |
+| $1506 / $0B0C/$0B05 / $14CC/$14CD/$153B / DP+$47/$48 | bytes/words | $CC04/$CC0E/$CC25 ($CAFA,104/F6/F4) stream/compare leaves | 05:CC04 |
+| $150B/$150D/$150F/$1511 / DP+$04/$05 | bytes/words | $CC92/$CCA0/$CCBB/$CCC8/$CCEE ($CAFA,F0/EC/EA/E8/148); $CCEE→$CD38 | 05:CC92 |
+
 | DP+$B0 / $05CE87–8A | byte/table | $CE60 BMI path AND long,X bit-clear masks ($FE/$FD/$FB/$F7) | 05:CE60 |
 | DP+$B7 / $0034,Y / $001B,Y | bytes | $D1F4/$D209 ($CAFA,96/94) face-class accept → $D4E7 | 05:D1F4 |
 | $14D7 / $0020,Y / DP+$B8 | bytes | $D260 ($CAFA,92) #$80 face flag seed | 05:D260 |
