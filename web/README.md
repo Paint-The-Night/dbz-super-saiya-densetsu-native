@@ -80,27 +80,35 @@ this build is **single-threaded** (no `-pthread`).
 
 ## Language select + English patch
 
-The first screen is a SNES-styled **言語選択 / Language** menu (English / 日本語).
+Language is **not** a website HTML panel. After a validated Japanese Rev 1 ROM is
+loaded, the **first screen in the game viewport** is an SDL-drawn
+**LANGUAGE / 言語** boot menu (`src/web_main.c`) styled like Super Saiya Densetsu
+menus (dark blue window, gold/orange border, chunky cursor).
 
-- **Japanese** — unmodified Rev 1 (same SHA-256 gate as before).
+- **Japanese** — unmodified Rev 1 (same SHA-256 gate; hash-identical until EN is chosen).
 - **English** — after the clean JP hash check, the browser fetches
   `patches/klepto-ssd-en-1.02.ips` (Klepto Software 1.02 / romhacking.net #326),
   prepends a 512-byte zero header, applies the IPS **in RAM**, strips the header,
   then calls `_dbz_web_load_prepared_rom` (skips the C hash so the patched image
   can boot). No patched ROM is ever hosted or uploaded.
 
-See `web/patches/README.md` for the IPS SHA-256 and credit.
+Controls match the game: D-pad / flick Up·Down, A / tap confirm (wired through the
+existing gesture + keyboard pulse path into the boot-menu state machine).
 
-Choice is stored in `localStorage` key `dbz-lang`.
+Choice is remembered in `localStorage` key `dbz-lang` (cursor default), but the
+in-game boot menu is shown every session. Quiet override: hold **Start** while
+confirming the ROM load to skip the menu and use the remembered language.
+
+See `web/patches/README.md` for the IPS SHA-256 and credit.
 
 ## How ROM load works
 
-1. Page loads `dbz.js` / `dbz.wasm` (engine only).
+1. Page loads `dbz.js` / `dbz.wasm` (engine only). Loader is the first **site** screen.
 2. User picks or drops a `.sfc`, or clicks **Play remembered ROM** (IndexedDB; click required for Web Audio unlock).
-3. JS validates JP SHA-256 (`ips.js` / `DbzPatch.prepareRom`); English applies IPS in RAM.
-4. JS copies the prepared 1 MiB buffer and calls `_dbz_web_load_prepared_rom`
-   (hash already checked in JS; C skips re-hash). Legacy `_dbz_web_load_rom` still hashes.
-5. On success, SDL starts the frame loop via `emscripten_set_main_loop`.
+3. JS validates JP SHA-256 (`ips.js` / `DbzPatch.prepareRom` with `ja`) and holds the clean 1 MiB image.
+4. C `_dbz_web_enter_lang_menu` draws the in-game LANGUAGE menu on the SDL canvas (page chrome hidden).
+5. On confirm, JS prepares JP clean or EN (Klepto IPS in RAM) and calls `_dbz_web_load_prepared_rom`.
+6. Emulator frame loop starts; real title/boot proceeds.
 
 ## Smoke test
 

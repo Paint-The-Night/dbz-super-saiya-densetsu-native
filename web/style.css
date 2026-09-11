@@ -330,95 +330,23 @@ footer { color: var(--muted); font-size: 0.8rem; margin-top: 0.5rem; }
   header h1 { font-size: 1.35rem; }
 }
 
-/* ---- Language gate (SNES-ish menu) ---- */
-header .tagline { opacity: 0.55; font-size: 0.85rem; }
-#lang-gate.snes-menu {
-  background: linear-gradient(180deg, #0e1424 0%, #121a2e 100%);
-  border: 4px solid #c9a227;
-  border-radius: 4px;
-  box-shadow:
-    0 0 0 2px #3a2a08,
-    inset 0 0 0 2px #5a4810,
-    0 8px 24px rgba(0, 0, 0, 0.45);
-  padding: 1.25rem 1.35rem 1.1rem;
-  max-width: 420px;
-  margin: 0 auto 1.25rem;
-  text-align: center;
+/* ---- Playing / boot: hide page chrome so canvas feels like the game ---- */
+body.playing header,
+body.playing #loader,
+body.playing .controls,
+body.playing footer {
+  display: none !important;
 }
-#lang-gate .menu-title {
-  margin: 0;
-  font-size: 1.35rem;
-  letter-spacing: 0.18em;
-  color: #ffd56a;
-  text-shadow: 0 2px 0 #3a2800;
-  font-weight: 800;
+body.playing .page {
+  max-width: none;
+  padding: 0.5rem 0.5rem 1rem;
 }
-#lang-gate .menu-sub {
-  margin: 0.35rem 0 1rem;
-  color: #e8c46a;
-  font-size: 0.95rem;
-  letter-spacing: 0.06em;
+body.playing .stage {
+  margin: 0 auto 0.35rem;
+  border-radius: 8px;
+  max-width: 960px;
 }
-#lang-gate .menu-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-}
-#lang-gate .menu-row {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 0.7rem 0.9rem;
-  border: 3px solid #6a5a28;
-  background: #1a2238;
-  color: #f0e6c8;
-  font-weight: 800;
-  font-size: 1.15rem;
-  letter-spacing: 0.12em;
-  cursor: pointer;
-  user-select: none;
-  -webkit-user-select: none;
-  text-align: left;
-  box-shadow: inset 0 0 0 1px #2a3555, 0 3px 0 #0a0e1a;
-  transition: background 0.08s, border-color 0.08s, color 0.08s;
-}
-#lang-gate .menu-row .cursor {
-  width: 1.1em;
-  color: transparent;
-  text-shadow: none;
-  flex: 0 0 auto;
-}
-#lang-gate .menu-row.selected {
-  border-color: #f5a623;
-  background: #243048;
-  color: #ffe9a8;
-  box-shadow: inset 0 0 0 1px #f5a62355, 0 3px 0 #0a0e1a;
-}
-#lang-gate .menu-row.selected .cursor {
-  color: #f5a623;
-  text-shadow: 0 0 6px rgba(245, 166, 35, 0.55);
-}
-#lang-gate .menu-row:hover,
-#lang-gate .menu-row:focus-visible {
-  border-color: #f5a623;
-  outline: none;
-}
-#lang-gate .menu-row .label { flex: 1; }
-#lang-gate .menu-hint {
-  margin: 0.9rem 0 0;
-  color: var(--muted);
-  font-size: 0.8rem;
-}
-#lang-gate .credit-line {
-  margin: 0.75rem 0 0;
-  color: #9aa3bd;
-  font-size: 0.75rem;
-  line-height: 1.35;
-}
-#lang-gate .credit-line a { color: var(--accent); }
+
 #loader .klepto-credit {
   margin-top: 0.75rem;
   color: var(--muted);
