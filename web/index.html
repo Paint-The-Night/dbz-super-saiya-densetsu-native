@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="description" content="Browser playable native port of Dragon Ball Z: Super Saiya Densetsu. Bring your own Japanese Rev 1 ROM — nothing is embedded.">
+  <meta name="description" content="Browser playable native port of Dragon Ball Z: Super Saiya Densetsu. Choose Japanese or English (Klepto patch applied locally). Bring your own Japanese Rev 1 ROM — nothing is embedded.">
   <title>Dragon Ball Z — Super Saiya Densetsu (Web)</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -11,12 +11,29 @@
   <div class="page">
     <header>
       <h1>Dragon Ball Z: Super Saiya Densetsu</h1>
-      <p class="tagline">Native reconstruction · browser (Emscripten/WASM) · densetsu.garyperrigo.com</p>
+      <p class="tagline">Native reconstruction · densetsu.garyperrigo.com</p>
     </header>
 
-    <section id="loader" class="panel">
-      <h2>Load Japanese Rev 1 ROM</h2>
-      <p class="legal">
+    <section id="lang-gate" class="panel snes-menu" aria-label="Language select">
+      <h2 class="menu-title">LANGUAGE</h2>
+      <p class="menu-sub">言語選択 / Language</p>
+      <ul id="lang-list" class="menu-list" role="listbox" aria-label="Language">
+        <li class="menu-row selected" role="option" tabindex="0" data-lang="en" aria-selected="true">
+          <span class="cursor" aria-hidden="true">▶</span>
+          <span class="label">ENGLISH</span>
+        </li>
+        <li class="menu-row" role="option" tabindex="-1" data-lang="ja" aria-selected="false">
+          <span class="cursor" aria-hidden="true">▶</span>
+          <span class="label">日本語</span>
+        </li>
+      </ul>
+      <p class="menu-hint">↑↓ / tap to choose · Enter / A / tap again to confirm</p>
+      <p class="credit-line">English text © Klepto Software fan translation 1.02 (applied locally).</p>
+    </section>
+
+    <section id="loader" class="panel hidden">
+      <h2 id="loader-title">Load Japanese Rev 1 ROM</h2>
+      <p class="legal" id="loader-legal">
         This site does <strong>not</strong> include, host, or distribute the commercial game ROM.
         You must supply a <strong>legally obtained, unmodified</strong>
         <em>Dragon Ball Z — Super Saiya Densetsu (Japan) (Rev&nbsp;1)</em>
@@ -25,12 +42,17 @@
       <p class="hash">Expected SHA-256:
         <code id="expected-hash">962aa7a09765a97164af67098877a8fe5b7f1ea9db738561eb466b7600fd241c</code>
       </p>
+      <p id="klepto-credit" class="klepto-credit hidden">
+        English mode applies the public <strong>Klepto Software</strong> IPS 1.02 in your browser after the clean JP hash check.
+        The patched image never leaves this session; no translated ROM is hosted.
+      </p>
       <label class="file-btn">
         <input type="file" id="rom-input" accept=".sfc,.smc,application/octet-stream" hidden>
-        Choose ROM file…
+        <span id="choose-rom-label">Choose ROM file…</span>
       </label>
       <button type="button" id="play-remembered" class="file-btn secondary hidden">Play remembered ROM</button>
       <button type="button" id="clear-remembered" class="linkish hidden">Forget remembered ROM</button>
+      <button type="button" id="change-lang" class="linkish">Change language</button>
       <p id="status" class="status" role="status">Loading engine…</p>
       <p id="error" class="error" hidden></p>
     </section>
@@ -107,7 +129,7 @@
         <input type="checkbox" id="classic-pad-toggle">
         Show classic pad (accessibility)
       </label>
-      <p class="note">Game text is Japanese; no translation patch is applied. Audio uses SDL2 → Web Audio after you load a ROM (user gesture). Emulated input still only uses SNES controller bits 0–11 via <code>snes_setButtonState</code> — touch synthesizes those bits; no menu RAM poke.</p>
+      <p class="note">Japanese is unmodified Rev&nbsp;1. English applies Klepto Software fan translation 1.02 locally in RAM after the clean JP hash check. Audio uses SDL2 → Web Audio after you load a ROM (user gesture). Emulated input still only uses SNES controller bits 0–11 via <code>snes_setButtonState</code> — touch synthesizes those bits; no menu RAM poke.</p>
     </section>
 
     <footer>
@@ -115,6 +137,7 @@
     </footer>
   </div>
 
+  <script src="ips.js"></script>
   <script>
     var Module = {
       canvas: (function() { return document.getElementById('canvas'); })(),
@@ -197,28 +220,179 @@
         clearBtn.classList.add('hidden');
         document.getElementById('play-remembered').classList.add('hidden');
         window.__dbzRemembered = null;
-        statusEl.textContent = 'Forgotten. Choose a ROM file to play.';
+        statusEl.textContent = (COPY[currentLang] || COPY.en).forgotten;
       }
 
-      function feedRom(u8) {
+      var currentLang = null; /* 'en' | 'ja' after confirm */
+      var engineReady = false;
+
+      var COPY = {
+        en: {
+          title: 'Load Japanese Rev 1 ROM',
+          legal: 'This site does <strong>not</strong> include, host, or distribute the commercial game ROM. You must supply a <strong>legally obtained, unmodified</strong> <em>Dragon Ball Z — Super Saiya Densetsu (Japan) (Rev&nbsp;1)</em> <code>.sfc</code> / <code>.smc</code> file. The engine verifies SHA-256, then applies the Klepto English IPS <strong>in memory</strong> (never downloads a patched ROM).',
+          choose: 'Choose ROM file…',
+          ready: 'Engine ready. Load your clean Japanese Rev 1 .sfc — English patch applies locally.',
+          remembered: 'Remembered ROM available — click “Play remembered ROM” (needed for audio unlock).',
+          reading: 'Reading ',
+          patching: 'Validating ROM and applying English patch…',
+          forgotten: 'Forgotten. Choose a ROM file to play.'
+        },
+        ja: {
+          title: '日本語 Rev 1 ROM を読み込む',
+          legal: 'このサイトは市販ROMを<strong>含み・配信しません</strong>。合法に入手した<strong>未改変</strong>の<em>ドラゴンボールZ 超サイヤ伝説（日本版 Rev&nbsp;1）</em>の <code>.sfc</code> / <code>.smc</code> を用意してください。SHA-256照合後にそのまま起動します。',
+          choose: 'ROMファイルを選ぶ…',
+          ready: 'エンジン準備完了。日本語 Rev 1 の .sfc を読み込んでください。',
+          remembered: '記憶したROMがあります — 「Play remembered ROM」で開始（音声解除のためクリックが必要）。',
+          reading: '読み込み中 ',
+          patching: 'ROMを検証しています…',
+          forgotten: '削除しました。ROMファイルを選んでください。'
+        }
+      };
+
+      function applyLoaderCopy(lang) {
+        var c = COPY[lang] || COPY.en;
+        document.getElementById('loader-title').textContent = c.title;
+        document.getElementById('loader-legal').innerHTML = c.legal;
+        document.getElementById('choose-rom-label').textContent = c.choose;
+        var credit = document.getElementById('klepto-credit');
+        if(credit) {
+          if(lang === 'en') credit.classList.remove('hidden');
+          else credit.classList.add('hidden');
+        }
+      }
+
+      function showLoader(lang) {
+        currentLang = lang;
+        try { localStorage.setItem('dbz-lang', lang); } catch (e) {}
+        document.getElementById('lang-gate').classList.add('hidden');
+        document.getElementById('loader').classList.remove('hidden');
+        applyLoaderCopy(lang);
+        if(engineReady) {
+          var c = COPY[lang] || COPY.en;
+          if(window.__dbzRemembered)
+            statusEl.textContent = c.remembered;
+          else
+            statusEl.textContent = c.ready;
+        }
+        if(lang === 'en' && typeof DbzPatch !== 'undefined' && DbzPatch.fetchPatchBytes) {
+          DbzPatch.fetchPatchBytes().then(function() {
+            setError('');
+          }).catch(function(err) {
+            setError('English patch not available yet: ' + (err && err.message ? err.message : err) +
+              ' — place klepto-ssd-en-1.02.ips under patches/ and reload.');
+          });
+        }
+      }
+
+      function showLangGate() {
+        document.getElementById('loader').classList.add('hidden');
+        document.getElementById('lang-gate').classList.remove('hidden');
+        var rows = document.querySelectorAll('#lang-list .menu-row');
+        var saved = null;
+        try { saved = localStorage.getItem('dbz-lang'); } catch (e) {}
+        var idx = 0;
+        if(saved === 'ja') idx = 1;
+        rows.forEach(function(r, i) {
+          var on = i === idx;
+          r.classList.toggle('selected', on);
+          r.setAttribute('aria-selected', on ? 'true' : 'false');
+          r.tabIndex = on ? 0 : -1;
+        });
+        if(rows[idx]) rows[idx].focus();
+      }
+
+      (function setupLangGate() {
+        var list = document.getElementById('lang-list');
+        if(!list) return;
+        var rows = Array.prototype.slice.call(list.querySelectorAll('.menu-row'));
+
+        function selectedIndex() {
+          for(var i = 0; i < rows.length; i++) if(rows[i].classList.contains('selected')) return i;
+          return 0;
+        }
+        function selectRow(i) {
+          i = (i + rows.length) % rows.length;
+          rows.forEach(function(r, j) {
+            var on = j === i;
+            r.classList.toggle('selected', on);
+            r.setAttribute('aria-selected', on ? 'true' : 'false');
+            r.tabIndex = on ? 0 : -1;
+          });
+          rows[i].focus();
+        }
+        function confirmSel() {
+          var row = rows[selectedIndex()];
+          if(!row) return;
+          showLoader(row.getAttribute('data-lang') || 'en');
+        }
+
+        rows.forEach(function(row, i) {
+          row.addEventListener('click', function() {
+            if(row.classList.contains('selected')) confirmSel();
+            else selectRow(i);
+          });
+          row.addEventListener('dblclick', confirmSel);
+        });
+
+        document.addEventListener('keydown', function(e) {
+          var gate = document.getElementById('lang-gate');
+          if(!gate || gate.classList.contains('hidden')) return;
+          if(e.key === 'ArrowUp' || e.key === 'Up') { e.preventDefault(); selectRow(selectedIndex() - 1); }
+          else if(e.key === 'ArrowDown' || e.key === 'Down') { e.preventDefault(); selectRow(selectedIndex() + 1); }
+          else if(e.key === 'Enter' || e.key === 'z' || e.key === 'Z' || e.key === 'x' || e.key === 'X') {
+            e.preventDefault();
+            confirmSel();
+          }
+        });
+
+        var changeBtn = document.getElementById('change-lang');
+        if(changeBtn) changeBtn.addEventListener('click', showLangGate);
+
+        /* Always show language gate first; restore cursor from localStorage. */
+        showLangGate();
+      })();
+
+      async function feedRom(u8) {
         setError('');
-        if(typeof Module._dbz_web_load_rom !== 'function') {
+        if(!currentLang) {
+          setError('Choose a language first.');
+          return;
+        }
+        if(typeof Module._dbz_web_load_prepared_rom !== 'function') {
           setError('Engine is not ready yet.');
           return;
         }
-        const ptr = Module._malloc(u8.length);
+        if(typeof DbzPatch === 'undefined' || !DbzPatch.prepareRom) {
+          setError('Patch helper (ips.js) failed to load.');
+          return;
+        }
+        var c = COPY[currentLang] || COPY.en;
+        statusEl.textContent = c.patching;
+        var prepared;
+        try {
+          prepared = await DbzPatch.prepareRom(u8, currentLang);
+        } catch (e) {
+          if(e && e.code === 1) {
+            setError('Wrong file size. Need 1,048,576 bytes (or +512-byte copier header).');
+          } else if(e && e.code === 2) {
+            setError('SHA-256 mismatch. Only unmodified Japanese Rev 1 (hash above) is accepted.');
+          } else {
+            setError((e && e.message) ? e.message : String(e));
+          }
+          statusEl.textContent = 'ROM rejected.';
+          return;
+        }
+        const ptr = Module._malloc(prepared.length);
         if(!ptr) { setError('Out of memory allocating ROM buffer.'); return; }
-        Module.HEAPU8.set(u8, ptr);
-        const rc = Module._dbz_web_load_rom(ptr, u8.length);
+        Module.HEAPU8.set(prepared, ptr);
+        const rc = Module._dbz_web_load_prepared_rom(ptr, prepared.length);
         Module._free(ptr);
         if(rc === 0) {
+          /* Remember clean JP bytes (original upload), not the patched image. */
           rememberRom(u8);
           document.getElementById('canvas').focus();
         } else if(rc === 1) {
-          setError('Wrong file size. Need 1,048,576 bytes (or +512-byte copier header).');
-          statusEl.textContent = 'ROM rejected.';
-        } else if(rc === 2) {
-          setError('SHA-256 mismatch. Only unmodified Japanese Rev 1 (hash above) is accepted.');
+          setError('Prepared ROM rejected (bad size).');
           statusEl.textContent = 'ROM rejected.';
         } else {
           setError('Could not start the game with this file.');
@@ -229,10 +403,11 @@
       input.addEventListener('change', async function() {
         const file = input.files && input.files[0];
         if(!file) return;
-        statusEl.textContent = 'Reading ' + file.name + '…';
+        var c = COPY[currentLang] || COPY.en;
+        statusEl.textContent = c.reading + file.name + '…';
         try {
           const buf = new Uint8Array(await file.arrayBuffer());
-          feedRom(buf);
+          await feedRom(buf);
         } catch (e) {
           setError('Failed to read file: ' + e);
         }
@@ -245,7 +420,7 @@
       });
 
       window.addEventListener('dbz-ready', async function() {
-        statusEl.textContent = 'Engine ready. Load your Japanese Rev 1 .sfc to start.';
+        engineReady = true;
         try {
           if(Module._dbz_web_expected_sha256) {
             const p = Module._dbz_web_expected_sha256();
@@ -257,7 +432,12 @@
         if(remembered) {
           window.__dbzRemembered = remembered;
           document.getElementById('play-remembered').classList.remove('hidden');
-          statusEl.textContent = 'Remembered ROM available — click “Play remembered ROM” (needed for audio unlock).';
+        }
+        if(currentLang) {
+          var c = COPY[currentLang] || COPY.en;
+          statusEl.textContent = remembered ? c.remembered : c.ready;
+        } else {
+          statusEl.textContent = 'Engine ready — choose a language above.';
         }
       });
 
@@ -270,9 +450,11 @@
       document.body.addEventListener('drop', async function(e) {
         const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
         if(!file) return;
-        statusEl.textContent = 'Reading ' + file.name + '…';
+        if(!currentLang) { setError('Choose a language first.'); return; }
+        var c = COPY[currentLang] || COPY.en;
+        statusEl.textContent = c.reading + file.name + '…';
         try {
-          feedRom(new Uint8Array(await file.arrayBuffer()));
+          await feedRom(new Uint8Array(await file.arrayBuffer()));
         } catch (err) {
           setError('Failed to read dropped file: ' + err);
         }

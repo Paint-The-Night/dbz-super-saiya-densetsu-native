@@ -33,8 +33,8 @@ source /workspace/emsdk/emsdk_env.sh
 ./tools/build-web.sh
 ```
 
-Output: `web/dist/` containing `index.html`, `style.css`, `dbz.js`, `dbz.wasm`
-(and helper `_headers` / `mime.types.example`).
+Output: `web/dist/` containing `index.html`, `style.css`, `ips.js`, `dbz.js`, `dbz.wasm`,
+`patches/*` (IPS only), and helper `_headers` / `mime.types.example`.
 
 Reproducible flags are set in `CMakeLists.txt` when `EMSCRIPTEN` is detected
 (`src/web_main.c`, `-sUSE_SDL=2`, single-threaded, no pthreads).
@@ -46,8 +46,9 @@ Reproducible flags are set in `CMakeLists.txt` when `EMSCRIPTEN` is detected
 aws s3 sync web/dist/ s3://YOUR_BUCKET/ \
   --delete \
   --exclude '*' \
-  --include 'index.html' --include 'style.css' \
-  --include 'dbz.js' --include 'dbz.wasm' --include '_headers'
+  --include 'index.html' --include 'style.css' --include 'ips.js' \
+  --include 'dbz.js' --include 'dbz.wasm' --include '_headers' \
+  --include 'patches/*'
 
 aws s3 cp web/dist/index.html s3://YOUR_BUCKET/index.html \
   --cache-control 'no-cache' \
@@ -76,12 +77,29 @@ Point the densetsu.garyperrigo.com distribution at that bucket/prefix.
 **No COOP/COEP** (or `Cross-Origin-Embedder-Policy`) headers are required:
 this build is **single-threaded** (no `-pthread`).
 
+
+## Language select + English patch
+
+The first screen is a SNES-styled **言語選択 / Language** menu (English / 日本語).
+
+- **Japanese** — unmodified Rev 1 (same SHA-256 gate as before).
+- **English** — after the clean JP hash check, the browser fetches
+  `patches/klepto-ssd-en-1.02.ips` (Klepto Software 1.02 / romhacking.net #326),
+  prepends a 512-byte zero header, applies the IPS **in RAM**, strips the header,
+  then calls `_dbz_web_load_prepared_rom` (skips the C hash so the patched image
+  can boot). No patched ROM is ever hosted or uploaded.
+
+See `web/patches/README.md` for the IPS SHA-256 and credit.
+
+Choice is stored in `localStorage` key `dbz-lang`.
+
 ## How ROM load works
 
 1. Page loads `dbz.js` / `dbz.wasm` (engine only).
 2. User picks or drops a `.sfc`, or clicks **Play remembered ROM** (IndexedDB; click required for Web Audio unlock).
-3. JS copies bytes into WASM heap and calls `_dbz_web_load_rom`.
-4. `dbz_load_rom_bytes` checks size + SHA-256; mismatch shows an on-page error.
+3. JS validates JP SHA-256 (`ips.js` / `DbzPatch.prepareRom`); English applies IPS in RAM.
+4. JS copies the prepared 1 MiB buffer and calls `_dbz_web_load_prepared_rom`
+   (hash already checked in JS; C skips re-hash). Legacy `_dbz_web_load_rom` still hashes.
 5. On success, SDL starts the frame loop via `emscripten_set_main_loop`.
 
 ## Smoke test

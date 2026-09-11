@@ -201,25 +201,13 @@ void dbz_web_toggle_pause(void) {
   paused = !paused;
 }
 
-/* Returns 0 on success, 1 bad size/header, 2 hash mismatch, 3 init failure. */
-EMSCRIPTEN_KEEPALIVE
-int dbz_web_load_rom(const uint8_t *data, int length) {
+/* Shared post-validation boot: takes owned 1 MiB buffer (freed here). */
+static int boot_prepared_rom(uint8_t *rom, size_t rom_size) {
   if(game) {
+    free(rom);
     set_status("ROM already loaded. Reload the page to choose another.");
     return 3;
   }
-  if(length != 1048576 && length != 1049088) {
-    set_status("Wrong file size. Need unmodified Japanese Rev 1 (1 MiB, optional 512-byte header).");
-    return 1;
-  }
-
-  size_t rom_size = 0;
-  uint8_t *rom = dbz_load_rom_bytes(data, (size_t)length, &rom_size);
-  if(!rom) {
-    set_status("ROM hash mismatch. Only the unmodified Japanese Rev 1 is accepted.");
-    return 2;
-  }
-
   game = snes_init();
   if(!game || !snes_loadRom(game, rom, (int)rom_size)) {
     free(rom);
@@ -247,6 +235,8 @@ int dbz_web_load_rom(const uint8_t *data, int length) {
   EM_ASM({
     const panel = document.getElementById('loader');
     if(panel) panel.classList.add('hidden');
+    const gate = document.getElementById('lang-gate');
+    if(gate) gate.classList.add('hidden');
     const canvas = document.getElementById('canvas');
     if(canvas) { canvas.focus(); canvas.tabIndex = 0; }
     const chrome = document.getElementById('touch-chrome');
@@ -259,6 +249,49 @@ int dbz_web_load_rom(const uint8_t *data, int length) {
   set_status("Playing — drag/tap on canvas · keyboard still works. P pause, Tab turbo.");
   emscripten_set_main_loop(frame_tick, 0, 0);
   return 0;
+}
+
+/* Returns 0 on success, 1 bad size/header, 2 hash mismatch, 3 init failure. */
+EMSCRIPTEN_KEEPALIVE
+int dbz_web_load_rom(const uint8_t *data, int length) {
+  if(game) {
+    set_status("ROM already loaded. Reload the page to choose another.");
+    return 3;
+  }
+  if(length != 1048576 && length != 1049088) {
+    set_status("Wrong file size. Need unmodified Japanese Rev 1 (1 MiB, optional 512-byte header).");
+    return 1;
+  }
+
+  size_t rom_size = 0;
+  uint8_t *rom = dbz_load_rom_bytes(data, (size_t)length, &rom_size);
+  if(!rom) {
+    set_status("ROM hash mismatch. Only the unmodified Japanese Rev 1 is accepted.");
+    return 2;
+  }
+  return boot_prepared_rom(rom, rom_size);
+}
+
+/* Load an already-validated 1 MiB buffer (JP clean or EN patched in JS).
+ * Security: only call after JS SHA-256 of the clean JP Rev 1 succeeds.
+ * Skips the C hash gate so English (Klepto IPS in RAM) can boot. */
+EMSCRIPTEN_KEEPALIVE
+int dbz_web_load_prepared_rom(const uint8_t *data, int length) {
+  if(game) {
+    set_status("ROM already loaded. Reload the page to choose another.");
+    return 3;
+  }
+  if(!data || length != 1048576) {
+    set_status("Prepared ROM must be exactly 1,048,576 bytes.");
+    return 1;
+  }
+  uint8_t *rom = malloc(1048576);
+  if(!rom) {
+    set_status("Out of memory allocating ROM buffer.");
+    return 3;
+  }
+  memcpy(rom, data, 1048576);
+  return boot_prepared_rom(rom, 1048576);
 }
 
 EMSCRIPTEN_KEEPALIVE
