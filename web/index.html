@@ -49,7 +49,7 @@
           <li>Swipe flick — step one tile / menu row</li>
           <li>Two-finger tap — Start</li>
         </ul>
-        <p class="hint-note">Traditional mode: flick + tap drive SNES bits. Direct touch (boot menu) taps host rows; in-game tap is A until menu cursor RAM is recovered — no invented addresses.</p>
+        <p class="hint-note">Traditional mode: flick + tap drive SNES bits. Direct touch (boot menu) taps host rows; in-game tap reads menu cursor WRAM ($0D62) for command/party/flight hit-rects and pulses Up/Down/A — no invented addresses, never pokes selection.</p>
         <button type="button" id="gesture-hint-dismiss" class="file-btn">Got it</button>
       </div>
     </div>
@@ -99,7 +99,7 @@
     <section class="panel controls">
       <h2>Controls</h2>
       <p class="gesture-map"><strong>Traditional:</strong> Drag to move · Tap = A · Long-press = B · Swipe flick = step · Two-finger = Start<br>
-        <strong>Direct touch:</strong> Tap host-menu rows (LANGUAGE / CONTROLS). In-game tap = A (stub — no menu-cursor WRAM yet).</p>
+        <strong>Direct touch:</strong> Tap host-menu rows (LANGUAGE / CONTROLS). In-game: command / party / flight menus read→pulse via $0D62; other UI taps A.</p>
       <ul>
         <li><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> — D-pad</li>
         <li><kbd>Z</kbd> B · <kbd>X</kbd> A · <kbd>A</kbd> Y · <kbd>S</kbd> X</li>

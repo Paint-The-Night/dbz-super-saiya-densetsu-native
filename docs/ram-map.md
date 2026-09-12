@@ -618,9 +618,30 @@ pulses — it never pokes selection WRAM.
 |---|---|---|---|
 | `$0D62` | byte | **Live menu selection index** (0=Talk … 4=Menu on the overworld command list) | Up/Down diffs `0,1,2,3,4`; Up from 2→1. ROM: `01:BA44` `INC $0D62` / `01:BA68` `DEC $0D62`, compare/wrap vs `$0D64`; `01:B149`/`01:B14C` clamp with `CMP #$05` |
 | `$0D64` | byte | Exclusive max index (command menu: `#5` → valid `0..4`) | Adjacent to `$0D62`; `CMP $0D64` before wrap-to-zero at `01:BA44`. Seeded `#5` at `01:BDB2` |
-| `$0D66` | byte | Menu-mode / UI class (`0` = overworld command menu; party probe `1`; battle-cmd probe `$0A`) | Gates `01:BA33` cluster (`CMP #$28`/`#$0B`/`#$26`); `01:B86D` uses it as Y for `$1100,Y` |
-| `$1100,Y` | byte | Per-mode cursor **save slot** (`Y = $0D66`). For mode 0 this mirrors `$0D62` while the command menu is open | `01:B86D` `LDA $0D62` / `STA $1100,Y`; `01:B9E9` reload. Party probe kept `$1100=4` while live `$0D62=0` under mode 1 |
-| DP+`$25` | byte | **UI-open gate**: `1` while command/party/battle UI is up; `0` when closed | Open (A) vs closed (B) WRAM pair; stays `1` across `$0D62` moves; Down with menu closed does **not** change `$0D62` |
+| `$0D66` | byte | Menu-mode / UI class (`0` = overworld command; `1` = party Cards…Save; `$0A` = flight Land/Item/Menu; `$0F` = Status grid — unrecovered for Direct) | Gates `01:BA33` cluster (`CMP #$28`/`#$0B`/`#$26`); `01:B86D` uses it as Y for `$1100,Y` |
+| `$1100,Y` | byte | Per-mode cursor **save slot** (`Y = $0D66`). Mode 0 mirrors live `$0D62`; mode 1 keeps parent Menu index in `$1100` while `$1101` mirrors live party `$0D62`; mode `$0A` mirrors into `$110A` | `01:B86D` `LDA $0D62` / `STA $1100,Y`; `01:B9E9` reload. Party diffs: `$1100=4` while `$0D62`/`$1101` track 0..4 |
+| DP+`$25` | byte | **UI-open gate**: `1` while command/party/flight UI is up; `0` when closed | Open (A) vs closed (B) WRAM pair; stays `1` across `$0D62` moves; Down with menu closed does **not** change `$0D62` |
+
+### Party submenu (`$0D66=1`) — recovered 2026-09-12
+
+Open from overworld command **Menu** (index 4) with A. Live list is still `$0D62` /
+`$0D64=#5` (Cards=0 … Save=4). Up/Down diffs `0,1,2,3,4` and Up from Save→Text.
+`$1100` stays `4` (parent Menu); `$1101` tracks the live party index. Triangle tips
+at 2× ≈ `312 + i*32`, window `x∈[160,320)`, `y∈[290,460)`.
+
+### Flight command menu (`$0D66=$0A`) — recovered 2026-09-12
+
+Reached on the battle-route scout after Fly + Up + A (Land/Item/Menu while airborne).
+`$0D62` / `$0D64=#3` (Land=0, Item=1, Menu=2); `$110A` mirrors. Tips ≈ `374 + i*32`
+(bottom three slots of the command window); hit-rect `x∈[30,280)`, `y∈[358,460)`.
+Same family as mode 0 — **not** the card-battle Fight stream (that mode was not
+hit within the 1800f battle-route window this pass).
+
+### Status grid (`$0D66=$0F`) — not Direct this pass
+
+Opening **Status** from the party list sets mode `$0F`. `$0D62` moves on Left/Right
+(observed 0↔2) with `$0D64` still `#5`, but the 3×2 portrait grid has no measured
+hit-rects yet. Direct leaves this mode as **tap = A** only.
 
 ### Rejected / non-cursor candidates (same pass)
 
@@ -633,7 +654,14 @@ pulses — it never pokes selection WRAM.
 
 ### Direct touch wiring (`src/web_main.c`)
 
-When Controls = Direct and DP+`$25==1`, a canvas tap in the measured command-menu
-rect (`x∈[30,280)`, `y∈[290,460)` at 2×) reads `$0D62`, pulses N× Up/Down
-(18-frame spacing), then A. Other taps (or other `$0D66` modes) pulse A only.
-Menu closed → A (opens the command menu / advances text).
+When Controls = Direct and DP+`$25==1`, a canvas tap in a measured mode rect
+reads `$0D62`, pulses N× Up/Down (18-frame spacing), then A:
+
+| `$0D66` | Max | Hit-rect (2×) | Rows |
+|---|---|---|---|
+| `0` | 5 | `x∈[30,280)`, `y∈[290,460)`, row0=294 | Talk / Look / Fly / Item / Menu |
+| `1` | 5 | `x∈[160,320)`, `y∈[290,460)`, row0=294 | Cards / Status / Order / Text / Save |
+| `$0A` | 3 | `x∈[30,280)`, `y∈[358,460)`, row0=358 | Land / Item / Menu |
+| other (e.g. `$0F`) | — | — | **tap = A** only |
+
+Menu closed → A (opens the command menu / advances text). Never pokes selection WRAM.

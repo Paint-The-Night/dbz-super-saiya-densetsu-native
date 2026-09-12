@@ -815,20 +815,41 @@ int dbz_web_get_controls_mode(void) {
 }
 
 /*
- * In-game command-menu geometry at 2× (512×480), measured from WRAM-correlated
- * triangle tips: Talk≈306, then +32 pitch through Menu (docs/ram-map.md).
+ * In-game menu geometry at 2× (512×480), measured from WRAM-correlated
+ * triangle tips (docs/ram-map.md). Pitch is always DBZ_UI_ROW_PITCH (32).
+ * Modes 0 / 1 / $0A share live cursor $0D62; Direct only reads it.
  */
 enum {
   DBZ_CMD_MENU_X0 = 30,
   DBZ_CMD_MENU_X1 = 280,
   DBZ_CMD_MENU_Y0 = 290,
   DBZ_CMD_MENU_Y1 = 460,
-  DBZ_CMD_MENU_ROW0_Y = 294, /* band start; tip centers ≈ 310 + i*32 */
+  DBZ_CMD_MENU_ROW0_Y = 294, /* tip centers ≈ 310 + i*32 (Talk…Menu) */
+  /* Party Cards/Status/Order/Text/Save — right of command window */
+  DBZ_PARTY_MENU_X0 = 160,
+  DBZ_PARTY_MENU_X1 = 320,
+  DBZ_PARTY_MENU_Y0 = 290,
+  DBZ_PARTY_MENU_Y1 = 460,
+  DBZ_PARTY_MENU_ROW0_Y = 294, /* tip centers ≈ 312 + i*32 */
+  /* Flight Land/Item/Menu ($0D66=$0A) — bottom three slots of command window */
+  DBZ_FLY_MENU_X0 = 30,
+  DBZ_FLY_MENU_X1 = 280,
+  DBZ_FLY_MENU_Y0 = 358,
+  DBZ_FLY_MENU_Y1 = 460,
+  DBZ_FLY_MENU_ROW0_Y = 358, /* tip centers ≈ 374 + i*32 */
   DBZ_WRAM_UI_OPEN = 0x0025,   /* DP+$25 == 1 while a UI menu is open */
   DBZ_WRAM_MENU_CURSOR = 0x0D62,
-  DBZ_WRAM_MENU_MAX = 0x0D64,  /* exclusive max (command menu: 5) */
-  DBZ_WRAM_MENU_MODE = 0x0D66  /* 0 = overworld Talk/Look/Fly/Item/Menu */
+  DBZ_WRAM_MENU_MAX = 0x0D64,  /* exclusive max */
+  DBZ_WRAM_MENU_MODE = 0x0D66  /* 0=cmd, 1=party, $0A=flight; else tap=A */
 };
+
+/* Clamp target into [0, max_excl). */
+static int direct_clamp_row(int target, int max_excl) {
+  if(max_excl <= 0) return 0;
+  if(target < 0) return 0;
+  if(target >= max_excl) return max_excl - 1;
+  return target;
+}
 
 /* Read $0D62 → pulse N× Up/Down → pulse A. Never writes selection WRAM. */
 static void direct_in_game_tap(int x, int y) {
@@ -845,16 +866,21 @@ static void direct_in_game_tap(int x, int y) {
   uint8_t max = game->ram[DBZ_WRAM_MENU_MAX];
   uint8_t cur = game->ram[DBZ_WRAM_MENU_CURSOR];
   int target = -1;
-  /* Row hit-test only for the measured overworld command menu. */
   if(mode == 0 && max == 5 &&
      x >= DBZ_CMD_MENU_X0 && x < DBZ_CMD_MENU_X1 &&
      y >= DBZ_CMD_MENU_Y0 && y < DBZ_CMD_MENU_Y1) {
-    target = (y - DBZ_CMD_MENU_ROW0_Y) / DBZ_UI_ROW_PITCH;
-    if(target < 0) target = 0;
-    if(target > 4) target = 4;
+    target = direct_clamp_row((y - DBZ_CMD_MENU_ROW0_Y) / DBZ_UI_ROW_PITCH, 5);
+  } else if(mode == 1 && max == 5 &&
+            x >= DBZ_PARTY_MENU_X0 && x < DBZ_PARTY_MENU_X1 &&
+            y >= DBZ_PARTY_MENU_Y0 && y < DBZ_PARTY_MENU_Y1) {
+    target = direct_clamp_row((y - DBZ_PARTY_MENU_ROW0_Y) / DBZ_UI_ROW_PITCH, 5);
+  } else if(mode == 0x0A && max == 3 &&
+            x >= DBZ_FLY_MENU_X0 && x < DBZ_FLY_MENU_X1 &&
+            y >= DBZ_FLY_MENU_Y0 && y < DBZ_FLY_MENU_Y1) {
+    target = direct_clamp_row((y - DBZ_FLY_MENU_ROW0_Y) / DBZ_UI_ROW_PITCH, 3);
   }
   if(target < 0) {
-    dbz_web_pulse_button(8, 3); /* confirm current row / other UI */
+    dbz_web_pulse_button(8, 3); /* confirm / unrecovered mode (e.g. $0F Status) */
     return;
   }
   if(max == 0) max = 1;
@@ -872,8 +898,8 @@ static void direct_in_game_tap(int x, int y) {
 /*
  * Canvas tap in 512×480 framebuffer pixels (top-left origin).
  * Host menus: hit-test the two Densetsu rows and confirm (host cursor only).
- * In-game Direct: read menu cursor WRAM ($0D62) and pulse Up/Down/A — never
- * poke selection RAM (docs/ram-map.md).
+ * In-game Direct: read $0D62 for modes 0 / 1 / $0A hit-rects and pulse
+ * Up/Down/A — never poke selection RAM (docs/ram-map.md).
  */
 EMSCRIPTEN_KEEPALIVE
 void dbz_web_canvas_tap(int x, int y) {

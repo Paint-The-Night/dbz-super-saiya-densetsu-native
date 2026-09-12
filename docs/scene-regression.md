@@ -99,4 +99,7 @@ python3 tools/run_scenes.py --binary build/dbz-port --rom "$ROM" \
 
 ## Direct touch / menu cursor
 
-Overworld command-menu cursor is `$0D62` (see `docs/ram-map.md`). `en_menu_smoke` still validates EN chrome only; it does not exercise Direct read→pulse.
+Live list cursor is `$0D62` for `$0D66` modes `0` (command), `1` (party), and
+`$0A` (flight Land/Item/Menu); see `docs/ram-map.md`. Status `$0F` and card-battle
+Fight UI remain tap=A until hit-rects are measured. `en_menu_smoke` still validates
+EN chrome only; it does not exercise Direct read→pulse.

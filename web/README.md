@@ -170,7 +170,7 @@ menu-selection WRAM.
 | Surface | Behavior |
 |---------|----------|
 | Host LANGUAGE / CONTROLS | Hit-test the two Densetsu rows; set host cursor and confirm |
-| In-game | **Read→pulse:** if DP+`$25==1` and tap hits the overworld command-menu rows, read `$0D62` and pulse N× Up/Down then A. Otherwise pulse A (opens menu / confirms). Never pokes selection WRAM (`docs/ram-map.md`). |
+| In-game | **Read→pulse:** if DP+`$25==1` and tap hits a measured menu rect (command mode 0, party mode 1, flight mode `$0A`), read `$0D62` and pulse N× Up/Down then A. Other modes (e.g. Status `$0F`) pulse A only. Never pokes selection WRAM (`docs/ram-map.md`). |
 
 Two-finger Start / three-finger Select still work in Direct (system shortcuts,
 not a virtual pad overlay). Classic pad stays **hidden by default** in Direct;
@@ -188,5 +188,5 @@ C APIs (frame-synced in `web_main.c`):
 - `dbz_web_set_gesture_mask` — canvas virtual-stick hold (`keys_gesture`)
 - `dbz_web_pulse_button(button, frames)` — queued pulses OR’d each `frame_tick`
 - `dbz_web_set_controls_mode` / `dbz_web_get_controls_mode` — 0 Traditional, 1 Direct
-- `dbz_web_canvas_tap(x, y)` — Direct hit-test / in-game A stub
+- `dbz_web_canvas_tap(x, y)` — Direct hit-test / in-game read→pulse
 - Each frame: `keys_kb | keys_touch | keys_gesture | pulse` → `snes_setButtonState`
