@@ -184,7 +184,10 @@ Chrome strip below the canvas (text links, not a fake SNES pad):
 
 Host **SKIP** (Densetsu cream/orange, top-right of the stage) appears once
 the ROM is running and hides after the overworld command UI is seeded. Tap
-it to jump the opening cutscene via Start then A as above.
+it (HTML overlay **or** canvas top-right hit-rect — Traditional and Direct)
+to jump the opening via Start on title/crawl/clouds then A through Raditz.
+While armed the button shows an orange pulse; inputs pause once the command
+menu is stably open so A cannot thrash into the party menu.
 
 Optional **Show classic pad** checkbox is Traditional / accessibility-only;
 default UX hides `#touch-pad`.

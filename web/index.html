@@ -642,8 +642,15 @@
             return;
           }
 
-          /* Quick tap → A */
+          /* Quick tap → opening Skip zone (fb) or A */
           if(!st.moved && dist <= TAP_SLOP && dt < LONG_MS) {
+            var fb = canvasToFb(st.x0, st.y0);
+            /* Top-right Skip backup — same rect as C opening_skip_hit. */
+            if(fb.x >= 400 && fb.y <= 56 &&
+               typeof Module._dbz_web_skip_cutscene === 'function') {
+              Module._dbz_web_skip_cutscene();
+              return;
+            }
             pulse(BTN_A, PULSE_FRAMES);
             return;
           }
@@ -671,16 +678,33 @@
         }
       })();
 
-      /* Opening SKIP — host overlay, top-right; C shows it only during intro. */
+      /* Opening SKIP — host overlay top-right; also canvas fb hit-rect in C.
+       * pointerdown+click so Desktop/Mobile both arm; stopImmediate so canvas
+       * gesture handlers never see the event (Traditional + Direct). */
       (function setupSkip() {
         const btn = document.getElementById('skip-cutscene');
         if(!btn) return;
-        btn.addEventListener('pointerdown', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          if(typeof Module._dbz_web_skip_cutscene === 'function')
-            Module._dbz_web_skip_cutscene();
-        });
+        var lastArm = 0;
+        function armSkip(e) {
+          if(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+          }
+          var now = performance.now();
+          if(now - lastArm < 400) return; /* pointerdown+click debounce */
+          lastArm = now;
+          try {
+            if(typeof Module._dbz_web_skip_cutscene === 'function')
+              Module._dbz_web_skip_cutscene();
+            else if(Module.ccall)
+              Module.ccall('dbz_web_skip_cutscene', null, [], []);
+          } catch (err) {
+            console.warn('skip cutscene failed', err);
+          }
+        }
+        btn.addEventListener('pointerdown', armSkip);
+        btn.addEventListener('click', armSkip);
       })();
 
       /* Chrome strip: Select / L / R / Pause / Turbo */

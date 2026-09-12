@@ -8,10 +8,11 @@
  * writes the live selection cursor ($0D62 / Status $0D63) plus $1100,Y
  * mirror, then pulses A only — tap-the-thing UX (host-driven selection +
  * SNES A), not N× D-pad scroll. CONTROLS also reopens in-game via chrome.
- * Opening SKIP (host overlay, top-right) synthesizes the game's own
- * intro skip: Start on title/crawl (tests/start-game.inputs), then A
- * through Raditz dialogue — not a WRAM warp. Direct Y origins are lifted
- * one DBZ_UI_ROW_PITCH vs the raw tip measurements (playtest offset).
+ * Opening SKIP (host overlay, top-right; also canvas top-right hit-rect)
+ * synthesizes the game's own intro skip: Start on title/crawl/clouds
+ * (tests/start-game.inputs), then A through Raditz — not a WRAM warp.
+ * Start is never sent after leaving intro visuals (would pause OW).
+ * Direct Y origins are lifted one DBZ_UI_ROW_PITCH vs tip measurements.
  * The same clean JP ROM always boots (no IPS / ROM patching). */
 #include <SDL.h>
 #include <emscripten.h>
@@ -60,8 +61,11 @@ static int opening_done;      /* 1 = reached playable overworld; hide Skip */
 static int skip_arm;          /* 1 = Skip sequencer running */
 static int skip_cooldown;     /* frames until next Start/A pulse */
 static int skip_saw_dialogue; /* $0733 seen nonzero — stay on A, not Start */
+static int skip_past_intro;   /* 1 = left title/crawl; A-only forever after */
+static int skip_start_count;  /* Start pulses issued this arm (cap clouds) */
 static int overworld_streak;  /* consecutive overworld-ready frames */
 static int skip_btn_shown = -1;
+static int skip_armed_ui = -1; /* JS armed class mirror */
 static unsigned lang_prev_keys;
 static int lang_confirm_lock; /* debounce frames after enter */
 /* Raster strips from JS (BGRX): JP labels for LANGUAGE + CONTROLS */
@@ -1071,8 +1075,22 @@ static void sync_skip_button(int show) {
     try { lang = localStorage.getItem('dbz-lang') || 'en'; } catch (e) {}
     el.textContent = (lang === 'ja') ? 'スキップ' : 'SKIP';
     if($0) el.classList.remove('hidden');
-    else el.classList.add('hidden');
+    else {
+      el.classList.add('hidden');
+      el.classList.remove('armed');
+    }
   }, show);
+}
+
+static void sync_skip_armed_ui(int armed) {
+  if(armed == skip_armed_ui) return;
+  skip_armed_ui = armed;
+  EM_ASM({
+    var el = document.getElementById('skip-cutscene');
+    if(!el) return;
+    if($0) el.classList.add('armed');
+    else el.classList.remove('armed');
+  }, armed);
 }
 
 static void opening_reset(void) {
@@ -1080,44 +1098,82 @@ static void opening_reset(void) {
   skip_arm = 0;
   skip_cooldown = 0;
   skip_saw_dialogue = 0;
+  skip_past_intro = 0;
+  skip_start_count = 0;
   overworld_streak = 0;
+  sync_skip_armed_ui(0);
   sync_skip_button(0);
+}
+
+/* Top-right Skip hit-rect in 512×480 fb pixels (HTML overlay backup). */
+static int opening_skip_hit(int x, int y) {
+  return x >= 400 && y >= 0 && y <= 56;
 }
 
 /* Drive host Skip visibility + Start/A sequencer (frame-synced). */
 static void opening_skip_tick(void) {
   if(!game || boot_phase != BOOT_PLAYING || opening_done) {
     skip_arm = 0;
+    sync_skip_armed_ui(0);
     sync_skip_button(0);
     return;
   }
   if(game->ram[DBZ_WRAM_MSG_BANK] != 0)
     skip_saw_dialogue = 1;
+
+  bool title = opening_title_sig();
+  bool crawl = opening_crawl_sig();
+  if(title || crawl) {
+    /* Still on intro visuals — may Start. */
+  } else if(skip_saw_dialogue || game->ram[DBZ_WRAM_UI_OPEN] == 7 ||
+            game->ram[DBZ_WRAM_MENU_MODE] == 9) {
+    /* Left title/crawl into Raditz / post-crawl — A only. */
+    skip_past_intro = 1;
+  }
+
   if(opening_overworld_ready()) {
     if(++overworld_streak >= 20) {
       opening_done = 1;
       skip_arm = 0;
+      sync_skip_armed_ui(0);
       sync_skip_button(0);
+      if(dbz_i18n_get() == DBZ_LANG_EN)
+        set_status(dbz_i18n_str(DBZ_STR_EN_WIP_STATUS));
+      else if(ctrl_mode == CTRL_DIRECT)
+        set_status(dbz_i18n_str(DBZ_STR_PLAYING_DIRECT_STATUS));
+      else
+        set_status(dbz_i18n_str(DBZ_STR_PLAYING_STATUS));
       return;
     }
-  } else {
-    overworld_streak = 0;
+    /* Hold still while latching — further A opens party (mode $08/$09)
+     * and resets the streak (playtest: Skip never settled). */
+    sync_skip_button(1);
+    sync_skip_armed_ui(skip_arm);
+    return;
   }
+  overworld_streak = 0;
   sync_skip_button(1);
+  sync_skip_armed_ui(skip_arm);
   if(!skip_arm) return;
   if(skip_cooldown > 0) {
     skip_cooldown--;
     return;
   }
   /* Evidence: tests/start-game.inputs — Start @300/@600 (clouds/title/crawl),
-   * then A (0x100) through Raditz. No WRAM warp; no Start once dialogue
-   * has begun (Start on overworld would pause). */
-  if(opening_title_sig() || opening_crawl_sig() || !skip_saw_dialogue) {
+   * then A through Raditz. Do NOT Start after leaving intro visuals
+   * (Start on overworld pauses). Cap Start spam on pre-title clouds. */
+  int use_start = 0;
+  if(!skip_past_intro) {
+    if(title || crawl) use_start = 1;
+    else if(!skip_saw_dialogue && skip_start_count < 4) use_start = 1; /* clouds */
+  }
+  if(use_start) {
     dbz_web_pulse_button(3, 4); /* Start */
-    skip_cooldown = 28;
+    skip_start_count++;
+    skip_cooldown = 48; /* ~0.8s — between spam-28 and replay-300 */
   } else {
     dbz_web_pulse_button(8, 3); /* A */
-    skip_cooldown = 18;
+    skip_cooldown = 12;
   }
 }
 
@@ -1128,12 +1184,15 @@ void dbz_web_skip_cutscene(void) {
   paused = false;
   skip_arm = 1;
   skip_cooldown = 0;
+  sync_skip_armed_ui(1);
+  set_status(dbz_i18n_get() == DBZ_LANG_JA ? "スキップ中…" : "Skipping opening…");
 }
 
 /*
  * Canvas tap in 512×480 framebuffer pixels (top-left origin).
- * Host menus: hit-test Densetsu rows and confirm. In-game Direct: write
- * selection WRAM for measured rects then pulse A (docs/ram-map.md).
+ * Host menus: hit-test Densetsu rows and confirm. Opening: top-right
+ * Skip zone arms the sequencer (works in Traditional + Direct without
+ * menu hit-rects). In-game Direct: write selection WRAM then pulse A.
  */
 EMSCRIPTEN_KEEPALIVE
 void dbz_web_canvas_tap(int x, int y) {
@@ -1147,6 +1206,10 @@ void dbz_web_canvas_tap(int x, int y) {
       ctrl_sel = row;
       controls_confirm();
     }
+    return;
+  }
+  if(boot_phase == BOOT_PLAYING && !opening_done && opening_skip_hit(x, y)) {
+    dbz_web_skip_cutscene();
     return;
   }
   if(boot_phase == BOOT_PLAYING && ctrl_mode == CTRL_DIRECT)
