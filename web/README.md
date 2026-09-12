@@ -170,7 +170,7 @@ menu-selection WRAM.
 | Surface | Behavior |
 |---------|----------|
 | Host LANGUAGE / CONTROLS | Hit-test the two Densetsu rows; set host cursor and confirm |
-| In-game | **Stub:** pulse A. No recovered menu-cursor WRAM (`docs/ram-map.md`). Do **not** invent addresses. When a cursor byte is known, assist may *read* it and pulse N× Up/Down then A. |
+| In-game | **Read→pulse:** if DP+`$25==1` and tap hits the overworld command-menu rows, read `$0D62` and pulse N× Up/Down then A. Otherwise pulse A (opens menu / confirms). Never pokes selection WRAM (`docs/ram-map.md`). |
 
 Two-finger Start / three-finger Select still work in Direct (system shortcuts,
 not a virtual pad overlay). Classic pad stays **hidden by default** in Direct;

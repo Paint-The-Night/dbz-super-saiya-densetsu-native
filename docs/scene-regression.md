@@ -96,3 +96,7 @@ python3 tools/run_scenes.py --binary build/dbz-port --rom "$ROM" \
 - [`prototype.md`](prototype.md) — host CLI, checkpoints, input replays
 - [`battle-route.md`](battle-route.md) — extended battle route
 - [`i18n.md`](i18n.md) / [`text-api.md`](text-api.md) — EN path (smoke scenes)
+
+## Direct touch / menu cursor
+
+Overworld command-menu cursor is `$0D62` (see `docs/ram-map.md`). `en_menu_smoke` still validates EN chrome only; it does not exercise Direct read→pulse.

@@ -34,7 +34,7 @@ static Snes *game;
  * Pulses (tap/long-press/flick) are queued separately so they last N frames. */
 static unsigned keys_kb, keys_touch, keys_gesture;
 enum { PULSE_SLOTS = 16 };
-static struct { unsigned mask; int remaining; } pulses[PULSE_SLOTS];
+static struct { unsigned mask; int remaining; int delay; } pulses[PULSE_SLOTS];
 static bool paused, turbo, loop_running;
 static uint32_t sample_phase;
 static uint64_t deadline, frequency;
@@ -382,6 +382,10 @@ static void blit_label(const uint8_t *src, int dx, int dy, int w, int h) {
 static unsigned collect_keys(void) {
   unsigned pulse = 0;
   for(int i = 0; i < PULSE_SLOTS; i++) {
+    if(pulses[i].delay > 0) {
+      pulses[i].delay--;
+      continue;
+    }
     if(pulses[i].remaining > 0) {
       pulse |= pulses[i].mask;
       pulses[i].remaining--;
@@ -643,7 +647,7 @@ static void lang_confirm(void) {
   keys_kb = 0;
   keys_touch = 0;
   keys_gesture = 0;
-  for(int i = 0; i < PULSE_SLOTS; i++) { pulses[i].mask = 0; pulses[i].remaining = 0; }
+  for(int i = 0; i < PULSE_SLOTS; i++) { pulses[i].mask = 0; pulses[i].remaining = 0; pulses[i].delay = 0; }
 
   ctrl_sel = (ctrl_mode == CTRL_DIRECT) ? 1 : 0;
   lang_prev_keys = 0xFFFFFFFFu;
@@ -670,7 +674,7 @@ static void controls_confirm(void) {
   keys_kb = 0;
   keys_touch = 0;
   keys_gesture = 0;
-  for(int i = 0; i < PULSE_SLOTS; i++) { pulses[i].mask = 0; pulses[i].remaining = 0; }
+  for(int i = 0; i < PULSE_SLOTS; i++) { pulses[i].mask = 0; pulses[i].remaining = 0; pulses[i].delay = 0; }
   emscripten_cancel_main_loop();
   EM_ASM({
     const mode = UTF8ToString($0);
@@ -763,22 +767,30 @@ void dbz_web_set_gesture_mask(unsigned mask) {
   keys_gesture = mask & 0xFFFu;
 }
 
-/* Pulse a button for N frames (tap/flick/chrome). Survives across frame_tick. */
-EMSCRIPTEN_KEEPALIVE
-void dbz_web_pulse_button(int button, int frames) {
+/* Pulse a button for N frames (tap/flick/chrome). Survives across frame_tick.
+ * delay>0 waits that many frames before the press (for sequenced Up/Down/A). */
+static void pulse_button_at(int button, int frames, int delay) {
   if(button < 0 || button > 11) return;
   if(frames < 1) frames = 1;
   if(frames > 30) frames = 30;
+  if(delay < 0) delay = 0;
   unsigned bit = 1u << button;
   for(int i = 0; i < PULSE_SLOTS; i++) {
-    if(pulses[i].remaining <= 0) {
+    if(pulses[i].remaining <= 0 && pulses[i].delay <= 0) {
       pulses[i].mask = bit;
       pulses[i].remaining = frames;
+      pulses[i].delay = delay;
       return;
     }
   }
   pulses[0].mask = bit;
   pulses[0].remaining = frames;
+  pulses[0].delay = delay;
+}
+
+EMSCRIPTEN_KEEPALIVE
+void dbz_web_pulse_button(int button, int frames) {
+  pulse_button_at(button, frames, 0);
 }
 
 EMSCRIPTEN_KEEPALIVE
@@ -803,10 +815,65 @@ int dbz_web_get_controls_mode(void) {
 }
 
 /*
+ * In-game command-menu geometry at 2× (512×480), measured from WRAM-correlated
+ * triangle tips: Talk≈306, then +32 pitch through Menu (docs/ram-map.md).
+ */
+enum {
+  DBZ_CMD_MENU_X0 = 30,
+  DBZ_CMD_MENU_X1 = 280,
+  DBZ_CMD_MENU_Y0 = 290,
+  DBZ_CMD_MENU_Y1 = 460,
+  DBZ_CMD_MENU_ROW0_Y = 294, /* band start; tip centers ≈ 310 + i*32 */
+  DBZ_WRAM_UI_OPEN = 0x0025,   /* DP+$25 == 1 while a UI menu is open */
+  DBZ_WRAM_MENU_CURSOR = 0x0D62,
+  DBZ_WRAM_MENU_MAX = 0x0D64,  /* exclusive max (command menu: 5) */
+  DBZ_WRAM_MENU_MODE = 0x0D66  /* 0 = overworld Talk/Look/Fly/Item/Menu */
+};
+
+/* Read $0D62 → pulse N× Up/Down → pulse A. Never writes selection WRAM. */
+static void direct_in_game_tap(int x, int y) {
+  if(!game) {
+    dbz_web_pulse_button(8, 3);
+    return;
+  }
+  /* Menu closed: A opens the command menu / advances dialogue. */
+  if(game->ram[DBZ_WRAM_UI_OPEN] != 1) {
+    dbz_web_pulse_button(8, 3);
+    return;
+  }
+  uint8_t mode = game->ram[DBZ_WRAM_MENU_MODE];
+  uint8_t max = game->ram[DBZ_WRAM_MENU_MAX];
+  uint8_t cur = game->ram[DBZ_WRAM_MENU_CURSOR];
+  int target = -1;
+  /* Row hit-test only for the measured overworld command menu. */
+  if(mode == 0 && max == 5 &&
+     x >= DBZ_CMD_MENU_X0 && x < DBZ_CMD_MENU_X1 &&
+     y >= DBZ_CMD_MENU_Y0 && y < DBZ_CMD_MENU_Y1) {
+    target = (y - DBZ_CMD_MENU_ROW0_Y) / DBZ_UI_ROW_PITCH;
+    if(target < 0) target = 0;
+    if(target > 4) target = 4;
+  }
+  if(target < 0) {
+    dbz_web_pulse_button(8, 3); /* confirm current row / other UI */
+    return;
+  }
+  if(max == 0) max = 1;
+  if(cur >= max) cur = 0;
+  int delta = target - (int)cur;
+  int dir_btn = delta > 0 ? 5 : 4; /* Down : Up */
+  int steps = delta > 0 ? delta : -delta;
+  const int press = 3;
+  const int gap = 18; /* ≈ kame-flight Down spacing */
+  for(int i = 0; i < steps; i++)
+    pulse_button_at(dir_btn, press, i * gap);
+  pulse_button_at(8, press, steps * gap + 8); /* A */
+}
+
+/*
  * Canvas tap in 512×480 framebuffer pixels (top-left origin).
  * Host menus: hit-test the two Densetsu rows and confirm (host cursor only).
- * In-game Direct: pulse A. No recovered menu-selection WRAM — do not invent
- * addresses; never poke selection RAM.
+ * In-game Direct: read menu cursor WRAM ($0D62) and pulse Up/Down/A — never
+ * poke selection RAM (docs/ram-map.md).
  */
 EMSCRIPTEN_KEEPALIVE
 void dbz_web_canvas_tap(int x, int y) {
@@ -822,10 +889,8 @@ void dbz_web_canvas_tap(int x, int y) {
     }
     return;
   }
-  if(boot_phase == BOOT_PLAYING && ctrl_mode == CTRL_DIRECT) {
-    /* Stub until a menu cursor byte is recovered (docs/ram-map.md). */
-    dbz_web_pulse_button(8, 3); /* A */
-  }
+  if(boot_phase == BOOT_PLAYING && ctrl_mode == CTRL_DIRECT)
+    direct_in_game_tap(x, y);
 }
 
 /* Shared post-validation boot: takes owned 1 MiB buffer (freed here). */
@@ -853,7 +918,7 @@ static int boot_prepared_rom(uint8_t *rom, size_t rom_size) {
   keys_kb = 0;
   keys_touch = 0;
   keys_gesture = 0;
-  for(int i = 0; i < PULSE_SLOTS; i++) { pulses[i].mask = 0; pulses[i].remaining = 0; }
+  for(int i = 0; i < PULSE_SLOTS; i++) { pulses[i].mask = 0; pulses[i].remaining = 0; pulses[i].delay = 0; }
   paused = false;
   turbo = false;
   loop_running = true;

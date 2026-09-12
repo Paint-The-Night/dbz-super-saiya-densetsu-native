@@ -606,3 +606,34 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 | $05E2F4,X pair ($72/$A0 or $58/$70) | bytes | $E2BD DP+$B7==#$28 gate table | 05:E2BD |
 | DP+$00/$01 (Y=#$8004/#$8406) / $1560/$1561 | bytes/words | $E342/$E347 seed threshold and phase bump | 05:E342 |
 | $1558/$1560 dual + $155C/$1564 m16 ±4 | bytes/words | $E446 multi-phase scroll oscillator | 05:E446 |
+
+## Overworld command-menu selection cursor (Direct touch)
+
+Recovered 2026-09-12 from WRAM diffs while the Talk/Look/Fly/Item/Menu window
+was open (open with **A** from the Kame House overworld checkpoint; navigate
+with Up/Down). Direct touch **reads** these bytes and synthesizes controller
+pulses — it never pokes selection WRAM.
+
+| Address | Width | Observed role | Evidence |
+|---|---|---|---|
+| `$0D62` | byte | **Live menu selection index** (0=Talk … 4=Menu on the overworld command list) | Up/Down diffs `0,1,2,3,4`; Up from 2→1. ROM: `01:BA44` `INC $0D62` / `01:BA68` `DEC $0D62`, compare/wrap vs `$0D64`; `01:B149`/`01:B14C` clamp with `CMP #$05` |
+| `$0D64` | byte | Exclusive max index (command menu: `#5` → valid `0..4`) | Adjacent to `$0D62`; `CMP $0D64` before wrap-to-zero at `01:BA44`. Seeded `#5` at `01:BDB2` |
+| `$0D66` | byte | Menu-mode / UI class (`0` = overworld command menu; party probe `1`; battle-cmd probe `$0A`) | Gates `01:BA33` cluster (`CMP #$28`/`#$0B`/`#$26`); `01:B86D` uses it as Y for `$1100,Y` |
+| `$1100,Y` | byte | Per-mode cursor **save slot** (`Y = $0D66`). For mode 0 this mirrors `$0D62` while the command menu is open | `01:B86D` `LDA $0D62` / `STA $1100,Y`; `01:B9E9` reload. Party probe kept `$1100=4` while live `$0D62=0` under mode 1 |
+| DP+`$25` | byte | **UI-open gate**: `1` while command/party/battle UI is up; `0` when closed | Open (A) vs closed (B) WRAM pair; stays `1` across `$0D62` moves; Down with menu closed does **not** change `$0D62` |
+
+### Rejected / non-cursor candidates (same pass)
+
+| Address | Why rejected |
+|---|---|
+| `$166C` (word) | Steps `+2` on **every** nav (Up or Down); `00:97D0` `INC` + clamp to `#$0800` — progress/counter, not selection. Already mapped as `$E340` gate |
+| `$01A4` / `$01AC` | World Y and camera snapshot; ±2 with some pre-menu actor posing, but not the text-menu index. Still camera/scroll roles |
+| OAM `$0401`/`$0405` | Display Y of sprites — follows selection, not the authority index |
+| `$0D5C` | Bank-`$04` movement shadow (`04:A4F1` INC with `$01A4`); stayed `0` on the command-menu path |
+
+### Direct touch wiring (`src/web_main.c`)
+
+When Controls = Direct and DP+`$25==1`, a canvas tap in the measured command-menu
+rect (`x∈[30,280)`, `y∈[290,460)` at 2×) reads `$0D62`, pulses N× Up/Down
+(18-frame spacing), then A. Other taps (or other `$0D66` modes) pulse A only.
+Menu closed → A (opens the command menu / advances text).
