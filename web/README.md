@@ -107,6 +107,15 @@ confirming the ROM load to skip the menu and use the remembered language.
 
 Klepto IPS lives under `research/klepto-reference/` as wording reference only.
 
+### Host overlay chrome (`draw_densetsu_window`)
+
+Boot-menu (and future host overlays) share `draw_densetsu_window` in
+`src/web_main.c`. Chrome is **pixel-sampled** from
+`artifacts/scout-start-game/frame-003000.bmp` (LakeSnes 2×): cream/orange/dark
+bevel, baked 16×16 corner studs, ocean playfield, dark-ink labels, and a blinking
+action-menu triangle cursor. No ROM patching — SDL framebuffer only.
+
+
 ## How ROM load works
 
 1. Page loads hashed `dbz.js` / `dbz.wasm` (engine only). Loader is the first **site** screen.

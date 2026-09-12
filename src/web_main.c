@@ -164,45 +164,168 @@ static void __attribute__((unused)) draw_frame(int x, int y, int w, int h, uint8
   }
 }
 
-/* Densetsu menu chrome sampled from artifacts/scout-start-game/frame-003000.bmp
- * (LakeSnes 2× framebuffer). Logical SNES border: 1 cream rim, 2 orange, 2 dark. */
+/* Densetsu menu chrome — pixel-sampled from artifacts/scout-start-game/frame-003000.bmp
+ * (LakeSnes 2× framebuffer). Shared host-overlay helper: draw_densetsu_window().
+ *
+ * Edge geometry at 2× (SNES ×2):
+ *   Top/Left (highlight): 2 cream + 4 orange + 4 dark → interior
+ *   Bottom/Right (shadow): 4 orange + 4 dark → exterior
+ * Corner studs: baked 16×16 tiles (TL/TR/BL/BR) from the same frame. */
 enum {
   DBZ_UI_CREAM_R = 255, DBZ_UI_CREAM_G = 239, DBZ_UI_CREAM_B = 206,
   DBZ_UI_ORANGE_R = 255, DBZ_UI_ORANGE_G = 82, DBZ_UI_ORANGE_B = 0,
   DBZ_UI_DARK_R = 132, DBZ_UI_DARK_G = 0, DBZ_UI_DARK_B = 0,
   DBZ_UI_TEXT_R = 0, DBZ_UI_TEXT_G = 0, DBZ_UI_TEXT_B = 49,
-  DBZ_UI_OCEAN_R = 0, DBZ_UI_OCEAN_G = 82, DBZ_UI_OCEAN_B = 156
+  DBZ_UI_OCEAN_R = 0, DBZ_UI_OCEAN_G = 82, DBZ_UI_OCEAN_B = 156,
+  DBZ_UI_CORNER = 16,
+  DBZ_UI_PAD_TL = 10, /* cream+orange+dark */
+  DBZ_UI_PAD_BR = 8,  /* orange+dark shadow */
+  DBZ_UI_ROW_PITCH = 32, /* action-menu line pitch at 2× */
+  DBZ_UI_CURSOR_W = 14,
+  DBZ_UI_CURSOR_H = 14,
+  DBZ_UI_BLINK_HALF = 16 /* frames visible / hidden — scout cursor cadence */
 };
 
-/* Approximate action-menu window: cream fill + layered border + corner studs. */
-static void draw_densetsu_window(int x, int y, int w, int h) {
-  /* Outer cream rim (2 fb px ≈ 1 SNES px at 2×). */
-  fill_rect(x, y, w, h, DBZ_UI_CREAM_R, DBZ_UI_CREAM_G, DBZ_UI_CREAM_B);
-  /* Orange band */
-  fill_rect(x + 2, y + 2, w - 4, h - 4, DBZ_UI_ORANGE_R, DBZ_UI_ORANGE_G, DBZ_UI_ORANGE_B);
-  /* Dark-red inner band */
-  fill_rect(x + 6, y + 6, w - 12, h - 12, DBZ_UI_DARK_R, DBZ_UI_DARK_G, DBZ_UI_DARK_B);
-  /* Cream interior */
-  fill_rect(x + 10, y + 10, w - 20, h - 20, DBZ_UI_CREAM_R, DBZ_UI_CREAM_G, DBZ_UI_CREAM_B);
-  /* Corner studs: small orange blocks inset on the dark band (game has beveled studs). */
-  const int s = 8;
-  fill_rect(x + 4, y + 4, s, s, DBZ_UI_ORANGE_R, DBZ_UI_ORANGE_G, DBZ_UI_ORANGE_B);
-  fill_rect(x + w - 4 - s, y + 4, s, s, DBZ_UI_ORANGE_R, DBZ_UI_ORANGE_G, DBZ_UI_ORANGE_B);
-  fill_rect(x + 4, y + h - 4 - s, s, s, DBZ_UI_ORANGE_R, DBZ_UI_ORANGE_G, DBZ_UI_ORANGE_B);
-  fill_rect(x + w - 4 - s, y + h - 4 - s, s, s, DBZ_UI_ORANGE_R, DBZ_UI_ORANGE_G, DBZ_UI_ORANGE_B);
+/* Palette index: 0=cream 1=orange 2=dark */
+static const uint8_t DENSETSU_RGB[3][3] = {
+  {DBZ_UI_CREAM_R, DBZ_UI_CREAM_G, DBZ_UI_CREAM_B},
+  {DBZ_UI_ORANGE_R, DBZ_UI_ORANGE_G, DBZ_UI_ORANGE_B},
+  {DBZ_UI_DARK_R, DBZ_UI_DARK_G, DBZ_UI_DARK_B}
+};
+
+static const uint8_t DENSETSU_CORNER_TL[256] = {
+  0,0,0,0,0,0,0,0,0,0,0,0,2,2,2,2,
+  0,0,0,0,0,0,0,0,0,0,0,0,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,2,2,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,2,2,2,2,2,2,
+  2,2,2,2,2,2,2,2,2,2,2,2,2,2,0,0,
+  2,2,2,2,2,2,2,2,2,2,2,2,2,2,0,0,
+  2,2,2,2,2,2,2,2,2,2,2,2,0,0,0,0,
+  2,2,2,2,2,2,2,2,2,2,2,2,0,0,0,0,
+};
+static const uint8_t DENSETSU_CORNER_TR[256] = {
+  0,0,0,0,0,0,0,0,0,0,0,0,2,2,2,2,
+  0,0,0,0,0,0,0,0,0,0,0,0,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  2,2,2,2,1,1,1,1,1,1,1,1,2,2,2,2,
+  2,2,2,2,1,1,1,1,1,1,1,1,2,2,2,2,
+  2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+  2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+  0,0,0,0,2,2,2,2,2,2,2,2,2,2,2,2,
+  0,0,0,0,2,2,2,2,2,2,2,2,2,2,2,2,
+};
+static const uint8_t DENSETSU_CORNER_BL[256] = {
+  0,0,0,0,0,0,0,0,0,0,2,2,2,2,0,0,
+  0,0,0,0,0,0,0,0,0,0,2,2,2,2,0,0,
+  0,0,1,1,1,1,1,1,1,1,2,2,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,2,2,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+  2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+  2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+  2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+};
+static const uint8_t DENSETSU_CORNER_BR[256] = {
+  2,2,0,0,0,0,0,0,0,0,0,0,2,2,2,2,
+  2,2,0,0,0,0,0,0,0,0,0,0,2,2,2,2,
+  0,0,0,0,1,1,1,1,1,1,1,1,2,2,2,2,
+  0,0,0,0,1,1,1,1,1,1,1,1,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,
+  2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+  2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+  2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+  2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+};
+
+/* Action-menu triangle cursor (orange outline, dark fill), 14×14 @ 2×. 0=skip. */
+static const uint8_t DENSETSU_CURSOR[DBZ_UI_CURSOR_W * DBZ_UI_CURSOR_H] = {
+  1,1,1,1,1,1,0,0,0,0,0,0,0,0,
+  1,1,1,1,1,1,0,0,0,0,0,0,0,0,
+  1,1,2,2,2,2,1,1,1,1,0,0,0,0,
+  1,1,2,2,2,2,1,1,1,1,0,0,0,0,
+  1,1,2,2,2,2,2,2,2,2,1,1,0,0,
+  1,1,2,2,2,2,2,2,2,2,1,1,0,0,
+  1,1,2,2,2,2,2,2,2,2,2,2,1,1,
+  1,1,2,2,2,2,2,2,2,2,2,2,1,1,
+  1,1,2,2,2,2,2,2,2,2,1,1,0,0,
+  1,1,2,2,2,2,2,2,2,2,1,1,0,0,
+  1,1,2,2,2,2,1,1,1,1,0,0,0,0,
+  1,1,2,2,2,2,1,1,1,1,0,0,0,0,
+  1,1,1,1,1,1,0,0,0,0,0,0,0,0,
+  1,1,1,1,1,1,0,0,0,0,0,0,0,0,
+};
+
+static unsigned lang_blink_frame;
+
+static void blit_chrome_indices(const uint8_t *tile, int dx, int dy, int tw, int th) {
+  for(int j = 0; j < th; j++) {
+    for(int i = 0; i < tw; i++) {
+      uint8_t v = tile[j * tw + i];
+      if(v > 2) continue;
+      put_px(dx + i, dy + j, DENSETSU_RGB[v][0], DENSETSU_RGB[v][1], DENSETSU_RGB[v][2]);
+    }
+  }
 }
 
-/* Right-pointing triangle cursor (filled), ~native action-menu pointer. */
-static void draw_cursor_tri(int x, int y, int h) {
-  if(h < 4) h = 4;
-  for(int row = 0; row < h; row++) {
-    int dist = row < h / 2 ? row : (h - 1 - row);
-    int width = 2 + dist * 2;
-    if(width > h) width = h;
-    fill_rect(x, y + row, width, 1, DBZ_UI_ORANGE_R, DBZ_UI_ORANGE_G, DBZ_UI_ORANGE_B);
-    /* 1px dark outline on the tip column */
-    put_px(x + width - 1, y + row, DBZ_UI_DARK_R, DBZ_UI_DARK_G, DBZ_UI_DARK_B);
+/* Shared host-UI chrome for in-game overlays (lang boot menu, future panels). */
+static void draw_densetsu_window(int x, int y, int w, int h) {
+  if(w < DBZ_UI_CORNER * 2 + 4 || h < DBZ_UI_CORNER * 2 + 4) return;
+  fill_rect(x, y, w, h, DBZ_UI_CREAM_R, DBZ_UI_CREAM_G, DBZ_UI_CREAM_B);
+
+  /* Mid edges (exclude 16×16 corner stamps). */
+  for(int i = DBZ_UI_CORNER; i < w - DBZ_UI_CORNER; i++) {
+    fill_rect(x + i, y + 0, 1, 2, DBZ_UI_CREAM_R, DBZ_UI_CREAM_G, DBZ_UI_CREAM_B);
+    fill_rect(x + i, y + 2, 1, 4, DBZ_UI_ORANGE_R, DBZ_UI_ORANGE_G, DBZ_UI_ORANGE_B);
+    fill_rect(x + i, y + 6, 1, 4, DBZ_UI_DARK_R, DBZ_UI_DARK_G, DBZ_UI_DARK_B);
+    fill_rect(x + i, y + h - 8, 1, 4, DBZ_UI_ORANGE_R, DBZ_UI_ORANGE_G, DBZ_UI_ORANGE_B);
+    fill_rect(x + i, y + h - 4, 1, 4, DBZ_UI_DARK_R, DBZ_UI_DARK_G, DBZ_UI_DARK_B);
   }
+  for(int j = DBZ_UI_CORNER; j < h - DBZ_UI_CORNER; j++) {
+    fill_rect(x + 0, y + j, 2, 1, DBZ_UI_CREAM_R, DBZ_UI_CREAM_G, DBZ_UI_CREAM_B);
+    fill_rect(x + 2, y + j, 4, 1, DBZ_UI_ORANGE_R, DBZ_UI_ORANGE_G, DBZ_UI_ORANGE_B);
+    fill_rect(x + 6, y + j, 4, 1, DBZ_UI_DARK_R, DBZ_UI_DARK_G, DBZ_UI_DARK_B);
+    fill_rect(x + w - 8, y + j, 4, 1, DBZ_UI_ORANGE_R, DBZ_UI_ORANGE_G, DBZ_UI_ORANGE_B);
+    fill_rect(x + w - 4, y + j, 4, 1, DBZ_UI_DARK_R, DBZ_UI_DARK_G, DBZ_UI_DARK_B);
+  }
+
+  blit_chrome_indices(DENSETSU_CORNER_TL, x, y, DBZ_UI_CORNER, DBZ_UI_CORNER);
+  blit_chrome_indices(DENSETSU_CORNER_TR, x + w - DBZ_UI_CORNER, y, DBZ_UI_CORNER, DBZ_UI_CORNER);
+  blit_chrome_indices(DENSETSU_CORNER_BL, x, y + h - DBZ_UI_CORNER, DBZ_UI_CORNER, DBZ_UI_CORNER);
+  blit_chrome_indices(DENSETSU_CORNER_BR, x + w - DBZ_UI_CORNER, y + h - DBZ_UI_CORNER,
+                      DBZ_UI_CORNER, DBZ_UI_CORNER);
+}
+
+static void draw_cursor_tri(int x, int y) {
+  blit_chrome_indices(DENSETSU_CURSOR, x, y, DBZ_UI_CURSOR_W, DBZ_UI_CURSOR_H);
 }
 
 static void draw_char(int x, int y, char c, uint8_t r, uint8_t g, uint8_t b, int scale) {
@@ -263,59 +386,53 @@ static void present_pixels(void) {
 }
 
 static void draw_lang_menu(void) {
-  /* Ocean-blue playfield (same RGB as overworld water in scout captures). */
+  /* Ocean-blue playfield (scout overworld water). */
   fill_rect(0, 0, WIDTH, HEIGHT, DBZ_UI_OCEAN_R, DBZ_UI_OCEAN_G, DBZ_UI_OCEAN_B);
 
-  /* Compact cream window — closer to native action-menu proportions than the old gold panel. */
-  const int win_w = 280;
-  const int win_h = 168;
+  /* Compact cream window — width fits scale-2 ENGLISH; height = title + 2 rows @ pitch 32. */
+  const int win_w = 220;
+  const int win_h = 148;
   const int win_x = (WIDTH - win_w) / 2;
   const int win_y = (HEIGHT - win_h) / 2 - 8;
-  const int pad = 10; /* draw_densetsu_window interior inset */
 
   draw_densetsu_window(win_x, win_y, win_w, win_h);
 
-  const int inner_x = win_x + pad;
-  const int inner_y = win_y + pad;
-  const int inner_w = win_w - 2 * pad;
+  const int inner_x = win_x + DBZ_UI_PAD_TL;
+  const int inner_y = win_y + DBZ_UI_PAD_TL;
+  const int inner_w = win_w - DBZ_UI_PAD_TL - DBZ_UI_PAD_BR;
 
-  /* Title — dark pixel text like in-game (not gold HUD chrome). */
+  /* Title — dark ink like in-game menus. */
   const char *title = dbz_i18n_str(DBZ_STR_LANG_TITLE);
   int tw = (int)strlen(title) * 8 * 2;
-  draw_text(inner_x + (inner_w - tw) / 2, inner_y + 10, title,
+  draw_text(inner_x + (inner_w - tw) / 2, inner_y + 4, title,
             DBZ_UI_TEXT_R, DBZ_UI_TEXT_G, DBZ_UI_TEXT_B, 2);
 
   if(labels_ready)
-    blit_label(label_gengo, inner_x + (inner_w - 120) / 2, inner_y + 36, 120, 22);
+    blit_label(label_gengo, inner_x + (inner_w - 120) / 2, inner_y + 28, 120, 22);
   else
-    draw_text(inner_x + (inner_w - 5 * 8) / 2, inner_y + 40, "GENGO",
+    draw_text(inner_x + (inner_w - 5 * 8) / 2, inner_y + 32, "GENGO",
               DBZ_UI_TEXT_R, DBZ_UI_TEXT_G, DBZ_UI_TEXT_B, 1);
 
-  /* Rows: plain cream + triangle cursor (no per-row gold boxes). */
-  const int row0_y = inner_y + 72;
-  const int row1_y = inner_y + 108;
-  const int text_x = inner_x + 36;
+  /* Rows: action-menu pitch (32px @ 2×); triangle cursor blinks like the game. */
+  const int row0_y = inner_y + 56;
+  const int text_x = inner_x + 24;
+  const bool cursor_on = ((lang_blink_frame / DBZ_UI_BLINK_HALF) & 1u) == 0u;
 
   for(int i = 0; i < 2; i++) {
-    int ry = i == 0 ? row0_y : row1_y;
-    bool on = lang_sel == i;
-    if(on)
-      draw_cursor_tri(inner_x + 8, ry + 4, 16);
+    int ry = row0_y + i * DBZ_UI_ROW_PITCH;
+    if(cursor_on && lang_sel == i)
+      draw_cursor_tri(inner_x + 4, ry + 1);
     if(i == 0) {
-      draw_text(text_x, ry + 4, "ENGLISH",
+      draw_text(text_x, ry + 1, "ENGLISH",
                 DBZ_UI_TEXT_R, DBZ_UI_TEXT_G, DBZ_UI_TEXT_B, 2);
     } else if(labels_ready) {
-      blit_label(label_nihongo, text_x, ry, 140, 24);
+      blit_label(label_nihongo, text_x, ry - 2, 140, 24);
     } else {
-      draw_text(text_x, ry + 4, "JAPANESE",
+      draw_text(text_x, ry + 1, "JAPANESE",
                 DBZ_UI_TEXT_R, DBZ_UI_TEXT_G, DBZ_UI_TEXT_B, 2);
     }
   }
-
-  /* Hint sits under the window on the playfield — not inside native chrome. */
-  const char *hint = dbz_i18n_str(DBZ_STR_LANG_HINT);
-  int hw = (int)strlen(hint) * 8;
-  draw_text((WIDTH - hw) / 2, win_y + win_h + 14, hint, 255, 239, 206, 1);
+  /* No non-native hint under the window — keep the playfield clean like the ROM UI. */
 }
 
 static void lang_confirm(void);
@@ -446,6 +563,7 @@ static void menu_tick(void) {
     }
   }
 
+  lang_blink_frame++;
   draw_lang_menu();
   present_pixels();
 }
@@ -631,6 +749,7 @@ void dbz_web_enter_lang_menu(int initial_sel, int skip_if_start) {
   lang_sel = initial_sel ? 1 : 0;
   lang_prev_keys = 0xFFFFFFFFu; /* ignore currently-held keys for one edge */
   lang_confirm_lock = 10;
+  lang_blink_frame = 0;
   boot_phase = BOOT_LANG;
   loop_running = true;
   labels_ready = false;
