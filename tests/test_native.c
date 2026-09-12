@@ -5,6 +5,7 @@
 #include "rom.h"
 #include "i18n.h"
 #include "text_script.h"
+#include "snes.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11357,6 +11358,31 @@ int main(int argc,char **argv) {
     require(ca.pc==0xcfc4 && a->ram[0x04]==0xf4,"cfb2 EN first byte F4");
     dbz_i18n_set(DBZ_LANG_JA);
     dbz_text_unbind();
+  }
+  /* EN font ensure: JA no-op on Bus; EN installs 2bpp tiles into real PPU VRAM $2000. */
+  {
+    require(!dbz_text_en_font_ready(), "font idle");
+    dbz_i18n_set(DBZ_LANG_JA);
+    Cpu ca=make_cpu(a,0,0);
+    dbz_text_en_font_ensure(&ca);
+    require(!dbz_text_en_font_ready(), "JA ensure no-op");
+    Snes *snes = snes_init();
+    require(snes && snes->ppu, "snes_init");
+    dbz_i18n_set(DBZ_LANG_EN);
+    dbz_text_en_font_reset();
+    Cpu ce={0};
+    ce.mem=snes; ce.read=snes_cpuRead; ce.write=snes_cpuWrite; ce.idle=snes_cpuIdle;
+    ce.dp=0;
+    dbz_text_en_font_ensure(&ce);
+    require(dbz_text_en_font_ready(), "EN font ready");
+    /* tile $06 ('b'-family) has ink in row 0 — word at VRAM $2000 + 6*8 */
+    require(snes->ppu->vram[(0x2000u + 6u * 8u) & 0x7fffu] != 0, "EN tile in VRAM");
+    require(snes_read(snes, 0x7e9000u) == 0x00, "EN mirror $7E9000 tile0");
+    require(snes_read(snes, 0x7e9060u) != 0x00, "EN mirror tile6 bytes");
+    size_t n=0; require(dbz_i18n_en_script(2, 3, &n) && n > 0, "EN script idx 3");
+    dbz_i18n_set(DBZ_LANG_JA);
+    require(!dbz_text_en_font_ready(), "font reset on JA");
+    snes_free(snes);
   }
 
 

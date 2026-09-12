@@ -77,14 +77,17 @@ With EN pointer-swap, `[$00]` points at the overlay, so different-length streams
 - `FF` line, `FE` page, `7F` end box, `01` gap (`CFB9` path).
 - High bytes (`$A0+`, …) take multi-byte / table expand paths in `$CFC4+`.
 
-## Font (EN) — research status
+## Font (EN) — contract
 
-| Item | Status |
-|------|--------|
-| JP font | Compressed graphics (RHDN / LotSS); not in C yet |
-| Klepto EN font | IPS cluster ~file `$088000` (CPU bank `$91`, JP=`FF` empty) — **reference only** |
-| Upload | Likely via `00:8732` VRAM CPU copy / `00:0800` DMA queue after `$7E3000` decode |
-| This pass | Documented; no upload leaf hooked. Stub: when a clear `lang==EN` font-upload call site is nativized, load tiles into bank `$91` overlay or VRAM without ROM mutation |
+| Item | Value |
+|------|-------|
+| JP upload leaf | `00:90C1`: DP+`$83/$85` = `$08:8000` → `C559` decompress → `$7E9000` → `C68C` rearrange → DMA (`90E6`) to VRAM word **`$2000`** |
+| Klepto ref tiles | 2bpp SNES, **`$1800`** bytes (384 tiles) at CPU `$91:8036` / file `$088036` (JP lead-in was `$FF`; gate stub at `$10:A000` copies when `$83:$85==$08:8000`) — **data source only** |
+| Native API | `dbz_text_en_font_ensure(cpu)` / `dbz_text_en_font_ready()` / `dbz_text_en_font_reset()` |
+| EN behavior | On `00:90C1` RTL, ensure installs tiles into `$7E9000` + PPU `vram[$2000..]` and sets DP+`$89=$1800`. Idempotent while `lang==EN`. |
+| JA | Ensure is a no-op; never writes VRAM / `$7E9000` |
+| Glyph indices | Script bytes map 1:1 to 2bpp tile numbers (attr `#$24` in `$7E3000`); Latin lowercase starts ~`$05`=`a` |
+| Data file | `src/text_en_font.inc` (extracted from Klepto IPS offline; not applied at runtime) |
 
 ## Tooling
 
@@ -94,7 +97,8 @@ With EN pointer-swap, `[$00]` points at the overlay, so different-length streams
 
 | File | Role |
 |------|------|
-| `src/text_script.h` / `.c` | Bind / overlay / filter API |
+| `src/text_script.h` / `.c` | Bind / overlay / filter / EN font API |
+| `src/text_en_font.inc` | Embedded 2bpp EN tileset (`$1800`) |
 | `src/i18n.h` / `.c` | Language + EN script tables |
 | `src/native_video.inc` | `text_script_cf3a_step`, `text_script_cfb2_step` |
 | `docs/i18n.md` | Policy + ship state |

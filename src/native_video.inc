@@ -1819,7 +1819,9 @@ static bool palette_dd44_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
-/* $0090C1: set decompress source $08:8000, VMAIN, call C559/C68C, DMA to $2000, palette. */
+/* $0090C1: set decompress source $08:8000, VMAIN, call C559/C68C, DMA to $2000, palette.
+ * EN (text API): after the leaf body, dbz_text_en_font_ensure installs Klepto-ref
+ * 2bpp Latin tiles into VRAM $2000 / $7E9000 (same dest as this DMA). JA: no-op. */
 static bool scene_gfx_90c1_step(Cpu *c, uint16_t pc) {
   if(c->e || c->xf || c->d || !c->mf) return false;
   switch(pc) {
@@ -1842,7 +1844,11 @@ static bool scene_gfx_90c1_step(Cpu *c, uint16_t pc) {
     case 0x90da: store_y_abs16(c, 0x2116); break;
     case 0x90dd: jsl_to(c, 0x90e6); break;
     case 0x90e1: jsl_to(c, 0x946f); break;
-    case 0x90e5: return_long(c); break;
+    case 0x90e5:
+      /* EN: replace JP tileset at VRAM $2000 with Latin 2bpp (same leaf dest). */
+      dbz_text_en_font_ensure(c);
+      return_long(c);
+      break;
   }
   return true;
 }

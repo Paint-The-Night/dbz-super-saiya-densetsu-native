@@ -11,9 +11,12 @@
  *   01:CF3A  message resolve ($0733 ×3 → 07:8F16 far bank; $0723 → u16 ptr)
  *            → DP+$00 long = string start; cursor math → DP+$20; Y←$071D
  *   01:CFB2  fetch LDA [$00],Y → $04; glyph path → $7E3000,X (01:D000/D00B)
+ *   00:90C1  font/tileset: decompress $08:8000 → $7E9000, DMA VRAM $2000
  *
  * EN pointer-swap: after resolve, dbz_text_pointer_swap_after_resolve may
  * retarget DP+$00 to a host WRAM overlay holding C-table glyph bytes.
+ * EN font: dbz_text_en_font_ensure installs Klepto-ref 2bpp tiles via the
+ * same VRAM $2000 path (hooked at 00:90C1 RTL).
  */
 
 #include <stddef.h>
@@ -32,6 +35,10 @@ extern "C" {
 #define DBZ_TEXT_EN_OVERLAY_MAX  0x0800u
 
 #define DBZ_TEXT_MAIN_BANK_SEL   2u /* $0733 index → 06:8000 at 07:8F16 */
+
+/* EN 2bpp font (Klepto ref $91:8036) — size / VRAM word dest. */
+#define DBZ_TEXT_EN_FONT_SIZE       0x1800u
+#define DBZ_TEXT_EN_FONT_VRAM_WORD  0x2000u
 
 typedef struct {
   bool active;
@@ -58,11 +65,12 @@ const DbzTextStream *dbz_text_active_stream(void);
  * EN — this remains the extension point for logical overlays. */
 uint8_t dbz_text_filter_script_byte(uint32_t addr24, uint8_t rom_byte);
 
-
-/* EN font upload stub — returns false until bank-$91 / VRAM leaf is wired.
- * Call sites should keep JP font path when false. See docs/text-api.md. */
+/* EN font (2bpp Latin tileset). Ready after a successful ensure while lang==EN.
+ * ensure: copies tiles into $7E9000 + PPU VRAM[$2000..] (00:90C1 DMA dest).
+ * reset: clear ready (called on language change). JA paths never upload. */
 bool dbz_text_en_font_ready(void);
-void dbz_text_en_font_ensure(Cpu *c); /* no-op stub until extract/upload lands */
+void dbz_text_en_font_ensure(Cpu *c);
+void dbz_text_en_font_reset(void);
 
 #ifdef __cplusplus
 }
