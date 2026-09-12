@@ -1,9 +1,11 @@
 /* Browser host for the DBZ native port. ROM is never embedded: the player
  * supplies Japanese Rev 1 via the File API; validation uses dbz_load_rom_bytes.
- * After a validated ROM is offered, an in-game LANGUAGE boot menu (SDL) is the
- * first screen in the game viewport — not a website HTML panel.
- * Language selects native i18n state only; the same clean JP ROM always boots
- * (no IPS / ROM patching). */
+ * After a validated ROM is offered, in-game SDL boot menus are the first
+ * screens in the game viewport — LANGUAGE, then CONTROLS — not HTML panels.
+ * Language selects native i18n state only; controls choose Traditional
+ * (gestures/pad) vs Direct touch (canvas hit-test). Both synthesize SNES
+ * bits 0–11 via snes_setButtonState. Direct never pokes menu-selection WRAM.
+ * The same clean JP ROM always boots (no IPS / ROM patching). */
 #include <SDL.h>
 #include <emscripten.h>
 #include <stdbool.h>
@@ -39,17 +41,24 @@ static uint64_t deadline, frequency;
 static const char *preferences = "/dbz-saves";
 static char status_message[256];
 
-/* ---- In-game language boot menu (before emulator title) ---- */
-enum { BOOT_NONE = 0, BOOT_LANG = 1, BOOT_PLAYING = 2 };
+/* ---- In-game boot menus (before emulator title): LANGUAGE then CONTROLS ---- */
+enum { BOOT_NONE = 0, BOOT_LANG = 1, BOOT_CONTROLS = 2, BOOT_PLAYING = 3 };
+enum { CTRL_TRADITIONAL = 0, CTRL_DIRECT = 1 };
 static int boot_phase = BOOT_NONE;
 static int lang_sel;          /* 0 = ENGLISH, 1 = 日本語 */
+static int ctrl_mode = CTRL_TRADITIONAL;
+static int ctrl_sel;          /* 0 = Traditional, 1 = Direct touch */
 static unsigned lang_prev_keys;
 static int lang_confirm_lock; /* debounce frames after enter */
-/* Raster strips from JS (BGRX): title subtitle + JP option label */
+/* Raster strips from JS (BGRX): JP labels for LANGUAGE + CONTROLS */
 enum { LABEL_W = 200, LABEL_H = 28, LABEL_BYTES = LABEL_W * LABEL_H * 4 };
 static uint8_t label_gengo[LABEL_BYTES];
 static uint8_t label_nihongo[LABEL_BYTES];
+static uint8_t label_ctrl_title[LABEL_BYTES];
+static uint8_t label_ctrl_trad[LABEL_BYTES];
+static uint8_t label_ctrl_direct[LABEL_BYTES];
 static uint8_t labels_ready;
+static uint8_t ctrl_labels_ready;
 
 /* Tiny 8×8 glyphs for A–Z, space, and a few symbols (bit0 = leftmost). */
 static const uint8_t FONT8[96][8] = {
@@ -388,23 +397,85 @@ static void present_pixels(void) {
   SDL_RenderPresent(renderer);
 }
 
-static void draw_lang_menu(void) {
-  /* Ocean-blue playfield (scout overworld water). */
+/* Shared LANGUAGE / CONTROLS window. Wide enough for scale-2 "DIRECT TOUCH". */
+enum { BOOT_WIN_W = 272, BOOT_WIN_H = 148 };
+
+static void boot_menu_geom(int *win_x, int *win_y, int *inner_x, int *inner_y,
+                           int *inner_w, int *row0_y) {
+  *win_x = (WIDTH - BOOT_WIN_W) / 2;
+  *win_y = (HEIGHT - BOOT_WIN_H) / 2 - 8;
+  *inner_x = *win_x + DBZ_UI_PAD_TL;
+  *inner_y = *win_y + DBZ_UI_PAD_TL;
+  *inner_w = BOOT_WIN_W - DBZ_UI_PAD_TL - DBZ_UI_PAD_BR;
+  *row0_y = *inner_y + 56;
+}
+
+/* Host-menu hit-test in 512×480 framebuffer pixels. Returns 0/1 or -1. */
+static int boot_menu_hit_row(int x, int y) {
+  int win_x, win_y, inner_x, inner_y, inner_w, row0_y;
+  boot_menu_geom(&win_x, &win_y, &inner_x, &inner_y, &inner_w, &row0_y);
+  (void)inner_x; (void)inner_y; (void)inner_w;
+  if(x < win_x || x >= win_x + BOOT_WIN_W) return -1;
+  if(y < win_y || y >= win_y + BOOT_WIN_H) return -1;
+  if(y < row0_y) return -1;
+  int row = (y - row0_y) / DBZ_UI_ROW_PITCH;
+  if(row < 0 || row > 1) return -1;
+  return row;
+}
+
+static void draw_boot_playfield(int *inner_x, int *inner_y, int *inner_w, int *row0_y) {
   fill_rect(0, 0, WIDTH, HEIGHT, DBZ_UI_OCEAN_R, DBZ_UI_OCEAN_G, DBZ_UI_OCEAN_B);
+  int win_x, win_y;
+  boot_menu_geom(&win_x, &win_y, inner_x, inner_y, inner_w, row0_y);
+  draw_densetsu_window(win_x, win_y, BOOT_WIN_W, BOOT_WIN_H);
+}
 
-  /* Compact cream window — width fits scale-2 ENGLISH; height = title + 2 rows @ pitch 32. */
-  const int win_w = 220;
-  const int win_h = 148;
-  const int win_x = (WIDTH - win_w) / 2;
-  const int win_y = (HEIGHT - win_h) / 2 - 8;
+static void raster_jp_labels(uint8_t *a, int aw, int ah, const char *as,
+                             uint8_t *b, int bw, int bh, const char *bs,
+                             uint8_t *c, int cw, int ch, const char *cs,
+                             uint8_t *ready) {
+  /* JS canvas raster → BGRX; missing strings skipped. */
+  EM_ASM({
+    function raster(text, ptr, w, h) {
+      if(!text || !ptr) return;
+      var cv = document.createElement('canvas');
+      cv.width = w;
+      cv.height = h;
+      var ctx = cv.getContext('2d');
+      ctx.imageSmoothingEnabled = false;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = '#000031';
+      ctx.font = 'bold 18px "Segoe UI", "Yu Gothic", "Hiragino Sans", sans-serif';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, 2, h / 2);
+      var img = ctx.getImageData(0, 0, w, h).data;
+      var heap = Module.HEAPU8;
+      for(var i = 0; i < w * h; i++) {
+        var s = i * 4;
+        var d = ptr + s;
+        heap[d + 0] = img[s + 2];
+        heap[d + 1] = img[s + 1];
+        heap[d + 2] = img[s + 0];
+        heap[d + 3] = img[s + 3];
+      }
+    }
+    try {
+      if($0) raster(UTF8ToString($9), $0, $1, $2);
+      if($3) raster(UTF8ToString($10), $3, $4, $5);
+      if($6) raster(UTF8ToString($11), $6, $7, $8);
+      Module.HEAPU8[$12] = 1;
+    } catch (e) {
+      console.warn('boot label raster failed', e);
+      Module.HEAPU8[$12] = 0;
+    }
+  }, (uintptr_t)a, aw, ah, (uintptr_t)b, bw, bh, (uintptr_t)c, cw, ch,
+     as ? as : "", bs ? bs : "", cs ? cs : "", (uintptr_t)ready);
+}
 
-  draw_densetsu_window(win_x, win_y, win_w, win_h);
+static void draw_lang_menu(void) {
+  int inner_x, inner_y, inner_w, row0_y;
+  draw_boot_playfield(&inner_x, &inner_y, &inner_w, &row0_y);
 
-  const int inner_x = win_x + DBZ_UI_PAD_TL;
-  const int inner_y = win_y + DBZ_UI_PAD_TL;
-  const int inner_w = win_w - DBZ_UI_PAD_TL - DBZ_UI_PAD_BR;
-
-  /* Title — dark ink like in-game menus. */
   const char *title = dbz_i18n_str(DBZ_STR_LANG_TITLE);
   int tw = (int)strlen(title) * 8 * 2;
   draw_text(inner_x + (inner_w - tw) / 2, inner_y + 4, title,
@@ -416,8 +487,6 @@ static void draw_lang_menu(void) {
     draw_text(inner_x + (inner_w - 5 * 8) / 2, inner_y + 32, "GENGO",
               DBZ_UI_TEXT_R, DBZ_UI_TEXT_G, DBZ_UI_TEXT_B, 1);
 
-  /* Rows: action-menu pitch (32px @ 2×); triangle cursor blinks like the game. */
-  const int row0_y = inner_y + 56;
   const int text_x = inner_x + 24;
   const bool cursor_on = ((lang_blink_frame / DBZ_UI_BLINK_HALF) & 1u) == 0u;
 
@@ -435,10 +504,43 @@ static void draw_lang_menu(void) {
                 DBZ_UI_TEXT_R, DBZ_UI_TEXT_G, DBZ_UI_TEXT_B, 2);
     }
   }
-  /* No non-native hint under the window — keep the playfield clean like the ROM UI. */
+}
+
+static void draw_ctrl_menu(void) {
+  int inner_x, inner_y, inner_w, row0_y;
+  draw_boot_playfield(&inner_x, &inner_y, &inner_w, &row0_y);
+
+  const bool ja = dbz_i18n_get() == DBZ_LANG_JA;
+  if(ja && ctrl_labels_ready)
+    blit_label(label_ctrl_title, inner_x + (inner_w - 80) / 2, inner_y + 6, 80, 22);
+  else {
+    const char *title = dbz_i18n_str(DBZ_STR_CTRL_TITLE);
+    int tw = (int)strlen(title) * 8 * 2;
+    draw_text(inner_x + (inner_w - tw) / 2, inner_y + 12, title,
+              DBZ_UI_TEXT_R, DBZ_UI_TEXT_G, DBZ_UI_TEXT_B, 2);
+  }
+
+  const int text_x = inner_x + 24;
+  const bool cursor_on = ((lang_blink_frame / DBZ_UI_BLINK_HALF) & 1u) == 0u;
+
+  for(int i = 0; i < 2; i++) {
+    int ry = row0_y + i * DBZ_UI_ROW_PITCH;
+    if(cursor_on && ctrl_sel == i)
+      draw_cursor_tri(inner_x + 4, ry + 1);
+    if(ja && ctrl_labels_ready) {
+      if(i == 0)
+        blit_label(label_ctrl_trad, text_x, ry - 2, 140, 24);
+      else
+        blit_label(label_ctrl_direct, text_x, ry - 2, 180, 24);
+    } else {
+      const char *row = dbz_i18n_str(i == 0 ? DBZ_STR_CTRL_TRADITIONAL : DBZ_STR_CTRL_DIRECT);
+      draw_text(text_x, ry + 1, row, DBZ_UI_TEXT_R, DBZ_UI_TEXT_G, DBZ_UI_TEXT_B, 2);
+    }
+  }
 }
 
 static void lang_confirm(void);
+static void controls_confirm(void);
 static void menu_tick(void);
 static void frame_tick(void);
 
@@ -458,10 +560,14 @@ static void enter_playing_chrome(void) {
     const chrome = document.getElementById('touch-chrome');
     if(chrome) chrome.classList.remove('hidden');
     const hint = document.getElementById('gesture-hint');
-    if(hint && !localStorage.getItem('dbz-gesture-hint-dismissed'))
+    var mode = UTF8ToString($0);
+    window.__dbzControlsMode = mode;
+    if(hint && mode !== 'direct' && !localStorage.getItem('dbz-gesture-hint-dismissed'))
       hint.classList.remove('hidden');
+    if(typeof window.__dbzApplyControlsChrome === 'function')
+      window.__dbzApplyControlsChrome(mode);
     if(typeof window.__dbzOnRomLoaded === 'function') window.__dbzOnRomLoaded();
-  });
+  }, ctrl_mode == CTRL_DIRECT ? "direct" : "traditional");
 }
 
 static void battery_load(Snes *s, const char *directory) {
@@ -530,6 +636,35 @@ static void lang_confirm(void) {
   DbzLang chosen = lang_sel == 1 ? DBZ_LANG_JA : DBZ_LANG_EN;
   dbz_i18n_set(chosen);
   const char *lang = chosen == DBZ_LANG_JA ? "ja" : "en";
+  EM_ASM({
+    try { localStorage.setItem('dbz-lang', UTF8ToString($0)); } catch (e) {}
+  }, lang);
+
+  keys_kb = 0;
+  keys_touch = 0;
+  keys_gesture = 0;
+  for(int i = 0; i < PULSE_SLOTS; i++) { pulses[i].mask = 0; pulses[i].remaining = 0; }
+
+  ctrl_sel = (ctrl_mode == CTRL_DIRECT) ? 1 : 0;
+  lang_prev_keys = 0xFFFFFFFFu;
+  lang_confirm_lock = 10;
+  lang_blink_frame = 0;
+  ctrl_labels_ready = 0;
+  raster_jp_labels(label_ctrl_title, 80, 22, "操作",
+                   label_ctrl_trad, 140, 24, "従来",
+                   label_ctrl_direct, 180, 24, "直接タッチ",
+                   &ctrl_labels_ready);
+  boot_phase = BOOT_CONTROLS;
+  set_status(ctrl_mode == CTRL_DIRECT
+    ? "Controls — tap a row"
+    : "Controls — ↑↓ / flick · A / tap to confirm");
+  draw_ctrl_menu();
+  present_pixels();
+}
+
+static void controls_confirm(void) {
+  ctrl_mode = ctrl_sel ? CTRL_DIRECT : CTRL_TRADITIONAL;
+  const char *mode = ctrl_mode == CTRL_DIRECT ? "direct" : "traditional";
   boot_phase = BOOT_NONE;
   lang_confirm_lock = 8;
   keys_kb = 0;
@@ -538,15 +673,21 @@ static void lang_confirm(void) {
   for(int i = 0; i < PULSE_SLOTS; i++) { pulses[i].mask = 0; pulses[i].remaining = 0; }
   emscripten_cancel_main_loop();
   EM_ASM({
-    const lang = UTF8ToString($0);
-    try { localStorage.setItem('dbz-lang', lang); } catch (e) {}
-    if(typeof window.__dbzOnLangPicked === 'function')
+    const mode = UTF8ToString($0);
+    try { localStorage.setItem('dbz-controls', mode); } catch (e) {}
+    window.__dbzControlsMode = mode;
+    if(typeof window.__dbzOnControlsPicked === 'function')
+      window.__dbzOnControlsPicked(mode);
+    else if(typeof window.__dbzOnLangPicked === 'function') {
+      var lang = 'en';
+      try { lang = localStorage.getItem('dbz-lang') || 'en'; } catch (e) {}
       window.__dbzOnLangPicked(lang);
-  }, lang);
+    }
+  }, mode);
 }
 
 static void menu_tick(void) {
-  if(boot_phase != BOOT_LANG) return;
+  if(boot_phase != BOOT_LANG && boot_phase != BOOT_CONTROLS) return;
   poll_input_events();
   if(!loop_running) return;
 
@@ -557,17 +698,20 @@ static void menu_tick(void) {
   if(lang_confirm_lock > 0) {
     lang_confirm_lock--;
   } else {
-    if(pressed & (1u << 4)) lang_sel = (lang_sel + 1) % 2; /* Up */
-    if(pressed & (1u << 5)) lang_sel = (lang_sel + 1) % 2; /* Down */
+    int *sel = (boot_phase == BOOT_LANG) ? &lang_sel : &ctrl_sel;
+    if(pressed & (1u << 4)) *sel = (*sel + 1) % 2; /* Up */
+    if(pressed & (1u << 5)) *sel = (*sel + 1) % 2; /* Down */
     /* A / B / Start / X confirm */
     if(pressed & ((1u << 8) | (1u << 0) | (1u << 3) | (1u << 9))) {
-      lang_confirm();
+      if(boot_phase == BOOT_LANG) lang_confirm();
+      else controls_confirm();
       return;
     }
   }
 
   lang_blink_frame++;
-  draw_lang_menu();
+  if(boot_phase == BOOT_LANG) draw_lang_menu();
+  else if(boot_phase == BOOT_CONTROLS) draw_ctrl_menu();
   present_pixels();
 }
 
@@ -647,6 +791,43 @@ void dbz_web_toggle_pause(void) {
   if(boot_phase == BOOT_PLAYING) paused = !paused;
 }
 
+/* 0 = Traditional (gestures/pad), 1 = Direct touch. Both still use bits 0–11. */
+EMSCRIPTEN_KEEPALIVE
+void dbz_web_set_controls_mode(int mode) {
+  ctrl_mode = mode ? CTRL_DIRECT : CTRL_TRADITIONAL;
+}
+
+EMSCRIPTEN_KEEPALIVE
+int dbz_web_get_controls_mode(void) {
+  return ctrl_mode == CTRL_DIRECT ? 1 : 0;
+}
+
+/*
+ * Canvas tap in 512×480 framebuffer pixels (top-left origin).
+ * Host menus: hit-test the two Densetsu rows and confirm (host cursor only).
+ * In-game Direct: pulse A. No recovered menu-selection WRAM — do not invent
+ * addresses; never poke selection RAM.
+ */
+EMSCRIPTEN_KEEPALIVE
+void dbz_web_canvas_tap(int x, int y) {
+  if(boot_phase == BOOT_LANG || boot_phase == BOOT_CONTROLS) {
+    int row = boot_menu_hit_row(x, y);
+    if(row < 0) return;
+    if(boot_phase == BOOT_LANG) {
+      lang_sel = row;
+      lang_confirm();
+    } else {
+      ctrl_sel = row;
+      controls_confirm();
+    }
+    return;
+  }
+  if(boot_phase == BOOT_PLAYING && ctrl_mode == CTRL_DIRECT) {
+    /* Stub until a menu cursor byte is recovered (docs/ram-map.md). */
+    dbz_web_pulse_button(8, 3); /* A */
+  }
+}
+
 /* Shared post-validation boot: takes owned 1 MiB buffer (freed here). */
 static int boot_prepared_rom(uint8_t *rom, size_t rom_size) {
   if(game) {
@@ -683,6 +864,8 @@ static int boot_prepared_rom(uint8_t *rom, size_t rom_size) {
   enter_playing_chrome();
   if(dbz_i18n_get() == DBZ_LANG_EN)
     set_status(dbz_i18n_str(DBZ_STR_EN_WIP_STATUS));
+  else if(ctrl_mode == CTRL_DIRECT)
+    set_status(dbz_i18n_str(DBZ_STR_PLAYING_DIRECT_STATUS));
   else
     set_status(dbz_i18n_str(DBZ_STR_PLAYING_STATUS));
   emscripten_set_main_loop(frame_tick, 0, 0);
@@ -742,13 +925,14 @@ const char *dbz_web_expected_sha256(void) {
   return DBZ_ROM_SHA256;
 }
 
-/* Show in-game LANGUAGE / 言語 boot menu as the first canvas screen.
- * initial_sel: 0=ENGLISH, 1=日本語 (from localStorage preference).
- * skip_if_start: if non-zero and Start is held, auto-confirm initial_sel. */
+/* Show in-game LANGUAGE / 言語 then CONTROLS as the first canvas screens.
+ * initial_sel: 0=ENGLISH, 1=日本語 (from localStorage dbz-lang).
+ * skip_if_start: if non-zero and Start is held, skip both menus using
+ * remembered language plus dbz_web_set_controls_mode / dbz-controls. */
 EMSCRIPTEN_KEEPALIVE
 void dbz_web_enter_lang_menu(int initial_sel, int skip_if_start) {
   if(game || boot_phase == BOOT_PLAYING) return;
-  if(boot_phase == BOOT_LANG) return;
+  if(boot_phase == BOOT_LANG || boot_phase == BOOT_CONTROLS) return;
 
   lang_sel = initial_sel ? 1 : 0;
   lang_prev_keys = 0xFFFFFFFFu; /* ignore currently-held keys for one edge */
@@ -756,41 +940,15 @@ void dbz_web_enter_lang_menu(int initial_sel, int skip_if_start) {
   lang_blink_frame = 0;
   boot_phase = BOOT_LANG;
   loop_running = true;
-  labels_ready = false;
+  labels_ready = 0;
+  ctrl_labels_ready = 0;
 
-  /* Ask JS to rasterize JP labels into our BGRX buffers. */
+  raster_jp_labels(label_gengo, 120, 22, "言語",
+                   label_nihongo, 140, 24, "日本語",
+                   NULL, 0, 0, "",
+                   &labels_ready);
+
   EM_ASM({
-    function raster(text, ptr, w, h) {
-      var c = document.createElement('canvas');
-      c.width = w;
-      c.height = h;
-      var ctx = c.getContext('2d');
-      ctx.imageSmoothingEnabled = false;
-      ctx.clearRect(0, 0, w, h);
-      ctx.fillStyle = '#000031'; /* DBZ_UI_TEXT — cream-window ink */
-      ctx.font = 'bold 18px "Segoe UI", "Yu Gothic", "Hiragino Sans", sans-serif';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(text, 2, h / 2);
-      var img = ctx.getImageData(0, 0, w, h).data;
-      var heap = Module.HEAPU8;
-      for(var i = 0; i < w * h; i++) {
-        var s = i * 4;
-        var d = ptr + s;
-        /* Store B,G,R,A — blit_label passes s[2],s[1],s[0] as R,G,B to put_px */
-        heap[d + 0] = img[s + 2];
-        heap[d + 1] = img[s + 1];
-        heap[d + 2] = img[s + 0];
-        heap[d + 3] = img[s + 3];
-      }
-    }
-    try {
-      raster('言語', $0, 120, 22);
-      raster('日本語', $1, 140, 24);
-      Module.HEAPU8[$2] = 1;
-    } catch (e) {
-      console.warn('boot label raster failed', e);
-      Module.HEAPU8[$2] = 0;
-    }
     document.body.classList.add('playing');
     const panel = document.getElementById('loader');
     if(panel) panel.classList.add('hidden');
@@ -804,18 +962,21 @@ void dbz_web_enter_lang_menu(int initial_sel, int skip_if_start) {
     if(canvas) { canvas.focus(); canvas.tabIndex = 0; }
     const chrome = document.getElementById('touch-chrome');
     if(chrome) chrome.classList.remove('hidden');
-  }, (uintptr_t)label_gengo, (uintptr_t)label_nihongo, (uintptr_t)&labels_ready);
+  });
 
-  /* Quiet override: held Start skips menu and uses remembered cursor. */
+  /* Quiet override: held Start skips LANGUAGE + CONTROLS (remembered lang+mode). */
   if(skip_if_start) {
     unsigned held = keys_kb | keys_touch | keys_gesture;
     if(held & (1u << 3)) {
       lang_confirm();
+      controls_confirm();
       return;
     }
   }
 
-  set_status("Language — ↑↓ / flick · A / tap to confirm");
+  set_status(ctrl_mode == CTRL_DIRECT
+    ? "Language — tap a row"
+    : "Language — ↑↓ / flick · A / tap to confirm");
   draw_lang_menu();
   present_pixels();
   emscripten_set_main_loop(menu_tick, 0, 0);

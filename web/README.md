@@ -88,32 +88,39 @@ Point densetsu.garyperrigo.com at that distribution.
 **No COOP/COEP** (or `Cross-Origin-Embedder-Policy`) headers are required:
 this build is **single-threaded** (no `-pthread`).
 
-## Language select + native i18n
+## Language + Controls select + native i18n
 
-Language is **not** a website HTML panel. After a validated Japanese Rev 1 ROM is
-loaded, the **first screen in the game viewport** is an SDL-drawn
-**LANGUAGE / 言語** boot menu (`src/web_main.c`).
+Language and controls are **not** website HTML panels. After a validated
+Japanese Rev 1 ROM is loaded, the **first screens in the game viewport** are
+SDL-drawn boot menus (`src/web_main.c`):
 
-- **Japanese** — `dbz_i18n_set(DBZ_LANG_JA)` then boot clean Rev 1.
+1. **LANGUAGE / 言語** — Japanese or English.
+2. **CONTROLS / 操作** — Traditional (gestures/pad) or Direct touch.
+
+Not a third row on the language menu — two screens.
+
+- **Japanese** — `dbz_i18n_set(DBZ_LANG_JA)` then (after Controls) boot clean Rev 1.
 - **English** — `dbz_i18n_set(DBZ_LANG_EN)` then boot the **same** clean Rev 1.
   Dialogue remains Japanese until native text/font hooks and EN tables exist
   (status may note the translation layer is in progress). No mojibake from IPS.
 
-Controls: D-pad / flick Up·Down, A / tap confirm.
+Host-menu input: D-pad / flick Up·Down, A / tap confirm; Direct mode tap-hits
+the two Densetsu rows.
 
-Choice is remembered in `localStorage` key `dbz-lang` (cursor default), but the
-in-game boot menu is shown every session. Quiet override: hold **Start** while
-confirming the ROM load to skip the menu and use the remembered language.
+Choices persist as `localStorage` `dbz-lang` (`en`|`ja`) and `dbz-controls`
+(`traditional`|`direct`). The menus still show every session. Quiet override:
+hold **Start** while confirming the ROM load to skip **both** screens and use
+the remembered language + controls pair.
 
 Klepto IPS lives under `research/klepto-reference/` as wording reference only.
 
 ### Host overlay chrome (`draw_densetsu_window`)
 
-Boot-menu (and future host overlays) share `draw_densetsu_window` in
-`src/web_main.c`. Chrome is **pixel-sampled** from
-`artifacts/scout-start-game/frame-003000.bmp` (LakeSnes 2×): cream/orange/dark
-bevel, baked 16×16 corner studs, ocean playfield, dark-ink labels, and a blinking
-action-menu triangle cursor. No ROM patching — SDL framebuffer only.
+LANGUAGE and CONTROLS share `draw_densetsu_window` in `src/web_main.c`. Chrome
+is **pixel-sampled** from `artifacts/scout-start-game/frame-003000.bmp`
+(LakeSnes 2×): cream/orange/dark bevel, baked 16×16 corner studs, ocean
+playfield, dark-ink labels, and a blinking action-menu triangle cursor. No ROM
+patching — SDL framebuffer only.
 
 
 ## How ROM load works
@@ -121,8 +128,8 @@ action-menu triangle cursor. No ROM patching — SDL framebuffer only.
 1. Page loads hashed `dbz.js` / `dbz.wasm` (engine only). Loader is the first **site** screen.
 2. User picks or drops a `.sfc`, or clicks **Play remembered ROM** (IndexedDB; click required for Web Audio unlock).
 3. JS validates JP SHA-256 and holds the clean 1 MiB image (no patch step).
-4. C `_dbz_web_enter_lang_menu` draws the in-game LANGUAGE menu on the SDL canvas.
-5. On confirm, C sets `dbz_i18n_set`; JS calls `_dbz_web_load_rom` / `_dbz_web_load_prepared_rom` with the **clean** buffer (C re-checks SHA-256).
+4. C `_dbz_web_enter_lang_menu` draws LANGUAGE, then CONTROLS, on the SDL canvas.
+5. On Controls confirm, C sets `dbz_i18n_set` + controls mode; JS calls `_dbz_web_load_rom` / `_dbz_web_load_prepared_rom` with the **clean** buffer (C re-checks SHA-256).
 6. Emulator frame loop starts; real title/boot proceeds.
 
 ## Smoke test
@@ -140,10 +147,13 @@ ls web/dist/dbz.*.js web/dist/dbz.*.wasm
 
 Arrows, Z/A/X/S/D/C, Enter, Right Shift; P pause; Tab turbo.
 
-### Canvas-native touch (primary)
+### Canvas-native touch (mode-gated)
 
-The game canvas is the input surface. Gestures synthesize the same SNES bits
-0–11 that the keyboard uses (`snes_setButtonState`). No menu WRAM is poked.
+The game canvas is the input surface. **Both** Traditional and Direct synthesize
+the same SNES bits 0–11 (`snes_setButtonState`). Direct **never** writes
+menu-selection WRAM.
+
+**Traditional** (default) — current gesture map:
 
 | Gesture | SNES bit(s) |
 |---------|-------------|
@@ -154,10 +164,22 @@ The game canvas is the input surface. Gestures synthesize the same SNES bits
 | Two-finger tap | Start (bit 3) |
 | Three-finger tap | Select (bit 2) |
 
+**Direct touch** — not a fake pad. JS calls `_dbz_web_canvas_tap(x, y)` in
+512×480 framebuffer pixels:
+
+| Surface | Behavior |
+|---------|----------|
+| Host LANGUAGE / CONTROLS | Hit-test the two Densetsu rows; set host cursor and confirm |
+| In-game | **Stub:** pulse A. No recovered menu-cursor WRAM (`docs/ram-map.md`). Do **not** invent addresses. When a cursor byte is known, assist may *read* it and pulse N× Up/Down then A. |
+
+Two-finger Start / three-finger Select still work in Direct (system shortcuts,
+not a virtual pad overlay). Classic pad stays **hidden by default** in Direct;
+the a11y checkbox can still show it.
+
 Chrome strip below the canvas (text links, not a fake SNES pad):
 **Select · L · R · Pause · Turbo**.
 
-Optional **Show classic pad** checkbox in Controls is accessibility-only;
+Optional **Show classic pad** checkbox is Traditional / accessibility-only;
 default UX hides `#touch-pad`.
 
 C APIs (frame-synced in `web_main.c`):
@@ -165,13 +187,6 @@ C APIs (frame-synced in `web_main.c`):
 - `dbz_web_set_button` — classic pad hold mask (`keys_touch`)
 - `dbz_web_set_gesture_mask` — canvas virtual-stick hold (`keys_gesture`)
 - `dbz_web_pulse_button(button, frames)` — queued pulses OR’d each `frame_tick`
+- `dbz_web_set_controls_mode` / `dbz_web_get_controls_mode` — 0 Traditional, 1 Direct
+- `dbz_web_canvas_tap(x, y)` — Direct hit-test / in-game A stub
 - Each frame: `keys_kb | keys_touch | keys_gesture | pulse` → `snes_setButtonState`
-
-### Next: menu hit-test via cursor RAM
-
-Investigation of `docs/ram-map.md` / tests found **no** recovered battle or
-overworld **menu selection cursor** byte suitable for “tap this row to select
-it”. Existing “cursor” names are WRAM/OAM/script stream cursors, not UI index.
-**Do not invent RAM addresses.** When a menu cursor address is recovered,
-optional assist can queue N× Up/Down then A from tap Y without bypassing
-`snes_setButtonState`.

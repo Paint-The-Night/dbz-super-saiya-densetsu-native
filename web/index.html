@@ -21,8 +21,9 @@
         You must supply a <strong>legally obtained, unmodified</strong>
         <em>Dragon Ball Z — Super Saiya Densetsu (Japan) (Rev&nbsp;1)</em>
         <code>.sfc</code> / <code>.smc</code> file. After the SHA-256 gate, the
-        <strong>in-game</strong> LANGUAGE / 言語 menu sets native i18n state; the same
-        clean Rev&nbsp;1 image always boots (no ROM patching).
+        <strong>in-game</strong> LANGUAGE / 言語 then CONTROLS menus set native i18n
+        and Traditional vs Direct touch; the same clean Rev&nbsp;1 image always
+        boots (no ROM patching).
       </p>
       <p class="hash">Expected SHA-256:
         <code id="expected-hash">962aa7a09765a97164af67098877a8fe5b7f1ea9db738561eb466b7600fd241c</code>
@@ -48,7 +49,7 @@
           <li>Swipe flick — step one tile / menu row</li>
           <li>Two-finger tap — Start</li>
         </ul>
-        <p class="hint-note">Pixel-perfect “tap this menu row” needs cursor RAM next — for now drive menus with flick + tap.</p>
+        <p class="hint-note">Traditional mode: flick + tap drive SNES bits. Direct touch (boot menu) taps host rows; in-game tap is A until menu cursor RAM is recovered — no invented addresses.</p>
         <button type="button" id="gesture-hint-dismiss" class="file-btn">Got it</button>
       </div>
     </div>
@@ -97,7 +98,8 @@
 
     <section class="panel controls">
       <h2>Controls</h2>
-      <p class="gesture-map"><strong>Canvas touch:</strong> Drag to move · Tap = A · Long-press = B · Swipe flick = step · Two-finger = Start</p>
+      <p class="gesture-map"><strong>Traditional:</strong> Drag to move · Tap = A · Long-press = B · Swipe flick = step · Two-finger = Start<br>
+        <strong>Direct touch:</strong> Tap host-menu rows (LANGUAGE / CONTROLS). In-game tap = A (stub — no menu-cursor WRAM yet).</p>
       <ul>
         <li><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> — D-pad</li>
         <li><kbd>Z</kbd> B · <kbd>X</kbd> A · <kbd>A</kbd> Y · <kbd>S</kbd> X</li>
@@ -109,7 +111,7 @@
         <input type="checkbox" id="classic-pad-toggle">
         Show classic pad (accessibility)
       </label>
-      <p class="note">After ROM load, the <strong>in-game</strong> LANGUAGE menu (first canvas screen) chooses Japanese or English. Both boot the same unmodified Rev&nbsp;1; English enables the native i18n layer (dialogue translation still in progress — game text stays Japanese until hooks ship). Audio uses SDL2 → Web Audio after you load a ROM (user gesture). Emulated input still only uses SNES controller bits 0–11 via <code>snes_setButtonState</code> — touch synthesizes those bits; no menu RAM poke.</p>
+      <p class="note">After ROM load, the <strong>in-game</strong> LANGUAGE menu then the CONTROLS menu (Traditional vs Direct touch) run on the canvas. Both boot the same unmodified Rev&nbsp;1; English enables the native i18n layer. Choice is stored as <code>dbz-lang</code> and <code>dbz-controls</code>. Hold Start on load to skip both with the remembered pair. Audio uses SDL2 → Web Audio after you load a ROM (user gesture). Emulated input still only uses SNES controller bits 0–11 via <code>snes_setButtonState</code> — Direct never pokes menu-selection WRAM.</p>
     </section>
 
     <footer>
@@ -209,11 +211,11 @@
       var COPY = {
         title: 'Load Japanese Rev 1 ROM',
         choose: 'Choose ROM file…',
-        ready: 'Engine ready. Load your clean Japanese Rev 1 .sfc — then pick language in-game.',
+        ready: 'Engine ready. Load your clean Japanese Rev 1 .sfc — then pick language and controls in-game.',
         remembered: 'Remembered ROM available — click “Play remembered ROM” (needed for audio unlock).',
         reading: 'Reading ',
         validating: 'Validating Japanese Rev 1 ROM…',
-        menu: 'ROM OK — choose LANGUAGE on the game screen.',
+        menu: 'ROM OK — choose LANGUAGE, then CONTROLS, on the game screen.',
         starting: 'Starting…',
         forgotten: 'Forgotten. Choose a ROM file to play.'
       };
@@ -274,23 +276,53 @@
         return false;
       }
 
+      function applyControlsMode(mode) {
+        var m = (mode === 'direct') ? 'direct' : 'traditional';
+        window.__dbzControlsMode = m;
+        try { localStorage.setItem('dbz-controls', m); } catch (e) {}
+        try {
+          if(typeof Module._dbz_web_set_controls_mode === 'function')
+            Module._dbz_web_set_controls_mode(m === 'direct' ? 1 : 0);
+        } catch (e) {}
+        if(typeof window.__dbzApplyControlsChrome === 'function')
+          window.__dbzApplyControlsChrome(m);
+        return m;
+      }
+
+      function rememberedControls() {
+        try {
+          var s = localStorage.getItem('dbz-controls');
+          if(s === 'direct' || s === 'traditional') return s;
+        } catch (e) {}
+        return 'traditional';
+      }
+
       window.__dbzOnLangPicked = async function(lang) {
-        bootBusy = true;
-        setError('');
-        statusEl.textContent = COPY.starting;
-        var clean = window.__dbzCleanRom;
-        if(!clean) {
-          setError('Internal error: clean ROM missing after language pick.');
-          bootBusy = false;
-          return;
-        }
+        /* Language only — ROM starts after CONTROLS (or Start-skip). */
         try { localStorage.setItem('dbz-lang', lang); } catch (e) {}
-        /* Reinforce C i18n (lang_confirm already set it; keep EN sticky across boot). */
         try {
           if(typeof Module._dbz_i18n_set === 'function')
             Module._dbz_i18n_set(lang === 'en' ? 1 : 0);
         } catch (e) {}
-        /* Same clean 1 MiB for EN and JP — no ROM patching. */
+      };
+
+      window.__dbzOnControlsPicked = async function(mode) {
+        bootBusy = true;
+        setError('');
+        statusEl.textContent = COPY.starting;
+        applyControlsMode(mode);
+        var clean = window.__dbzCleanRom;
+        if(!clean) {
+          setError('Internal error: clean ROM missing after controls pick.');
+          bootBusy = false;
+          return;
+        }
+        var lang = 'en';
+        try { lang = localStorage.getItem('dbz-lang') || 'en'; } catch (e) {}
+        try {
+          if(typeof Module._dbz_i18n_set === 'function')
+            Module._dbz_i18n_set(lang === 'en' ? 1 : 0);
+        } catch (e) {}
         var ok = await startCleanRom(clean);
         bootBusy = false;
         if(!ok) {
@@ -338,8 +370,9 @@
         var saved = null;
         try { saved = localStorage.getItem('dbz-lang'); } catch (e) {}
         var initial = (saved === 'ja') ? 1 : 0;
+        applyControlsMode(rememberedControls());
         bootBusy = true;
-        /* skip_if_start=1: holding Start quietly uses remembered language */
+        /* skip_if_start=1: holding Start skips LANGUAGE+CONTROLS (remembered pair) */
         Module._dbz_web_enter_lang_menu(initial, 1);
         document.getElementById('canvas').focus();
       }
@@ -420,6 +453,24 @@
         const PULSE_FRAMES = 3;
         const DIR_UP = 4, DIR_DOWN = 5, DIR_LEFT = 6, DIR_RIGHT = 7;
         const BTN_B = 0, BTN_A = 8, BTN_START = 3, BTN_SELECT = 2;
+        const FB_W = 512, FB_H = 480;
+
+        function getControlsMode() {
+          if(window.__dbzControlsMode === 'direct' || window.__dbzControlsMode === 'traditional')
+            return window.__dbzControlsMode;
+          try {
+            var s = localStorage.getItem('dbz-controls');
+            if(s === 'direct') return 'direct';
+          } catch (e) {}
+          return 'traditional';
+        }
+        function isDirect() { return getControlsMode() === 'direct'; }
+        function canvasToFb(clientX, clientY) {
+          var rect = canvas.getBoundingClientRect();
+          var x = Math.floor((clientX - rect.left) / rect.width * FB_W);
+          var y = Math.floor((clientY - rect.top) / rect.height * FB_H);
+          return { x: x, y: y };
+        }
 
         const pointers = new Map(); /* pointerId -> state */
         let longTimer = null;
@@ -520,6 +571,10 @@
             return;
           }
 
+          if(isDirect()) {
+            /* Direct: no virtual stick / long-press B. Multitouch Start/Select stay. */
+            return;
+          }
           if(pointers.size === 1) scheduleLongPress(st);
         }
 
@@ -536,6 +591,7 @@
             clearLongTimer();
           }
           if(st.consumed === 'multitouch' || st.consumed === 'long') return;
+          if(isDirect()) return; /* Direct: tap slop only; no held stick */
           if(pointers.size === 1 && dist >= DEADZONE) {
             /* Delay held stick so short swipes become single-step flicks (menus). */
             const heldFor = performance.now() - st.t0;
@@ -573,6 +629,15 @@
 
           /* Held virtual stick: mask already cleared when last pointer lifted. */
           if(st.holdingStick) return;
+
+          if(isDirect()) {
+            if(!st.moved && dist <= TAP_SLOP && dt < LONG_MS) {
+              var fb = canvasToFb(st.x0, st.y0);
+              if(typeof Module._dbz_web_canvas_tap === 'function')
+                Module._dbz_web_canvas_tap(fb.x, fb.y);
+            }
+            return;
+          }
 
           /* Quick tap → A */
           if(!st.moved && dist <= TAP_SLOP && dt < LONG_MS) {
@@ -639,7 +704,7 @@
         });
       })();
 
-      /* Classic pad toggle (accessibility) */
+      /* Classic pad: Traditional / a11y only — hidden by default in Direct. */
       (function setupClassicPad() {
         const pad = document.getElementById('touch-pad');
         const toggle = document.getElementById('classic-pad-toggle');
@@ -655,6 +720,10 @@
           }
         }
         applyVisible(false);
+        window.__dbzApplyControlsChrome = function(mode) {
+          if(mode === 'direct' && !toggle.checked)
+            applyVisible(false);
+        };
         toggle.addEventListener('change', function() {
           applyVisible(toggle.checked);
         });
