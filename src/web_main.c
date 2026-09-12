@@ -13,6 +13,7 @@
 #include <string.h>
 #include "i18n.h"
 #include "native.h"
+#include "text_script.h"
 #include "rom.h"
 #include "snes.h"
 
@@ -141,12 +142,14 @@ static void set_status(const char *msg) {
 
 static void put_px(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
   if((unsigned)x >= (unsigned)WIDTH || (unsigned)y >= (unsigned)HEIGHT) return;
-  /* Match LakeSnes default BGRX packing used with SDL_PIXELFORMAT_RGBX8888. */
+  /* LakeSnes ppu_pixelOutputFormatBGRX (=1) stores [X,B,G,R] in memory for
+   * SDL_PIXELFORMAT_RGBX8888 (LE packed 0xRRGGBBXX). Writing [B,G,R,X] shifted
+   * channels: cream→cyan, orange→lime — the playtest lang-menu failure. */
   uint8_t *p = pixels + (y * WIDTH + x) * 4;
-  p[0] = b;
-  p[1] = g;
-  p[2] = r;
-  p[3] = 0;
+  p[0] = 0;
+  p[1] = b;
+  p[2] = g;
+  p[3] = r;
 }
 
 static void fill_rect(int x, int y, int w, int h, uint8_t r, uint8_t g, uint8_t b) {
@@ -582,6 +585,8 @@ static void frame_tick(void) {
   unsigned keys = collect_keys();
   for(int b = 0; b < 12; b++) snes_setButtonState(game, 1, b, (keys >> b) & 1u);
   snes_runFrame(game);
+  if(dbz_i18n_get() == DBZ_LANG_EN)
+    dbz_text_en_intro_ensure(game->cpu);
   snes_setPixels(game, pixels);
   sample_phase += 320400000;
   int count = (int)(sample_phase / 600988);
@@ -772,7 +777,7 @@ void dbz_web_enter_lang_menu(int initial_sel, int skip_if_start) {
       for(var i = 0; i < w * h; i++) {
         var s = i * 4;
         var d = ptr + s;
-        /* Store BGRX to match put_px / LakeSnes */
+        /* Store B,G,R,A — blit_label passes s[2],s[1],s[0] as R,G,B to put_px */
         heap[d + 0] = img[s + 2];
         heap[d + 1] = img[s + 1];
         heap[d + 2] = img[s + 0];

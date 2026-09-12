@@ -5,6 +5,8 @@
 #include <string.h>
 #include "snes.h"
 #include "native.h"
+#include "text_script.h"
+#include "i18n.h"
 #include "rom.h"
 
 enum { WIDTH=512, HEIGHT=480, PIXEL_BYTES=WIDTH*HEIGHT*4, MAX_EVENTS=4096 };
@@ -121,7 +123,7 @@ static void raw_state_load(const char *path,Snes *game,Snes *reference,int size)
 }
 static void usage(void) {
   puts("dbz-port --rom GAME.sfc [--headless --frames N] [--verify] [--no-native]\n"
-       "         [--inputs replay.txt] [--dump-dir existing-directory] [--capture-every N]\n"
+       "         [--lang en|ja] [--inputs replay.txt] [--dump-dir existing-directory] [--capture-every N]\n"
        "         [--save-dir existing-directory] [--load-checkpoint file.dbzstate]\n"
        "         [--load-state raw.state]\n"
        "Controls: arrows, Z/B, X/A, A/Y, S/X, Enter/Start, Right Shift/Select, D/L, C/R.\n"
@@ -144,7 +146,12 @@ int main(int argc,char **argv) {
     else if(i+1<argc && !strcmp(argv[i],"--load-state")) state_path=argv[++i];
     else if(i+1<argc && !strcmp(argv[i],"--dump-dir")) dump_dir=argv[++i];
     else if(i+1<argc && !strcmp(argv[i],"--save-dir")) save_dir=argv[++i];
-    else if(i+1<argc && (!strcmp(argv[i],"--frames") || !strcmp(argv[i],"--capture-every"))) {
+    else if(i+1<argc && !strcmp(argv[i],"--lang")) {
+      const char *l=argv[++i];
+      if(!strcmp(l,"en")||!strcmp(l,"EN")||!strcmp(l,"english")) dbz_i18n_set(DBZ_LANG_EN);
+      else if(!strcmp(l,"ja")||!strcmp(l,"JA")||!strcmp(l,"jp")||!strcmp(l,"japanese")) dbz_i18n_set(DBZ_LANG_JA);
+      else die("Invalid --lang (en|ja)");
+    } else if(i+1<argc && (!strcmp(argv[i],"--frames") || !strcmp(argv[i],"--capture-every"))) {
       bool frames=!strcmp(argv[i],"--frames");char *end;unsigned long v=strtoul(argv[++i],&end,10);
       if(*end || !v || v>10000000) die("Invalid frame count");
       if(frames) frame_limit=(unsigned)v;else capture_every=(unsigned)v;
@@ -236,6 +243,7 @@ int main(int argc,char **argv) {
     unsigned mask=input_path?replay_mask(frame):keys;
     for(int b=0;b<12;b++) { snes_setButtonState(game,1,b,(mask>>b)&1u);if(verify) snes_setButtonState(reference,1,b,(mask>>b)&1u); }
     snes_runFrame(game);
+    if(dbz_i18n_get()==DBZ_LANG_EN) dbz_text_en_intro_ensure(game->cpu);
     if(verify) {
       if(trace_reference) { execution.cpu=reference->cpu; execution.enabled=false; }
       snes_runFrame(reference);

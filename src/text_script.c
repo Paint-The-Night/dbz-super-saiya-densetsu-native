@@ -5,9 +5,11 @@
 #include <string.h>
 
 #include "text_en_font.inc"
+#include "text_en_intro.inc"
 
 static DbzTextStream g_stream;
 static bool g_en_font_ready;
+static bool g_en_intro_ready;
 
 void dbz_text_unbind(void) {
   memset(&g_stream, 0, sizeof g_stream);
@@ -70,6 +72,11 @@ uint8_t dbz_text_filter_script_byte(uint32_t addr24, uint8_t rom_byte) {
 
 void dbz_text_en_font_reset(void) {
   g_en_font_ready = false;
+  g_en_intro_ready = false;
+}
+
+void dbz_text_en_intro_reset(void) {
+  g_en_intro_ready = false;
 }
 
 bool dbz_text_en_font_ready(void) {
@@ -118,4 +125,56 @@ void dbz_text_en_font_ensure(Cpu *c) {
   }
 
   g_en_font_ready = true;
+}
+
+/*
+ * Opening crawl EN — BG1/BG2 tilemaps at VRAM $6000/$6800 use Latin tile
+ * indices (0xDA+) against CHR at $2000. Same scene keeps one static nametable
+ * and scrolls it; CF3A never runs ($0733 stays 0). Data from Klepto 1.02
+ * offline extract (text_en_intro.inc).
+ */
+void dbz_text_en_intro_ensure(Cpu *c) {
+  if(!c || !c->mem) return;
+  if(dbz_i18n_get() != DBZ_LANG_EN) {
+    g_en_intro_ready = false;
+    return;
+  }
+  Snes *snes = (Snes *)c->mem;
+  if(!snes->ppu) return;
+
+  /* Intro signature: BG3 nametable $7000, CHR base $4000 (speed-line layer). */
+  BgLayer *bg3 = &snes->ppu->bgLayer[2];
+  if(bg3->tilemapAdr != 0x7000u || bg3->tileAdr != 0x4000u) {
+    g_en_intro_ready = false;
+    return;
+  }
+
+  /* Fingerprint JP crawl page — only swap when that nametable is resident. */
+  uint64_t h = 14695981039346656037ull;
+  for(uint32_t i = 0; i < 0x800u; i++) {
+    uint16_t w = snes->ppu->vram[(0x6000u + i) & 0x7fffu];
+    h ^= (uint8_t)w; h *= 1099511628211ull;
+    h ^= (uint8_t)(w >> 8); h *= 1099511628211ull;
+  }
+  /* Arm on JP crawl nametable; keep refreshing while intro stays active
+   * (JP DMA can rewrite BG1 mid-scene — re-apply EN without waiting for FNV). */
+  if(h != DBZ_TEXT_EN_INTRO_JP_BG1_FNV && !g_en_intro_ready)
+    return;
+
+  for(uint32_t i = 0; i < DBZ_TEXT_EN_INTRO_CHR_BYTES / 2u; i++) {
+    uint16_t w = (uint16_t)DBZ_TEXT_EN_INTRO_CHR[i * 2u] |
+                 ((uint16_t)DBZ_TEXT_EN_INTRO_CHR[i * 2u + 1u] << 8);
+    snes->ppu->vram[(0x2000u + i) & 0x7fffu] = w;
+  }
+  for(uint32_t i = 0; i < DBZ_TEXT_EN_INTRO_BG_BYTES / 2u; i++) {
+    uint16_t w1 = (uint16_t)DBZ_TEXT_EN_INTRO_BG1[i * 2u] |
+                  ((uint16_t)DBZ_TEXT_EN_INTRO_BG1[i * 2u + 1u] << 8);
+    uint16_t w2 = (uint16_t)DBZ_TEXT_EN_INTRO_BG2[i * 2u] |
+                  ((uint16_t)DBZ_TEXT_EN_INTRO_BG2[i * 2u + 1u] << 8);
+    snes->ppu->vram[(0x6000u + i) & 0x7fffu] = w1;
+    snes->ppu->vram[(0x6800u + i) & 0x7fffu] = w2;
+  }
+  /* Intro CHR is not the dialogue Latin set — force dialogue ensure to re-run later. */
+  g_en_font_ready = false;
+  g_en_intro_ready = true;
 }

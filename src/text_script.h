@@ -72,6 +72,12 @@ bool dbz_text_en_font_ready(void);
 void dbz_text_en_font_ensure(Cpu *c);
 void dbz_text_en_font_reset(void);
 
+/* Opening crawl (BG3 tm=$7000 / chr=$4000): EN uses Klepto-ref CHR@$2000 plus
+ * BG1/BG2 tilemaps with Latin indices. Not CF3A — call from the host frame
+ * loop while the intro scene is active. JA: no-op. */
+void dbz_text_en_intro_ensure(Cpu *c);
+void dbz_text_en_intro_reset(void);
+
 #ifdef __cplusplus
 }
 #endif

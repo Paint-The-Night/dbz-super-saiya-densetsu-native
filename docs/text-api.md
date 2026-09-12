@@ -150,3 +150,11 @@ Do not hand-edit `text_en_scripts.inc` or `text_en_banks.inc`. Product path neve
 | `src/i18n.h` / `.c` | Language + `dbz_i18n_en_script` API (includes both tables) |
 | `src/native_video.inc` | `text_script_cf3a_step`, `text_script_cfb2_step` |
 | `docs/i18n.md` | Policy + ship state |
+
+## Opening crawl (not CF3A)
+
+The boot narration scroll uses BG1/BG2 tilemaps + CHR at VRAM `$2000` and never
+calls `01:CF3A` (`$0733` stays 0). EN path: `dbz_text_en_intro_ensure` copies
+offline Klepto-ref assets from `text_en_intro.inc` while the crawl BG3 signature
+is live. Dialogue still uses pointer-swap + `dbz_text_en_font_ensure` after intro.
+

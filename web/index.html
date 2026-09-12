@@ -285,7 +285,12 @@
           return;
         }
         try { localStorage.setItem('dbz-lang', lang); } catch (e) {}
-        /* Same clean 1 MiB for EN and JP — language was set in C via dbz_i18n_set. */
+        /* Reinforce C i18n (lang_confirm already set it; keep EN sticky across boot). */
+        try {
+          if(typeof Module._dbz_i18n_set === 'function')
+            Module._dbz_i18n_set(lang === 'en' ? 1 : 0);
+        } catch (e) {}
+        /* Same clean 1 MiB for EN and JP — no ROM patching. */
         var ok = await startCleanRom(clean);
         bootBusy = false;
         if(!ok) {
