@@ -97,7 +97,9 @@ SDL-drawn boot menus (`src/web_main.c`):
 1. **LANGUAGE / 言語** — Japanese or English.
 2. **CONTROLS / 操作** — Traditional (gestures/pad) or Direct touch.
 
-Not a third row on the language menu — two screens.
+Not a third row on the language menu — two screens. The same CONTROLS parchment
+reopens mid-play from the chrome **Controls** button (or Direct → party Text)
+via `_dbz_web_open_controls_menu` and updates `dbz-controls` live without reboot.
 
 - **Japanese** — `dbz_i18n_set(DBZ_LANG_JA)` then (after Controls) boot clean Rev 1.
 - **English** — `dbz_i18n_set(DBZ_LANG_EN)` then boot the **same** clean Rev 1.
@@ -149,9 +151,10 @@ Arrows, Z/A/X/S/D/C, Enter, Right Shift; P pause; Tab turbo.
 
 ### Canvas-native touch (mode-gated)
 
-The game canvas is the input surface. **Both** Traditional and Direct synthesize
-the same SNES bits 0–11 (`snes_setButtonState`). Direct **never** writes
-menu-selection WRAM.
+The game canvas is the input surface. **Both** Traditional and Direct use SNES
+bits 0–11 for confirms (`snes_setButtonState`). Direct is **tap-the-thing**:
+hit-test a measured menu rect, **write** the live cursor WRAM, pulse A — not
+N× D-pad scroll.
 
 **Traditional** (default) — current gesture map:
 
@@ -170,14 +173,14 @@ menu-selection WRAM.
 | Surface | Behavior |
 |---------|----------|
 | Host LANGUAGE / CONTROLS | Hit-test the two Densetsu rows; set host cursor and confirm |
-| In-game | **Read→pulse:** if DP+`$25==1` and tap hits a measured menu rect (command mode 0, party mode 1, flight mode `$0A`), read `$0D62` and pulse N× Up/Down then A. Other modes (e.g. Status `$0F`) pulse A only. Never pokes selection WRAM (`docs/ram-map.md`). |
+| In-game | **Write→A:** if DP+`$25==1` and tap hits a measured rect (command 0 / party 1 / flight `$0A` / Status `$0F`), write `$0D62` (Status also `$0D63` + `$1100,Y` mirror) then pulse A. Party Text opens host CONTROLS. See `docs/ram-map.md`. |
 
 Two-finger Start / three-finger Select still work in Direct (system shortcuts,
 not a virtual pad overlay). Classic pad stays **hidden by default** in Direct;
 the a11y checkbox can still show it.
 
 Chrome strip below the canvas (text links, not a fake SNES pad):
-**Select · L · R · Pause · Turbo**.
+**Select · L · R · Controls · Pause · Turbo**.
 
 Optional **Show classic pad** checkbox is Traditional / accessibility-only;
 default UX hides `#touch-pad`.
@@ -188,5 +191,6 @@ C APIs (frame-synced in `web_main.c`):
 - `dbz_web_set_gesture_mask` — canvas virtual-stick hold (`keys_gesture`)
 - `dbz_web_pulse_button(button, frames)` — queued pulses OR’d each `frame_tick`
 - `dbz_web_set_controls_mode` / `dbz_web_get_controls_mode` — 0 Traditional, 1 Direct
-- `dbz_web_canvas_tap(x, y)` — Direct hit-test / in-game read→pulse
+- `dbz_web_canvas_tap(x, y)` — Direct hit-test / in-game write→A
+- `dbz_web_open_controls_menu` — reopen CONTROLS parchment mid-play
 - Each frame: `keys_kb | keys_touch | keys_gesture | pulse` → `snes_setButtonState`

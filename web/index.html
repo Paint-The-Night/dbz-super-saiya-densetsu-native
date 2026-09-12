@@ -22,8 +22,8 @@
         <em>Dragon Ball Z — Super Saiya Densetsu (Japan) (Rev&nbsp;1)</em>
         <code>.sfc</code> / <code>.smc</code> file. After the SHA-256 gate, the
         <strong>in-game</strong> LANGUAGE / 言語 then CONTROLS menus set native i18n
-        and Traditional vs Direct touch; the same clean Rev&nbsp;1 image always
-        boots (no ROM patching).
+        and Traditional vs Direct touch (re-open CONTROLS anytime from the chrome
+        strip); the same clean Rev&nbsp;1 image always boots (no ROM patching).
       </p>
       <p class="hash">Expected SHA-256:
         <code id="expected-hash">962aa7a09765a97164af67098877a8fe5b7f1ea9db738561eb466b7600fd241c</code>
@@ -49,7 +49,7 @@
           <li>Swipe flick — step one tile / menu row</li>
           <li>Two-finger tap — Start</li>
         </ul>
-        <p class="hint-note">Traditional mode: flick + tap drive SNES bits. Direct touch (boot menu) taps host rows; in-game tap reads menu cursor WRAM ($0D62) for command/party/flight hit-rects and pulses Up/Down/A — no invented addresses, never pokes selection.</p>
+        <p class="hint-note">Traditional: flick + tap drive SNES bits. Direct: tap a menu row/cell — host writes the live cursor ($0D62 / Status $0D63) and pulses A (tap-the-thing). Chrome <strong>Controls</strong> reopens Traditional/Direct anytime.</p>
         <button type="button" id="gesture-hint-dismiss" class="file-btn">Got it</button>
       </div>
     </div>
@@ -61,6 +61,8 @@
       <button type="button" class="chrome-btn" data-pulse="10">L</button>
       <span class="chrome-sep" aria-hidden="true">·</span>
       <button type="button" class="chrome-btn" data-pulse="11">R</button>
+      <span class="chrome-sep" aria-hidden="true">·</span>
+      <button type="button" class="chrome-btn" data-action="controls">Controls</button>
       <span class="chrome-sep" aria-hidden="true">·</span>
       <button type="button" class="chrome-btn" data-action="pause">Pause</button>
       <span class="chrome-sep" aria-hidden="true">·</span>
@@ -99,7 +101,7 @@
     <section class="panel controls">
       <h2>Controls</h2>
       <p class="gesture-map"><strong>Traditional:</strong> Drag to move · Tap = A · Long-press = B · Swipe flick = step · Two-finger = Start<br>
-        <strong>Direct touch:</strong> Tap host-menu rows (LANGUAGE / CONTROLS). In-game: command / party / flight menus read→pulse via $0D62; other UI taps A.</p>
+        <strong>Direct touch:</strong> Tap host LANGUAGE / CONTROLS rows. In-game: tap a measured menu row/cell — writes $0D62 (Status also $0D63) then pulses A. Party <em>Text</em> or chrome <strong>Controls</strong> reopens CONTROLS live.</p>
       <ul>
         <li><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> — D-pad</li>
         <li><kbd>Z</kbd> B · <kbd>X</kbd> A · <kbd>A</kbd> Y · <kbd>S</kbd> X</li>
@@ -111,7 +113,7 @@
         <input type="checkbox" id="classic-pad-toggle">
         Show classic pad (accessibility)
       </label>
-      <p class="note">After ROM load, the <strong>in-game</strong> LANGUAGE menu then the CONTROLS menu (Traditional vs Direct touch) run on the canvas. Both boot the same unmodified Rev&nbsp;1; English enables the native i18n layer. Choice is stored as <code>dbz-lang</code> and <code>dbz-controls</code>. Hold Start on load to skip both with the remembered pair. Audio uses SDL2 → Web Audio after you load a ROM (user gesture). Emulated input still only uses SNES controller bits 0–11 via <code>snes_setButtonState</code> — Direct never pokes menu-selection WRAM.</p>
+      <p class="note">After ROM load, the <strong>in-game</strong> LANGUAGE menu then the CONTROLS menu (Traditional vs Direct touch) run on the canvas. Re-open CONTROLS anytime from the chrome strip (or Direct→party Text) without rebooting. Choice is stored as <code>dbz-lang</code> and <code>dbz-controls</code>. Hold Start on load to skip both with the remembered pair. Direct is host-driven selection + SNES A (writes measured cursor WRAM), not a fake D-pad scroll.</p>
     </section>
 
     <footer>
@@ -677,6 +679,11 @@
           if(!btn || !chrome.contains(btn)) return;
           e.preventDefault();
           const action = btn.getAttribute('data-action');
+          if(action === 'controls') {
+            if(typeof Module._dbz_web_open_controls_menu === 'function')
+              Module._dbz_web_open_controls_menu();
+            return;
+          }
           if(action === 'pause') {
             if(typeof Module._dbz_web_toggle_pause === 'function')
               Module._dbz_web_toggle_pause();

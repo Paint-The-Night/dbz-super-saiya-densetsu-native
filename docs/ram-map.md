@@ -611,15 +611,15 @@ capacity from the test queue lengths or apply new bounds that change game logic.
 
 Recovered 2026-09-12 from WRAM diffs while the Talk/Look/Fly/Item/Menu window
 was open (open with **A** from the Kame House overworld checkpoint; navigate
-with Up/Down). Direct touch **reads** these bytes and synthesizes controller
-pulses — it never pokes selection WRAM.
+with Up/Down). Direct touch **writes** the live cursor for measured hit-rects, then
+pulses A only (tap-the-thing). Addresses below are evidence-backed.
 
 | Address | Width | Observed role | Evidence |
 |---|---|---|---|
 | `$0D62` | byte | **Live menu selection index** (0=Talk … 4=Menu on the overworld command list) | Up/Down diffs `0,1,2,3,4`; Up from 2→1. ROM: `01:BA44` `INC $0D62` / `01:BA68` `DEC $0D62`, compare/wrap vs `$0D64`; `01:B149`/`01:B14C` clamp with `CMP #$05` |
 | `$0D64` | byte | Exclusive max index (command menu: `#5` → valid `0..4`) | Adjacent to `$0D62`; `CMP $0D64` before wrap-to-zero at `01:BA44`. Seeded `#5` at `01:BDB2` |
-| `$0D66` | byte | Menu-mode / UI class (`0` = overworld command; `1` = party Cards…Save; `$0A` = flight Land/Item/Menu; `$0F` = Status grid — unrecovered for Direct) | Gates `01:BA33` cluster (`CMP #$28`/`#$0B`/`#$26`); `01:B86D` uses it as Y for `$1100,Y` |
-| `$1100,Y` | byte | Per-mode cursor **save slot** (`Y = $0D66`). Mode 0 mirrors live `$0D62`; mode 1 keeps parent Menu index in `$1100` while `$1101` mirrors live party `$0D62`; mode `$0A` mirrors into `$110A` | `01:B86D` `LDA $0D62` / `STA $1100,Y`; `01:B9E9` reload. Party diffs: `$1100=4` while `$0D62`/`$1101` track 0..4 |
+| `$0D66` | byte | Menu-mode / UI class (`0` = overworld command; `1` = party Cards…Save; `$0A` = flight Land/Item/Menu; `$0F` = Status 3×3 grid) | Gates `01:BA33` cluster (`CMP #$28`/`#$0B`/`#$26`); `01:B86D` uses it as Y for `$1100,Y`; Status specialty at `01:B7E5` `CMP #$0F` |
+| `$1100,Y` | byte | Per-mode cursor **save slot** (`Y = $0D66`). Mode 0 mirrors live `$0D62`; mode 1 keeps parent Menu index in `$1100` while `$1101` mirrors live party `$0D62`; mode `$0A` → `$110A`; Status `$0F` → `$110F` (column) | `01:B86D` `LDA $0D62` / `STA $1100,Y`; `01:B9E9` reload. Party diffs: `$1100=4` while `$0D62`/`$1101` track 0..4 |
 | DP+`$25` | byte | **UI-open gate**: `1` while command/party/flight UI is up; `0` when closed | Open (A) vs closed (B) WRAM pair; stays `1` across `$0D62` moves; Down with menu closed does **not** change `$0D62` |
 
 ### Party submenu (`$0D66=1`) — recovered 2026-09-12
@@ -637,11 +637,22 @@ Reached on the battle-route scout after Fly + Up + A (Land/Item/Menu while airbo
 Same family as mode 0 — **not** the card-battle Fight stream (that mode was not
 hit within the 1800f battle-route window this pass).
 
-### Status grid (`$0D66=$0F`) — not Direct this pass
+### Status grid (`$0D66=$0F`) — recovered 2026-09-12
 
-Opening **Status** from the party list sets mode `$0F`. `$0D62` moves on Left/Right
-(observed 0↔2) with `$0D64` still `#5`, but the 3×2 portrait grid has no measured
-hit-rects yet. Direct leaves this mode as **tap = A** only.
+Open **Status** from the party list (index 1) with A. Live axes:
+
+| Address | Role | Evidence |
+|---|---|---|
+| `$0D62` | **Column** 0..2 (Left/Right; wraps 2→0) | Rights `0→1→2→0`; tips at 2× ≈ `148.5 / 276.5 / 404.5` |
+| `$0D63` | **Row** 0..2 (Up/Down; wraps 2→0) | Down from row0→1→2→0; tip Y ≈ `56.5` then `≈184` |
+| `$0D64` | Still `#5` (list exclusive-max leftover; Status L/R wrap is among 3 cols) | Unchanged while navigating the grid |
+| `$110F` | Mirrors column (`$0D62`) after settle | WRAM scan under mode `$0F` |
+
+Grid lines at 2× (cream interior): vertical dividers `x=214` / `342`; horizontal
+`y=168` / `296`; outer content `x∈[42,476)`, `y∈[42,428)`. Hit-cells are the
+3×3 slots those lines bound. ROM specialty: `01:B7E5` `CMP #$0F` before shared
+nav. Card-battle Fight UI was **not** reached within the 1800f battle-route
+window (flight menu `$0A` only) — still a Direct gap.
 
 ### Rejected / non-cursor candidates (same pass)
 
@@ -655,13 +666,16 @@ hit-rects yet. Direct leaves this mode as **tap = A** only.
 ### Direct touch wiring (`src/web_main.c`)
 
 When Controls = Direct and DP+`$25==1`, a canvas tap in a measured mode rect
-reads `$0D62`, pulses N× Up/Down (18-frame spacing), then A:
+**writes** the live cursor (host-driven selection) and pulses **A** only — no
+N× D-pad scroll. Integrity = selection WRAM + SNES A, not a fake pad UI.
 
-| `$0D66` | Max | Hit-rect (2×) | Rows |
+| `$0D66` | Writes | Hit-rect (2×) | Notes |
 |---|---|---|---|
-| `0` | 5 | `x∈[30,280)`, `y∈[290,460)`, row0=294 | Talk / Look / Fly / Item / Menu |
-| `1` | 5 | `x∈[160,320)`, `y∈[290,460)`, row0=294 | Cards / Status / Order / Text / Save |
-| `$0A` | 3 | `x∈[30,280)`, `y∈[358,460)`, row0=358 | Land / Item / Menu |
-| other (e.g. `$0F`) | — | — | **tap = A** only |
+| `0` | `$0D62` + `$1100` | `x∈[30,280)`, `y∈[290,460)`, row0=294 pitch 32 | Talk…Menu |
+| `1` | `$0D62` + `$1101` | `x∈[160,320)`, `y∈[290,460)`, row0=294 | Cards…Save; **Text** (index 3) opens host CONTROLS |
+| `$0A` | `$0D62` + `$110A` | `x∈[30,280)`, `y∈[358,460)`, row0=358 | Land/Item/Menu |
+| `$0F` | `$0D62` col, `$0D63` row, `$110F` | 3×3 cells via dividers 214/342 × 168/296 | Status grid |
+| other | — | — | **tap = A** only |
 
-Menu closed → A (opens the command menu / advances text). Never pokes selection WRAM.
+Menu closed → A. CONTROLS parchment also reopens mid-play via chrome **Controls**
+(`dbz_web_open_controls_menu`) and updates `dbz-controls` live without reboot.

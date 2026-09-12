@@ -69,7 +69,7 @@ static const char *const STR_JA[DBZ_STR_COUNT] = {
   "TRADITIONAL",
   "DIRECT TOUCH",
   "UP/DOWN  A=OK",
-  "Playing — tap canvas (A) · keyboard still works. P pause, Tab turbo."
+  "Playing — tap menus directly · Controls in chrome. P pause, Tab turbo."
 };
 
 static const char *const STR_EN[DBZ_STR_COUNT] = {
@@ -83,7 +83,7 @@ static const char *const STR_EN[DBZ_STR_COUNT] = {
   "TRADITIONAL",
   "DIRECT TOUCH",
   "UP/DOWN  A=OK",
-  "Playing — tap canvas (A) · keyboard still works. P pause, Tab turbo."
+  "Playing — tap menus directly · Controls in chrome. P pause, Tab turbo."
 };
 
 const char *dbz_i18n_str(int id) {

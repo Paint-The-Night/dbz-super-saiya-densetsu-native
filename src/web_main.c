@@ -4,7 +4,10 @@
  * screens in the game viewport — LANGUAGE, then CONTROLS — not HTML panels.
  * Language selects native i18n state only; controls choose Traditional
  * (gestures/pad) vs Direct touch (canvas hit-test). Both synthesize SNES
- * bits 0–11 via snes_setButtonState. Direct never pokes menu-selection WRAM.
+ * bits 0–11 via snes_setButtonState. Direct hit-tests measured menu rects,
+ * writes the live selection cursor ($0D62 / Status $0D63) plus $1100,Y
+ * mirror, then pulses A only — tap-the-thing UX (host-driven selection +
+ * SNES A), not N× D-pad scroll. CONTROLS also reopens in-game via chrome.
  * The same clean JP ROM always boots (no IPS / ROM patching). */
 #include <SDL.h>
 #include <emscripten.h>
@@ -48,6 +51,7 @@ static int boot_phase = BOOT_NONE;
 static int lang_sel;          /* 0 = ENGLISH, 1 = 日本語 */
 static int ctrl_mode = CTRL_TRADITIONAL;
 static int ctrl_sel;          /* 0 = Traditional, 1 = Direct touch */
+static int controls_live;     /* 1 = CONTROLS overlay mid-play (not boot) */
 static unsigned lang_prev_keys;
 static int lang_confirm_lock; /* debounce frames after enter */
 /* Raster strips from JS (BGRX): JP labels for LANGUAGE + CONTROLS */
@@ -666,9 +670,43 @@ static void lang_confirm(void) {
   present_pixels();
 }
 
+static void apply_controls_mode_js(const char *mode) {
+  EM_ASM({
+    const mode = UTF8ToString($0);
+    try { localStorage.setItem('dbz-controls', mode); } catch (e) {}
+    window.__dbzControlsMode = mode;
+    if(typeof window.__dbzApplyControlsChrome === 'function')
+      window.__dbzApplyControlsChrome(mode);
+  }, mode);
+}
+
+static void resume_playing_from_controls(void) {
+  controls_live = 0;
+  boot_phase = BOOT_PLAYING;
+  paused = false;
+  lang_confirm_lock = 8;
+  keys_kb = 0;
+  keys_touch = 0;
+  keys_gesture = 0;
+  for(int i = 0; i < PULSE_SLOTS; i++) { pulses[i].mask = 0; pulses[i].remaining = 0; pulses[i].delay = 0; }
+  if(dbz_i18n_get() == DBZ_LANG_EN)
+    set_status(dbz_i18n_str(DBZ_STR_EN_WIP_STATUS));
+  else if(ctrl_mode == CTRL_DIRECT)
+    set_status(dbz_i18n_str(DBZ_STR_PLAYING_DIRECT_STATUS));
+  else
+    set_status(dbz_i18n_str(DBZ_STR_PLAYING_STATUS));
+  emscripten_cancel_main_loop();
+  emscripten_set_main_loop(frame_tick, 0, 0);
+}
+
 static void controls_confirm(void) {
   ctrl_mode = ctrl_sel ? CTRL_DIRECT : CTRL_TRADITIONAL;
   const char *mode = ctrl_mode == CTRL_DIRECT ? "direct" : "traditional";
+  if(controls_live && game) {
+    apply_controls_mode_js(mode);
+    resume_playing_from_controls();
+    return;
+  }
   boot_phase = BOOT_NONE;
   lang_confirm_lock = 8;
   keys_kb = 0;
@@ -690,6 +728,35 @@ static void controls_confirm(void) {
   }, mode);
 }
 
+/* Re-open CONTROLS parchment mid-play (chrome / party Text). Live update — no reboot. */
+EMSCRIPTEN_KEEPALIVE
+void dbz_web_open_controls_menu(void) {
+  if(!game || boot_phase != BOOT_PLAYING) return;
+  controls_live = 1;
+  ctrl_sel = (ctrl_mode == CTRL_DIRECT) ? 1 : 0;
+  lang_prev_keys = 0xFFFFFFFFu;
+  lang_confirm_lock = 10;
+  lang_blink_frame = 0;
+  keys_kb = 0;
+  keys_touch = 0;
+  keys_gesture = 0;
+  for(int i = 0; i < PULSE_SLOTS; i++) { pulses[i].mask = 0; pulses[i].remaining = 0; pulses[i].delay = 0; }
+  ctrl_labels_ready = 0;
+  raster_jp_labels(label_ctrl_title, 80, 22, "操作",
+                   label_ctrl_trad, 140, 24, "従来",
+                   label_ctrl_direct, 180, 24, "直接タッチ",
+                   &ctrl_labels_ready);
+  boot_phase = BOOT_CONTROLS;
+  paused = true;
+  set_status(ctrl_mode == CTRL_DIRECT
+    ? "Controls — tap a row (B cancels)"
+    : "Controls — ↑↓ / A · B cancels");
+  draw_ctrl_menu();
+  present_pixels();
+  emscripten_cancel_main_loop();
+  emscripten_set_main_loop(menu_tick, 0, 0);
+}
+
 static void menu_tick(void) {
   if(boot_phase != BOOT_LANG && boot_phase != BOOT_CONTROLS) return;
   poll_input_events();
@@ -705,8 +772,15 @@ static void menu_tick(void) {
     int *sel = (boot_phase == BOOT_LANG) ? &lang_sel : &ctrl_sel;
     if(pressed & (1u << 4)) *sel = (*sel + 1) % 2; /* Up */
     if(pressed & (1u << 5)) *sel = (*sel + 1) % 2; /* Down */
-    /* A / B / Start / X confirm */
-    if(pressed & ((1u << 8) | (1u << 0) | (1u << 3) | (1u << 9))) {
+    /* Live CONTROLS: B cancels without changing mode. */
+    if(controls_live && boot_phase == BOOT_CONTROLS && (pressed & (1u << 0))) {
+      resume_playing_from_controls();
+      return;
+    }
+    /* A / Start / X confirm; boot CONTROLS also accepts B as confirm. */
+    unsigned confirm = (1u << 8) | (1u << 3) | (1u << 9);
+    if(!controls_live) confirm |= (1u << 0); /* B */
+    if(pressed & confirm) {
       if(boot_phase == BOOT_LANG) lang_confirm();
       else controls_confirm();
       return;
@@ -816,8 +890,8 @@ int dbz_web_get_controls_mode(void) {
 
 /*
  * In-game menu geometry at 2× (512×480), measured from WRAM-correlated
- * triangle tips (docs/ram-map.md). Pitch is always DBZ_UI_ROW_PITCH (32).
- * Modes 0 / 1 / $0A share live cursor $0D62; Direct only reads it.
+ * triangle tips / Status grid lines (docs/ram-map.md). List pitch is
+ * DBZ_UI_ROW_PITCH (32). Direct writes the live cursor then pulses A.
  */
 enum {
   DBZ_CMD_MENU_X0 = 30,
@@ -837,13 +911,24 @@ enum {
   DBZ_FLY_MENU_Y0 = 358,
   DBZ_FLY_MENU_Y1 = 460,
   DBZ_FLY_MENU_ROW0_Y = 358, /* tip centers ≈ 374 + i*32 */
+  /* Status 3×3 portrait grid ($0D66=$0F): col=$0D62, row=$0D63 */
+  DBZ_STATUS_X0 = 42,
+  DBZ_STATUS_X1 = 476,
+  DBZ_STATUS_Y0 = 42,
+  DBZ_STATUS_Y1 = 428,
+  DBZ_STATUS_COL1_X = 214, /* vertical dividers */
+  DBZ_STATUS_COL2_X = 342,
+  DBZ_STATUS_ROW1_Y = 168, /* horizontal dividers */
+  DBZ_STATUS_ROW2_Y = 296,
   DBZ_WRAM_UI_OPEN = 0x0025,   /* DP+$25 == 1 while a UI menu is open */
   DBZ_WRAM_MENU_CURSOR = 0x0D62,
-  DBZ_WRAM_MENU_MAX = 0x0D64,  /* exclusive max */
-  DBZ_WRAM_MENU_MODE = 0x0D66  /* 0=cmd, 1=party, $0A=flight; else tap=A */
+  DBZ_WRAM_MENU_ROW = 0x0D63,  /* Status row axis (Up/Down) */
+  DBZ_WRAM_MENU_MAX = 0x0D64,  /* exclusive max (list modes) */
+  DBZ_WRAM_MENU_MODE = 0x0D66, /* 0=cmd, 1=party, $0A=flight, $0F=Status */
+  DBZ_WRAM_MENU_SAVE = 0x1100, /* per-mode mirror; Y = $0D66 */
+  DBZ_PARTY_TEXT_INDEX = 3     /* party Text row → host CONTROLS */
 };
 
-/* Clamp target into [0, max_excl). */
 static int direct_clamp_row(int target, int max_excl) {
   if(max_excl <= 0) return 0;
   if(target < 0) return 0;
@@ -851,20 +936,37 @@ static int direct_clamp_row(int target, int max_excl) {
   return target;
 }
 
-/* Read $0D62 → pulse N× Up/Down → pulse A. Never writes selection WRAM. */
+/* Host-driven selection: write live cursor (+ mirror) then pulse A only. */
+static void direct_set_list_cursor(uint8_t mode, uint8_t target) {
+  game->ram[DBZ_WRAM_MENU_CURSOR] = target;
+  /* Mode 1 keeps parent Menu index in $1100; live party index is $1101. */
+  if(mode == 1)
+    game->ram[DBZ_WRAM_MENU_SAVE + 1] = target;
+  else
+    game->ram[DBZ_WRAM_MENU_SAVE + mode] = target;
+}
+
+static void direct_set_status_cursor(uint8_t col, uint8_t row) {
+  game->ram[DBZ_WRAM_MENU_CURSOR] = col;
+  game->ram[DBZ_WRAM_MENU_ROW] = row;
+  game->ram[DBZ_WRAM_MENU_SAVE + 0x0F] = col; /* $110F mirrors column */
+}
+
+/*
+ * Tap-the-thing: hit-test → write $0D62 (Status also $0D63) → pulse A.
+ * Party Text opens the host CONTROLS overlay instead of the in-game Text UI.
+ */
 static void direct_in_game_tap(int x, int y) {
   if(!game) {
     dbz_web_pulse_button(8, 3);
     return;
   }
-  /* Menu closed: A opens the command menu / advances dialogue. */
   if(game->ram[DBZ_WRAM_UI_OPEN] != 1) {
     dbz_web_pulse_button(8, 3);
     return;
   }
   uint8_t mode = game->ram[DBZ_WRAM_MENU_MODE];
   uint8_t max = game->ram[DBZ_WRAM_MENU_MAX];
-  uint8_t cur = game->ram[DBZ_WRAM_MENU_CURSOR];
   int target = -1;
   if(mode == 0 && max == 5 &&
      x >= DBZ_CMD_MENU_X0 && x < DBZ_CMD_MENU_X1 &&
@@ -874,32 +976,36 @@ static void direct_in_game_tap(int x, int y) {
             x >= DBZ_PARTY_MENU_X0 && x < DBZ_PARTY_MENU_X1 &&
             y >= DBZ_PARTY_MENU_Y0 && y < DBZ_PARTY_MENU_Y1) {
     target = direct_clamp_row((y - DBZ_PARTY_MENU_ROW0_Y) / DBZ_UI_ROW_PITCH, 5);
+    if(target == DBZ_PARTY_TEXT_INDEX) {
+      direct_set_list_cursor(mode, (uint8_t)target);
+      dbz_web_open_controls_menu();
+      return;
+    }
   } else if(mode == 0x0A && max == 3 &&
             x >= DBZ_FLY_MENU_X0 && x < DBZ_FLY_MENU_X1 &&
             y >= DBZ_FLY_MENU_Y0 && y < DBZ_FLY_MENU_Y1) {
     target = direct_clamp_row((y - DBZ_FLY_MENU_ROW0_Y) / DBZ_UI_ROW_PITCH, 3);
-  }
-  if(target < 0) {
-    dbz_web_pulse_button(8, 3); /* confirm / unrecovered mode (e.g. $0F Status) */
+  } else if(mode == 0x0F &&
+            x >= DBZ_STATUS_X0 && x < DBZ_STATUS_X1 &&
+            y >= DBZ_STATUS_Y0 && y < DBZ_STATUS_Y1) {
+    uint8_t col = (x < DBZ_STATUS_COL1_X) ? 0 : (x < DBZ_STATUS_COL2_X) ? 1 : 2;
+    uint8_t row = (y < DBZ_STATUS_ROW1_Y) ? 0 : (y < DBZ_STATUS_ROW2_Y) ? 1 : 2;
+    direct_set_status_cursor(col, row);
+    dbz_web_pulse_button(8, 3);
     return;
   }
-  if(max == 0) max = 1;
-  if(cur >= max) cur = 0;
-  int delta = target - (int)cur;
-  int dir_btn = delta > 0 ? 5 : 4; /* Down : Up */
-  int steps = delta > 0 ? delta : -delta;
-  const int press = 3;
-  const int gap = 18; /* ≈ kame-flight Down spacing */
-  for(int i = 0; i < steps; i++)
-    pulse_button_at(dir_btn, press, i * gap);
-  pulse_button_at(8, press, steps * gap + 8); /* A */
+  if(target < 0) {
+    dbz_web_pulse_button(8, 3);
+    return;
+  }
+  direct_set_list_cursor(mode, (uint8_t)target);
+  dbz_web_pulse_button(8, 3);
 }
 
 /*
  * Canvas tap in 512×480 framebuffer pixels (top-left origin).
- * Host menus: hit-test the two Densetsu rows and confirm (host cursor only).
- * In-game Direct: read $0D62 for modes 0 / 1 / $0A hit-rects and pulse
- * Up/Down/A — never poke selection RAM (docs/ram-map.md).
+ * Host menus: hit-test Densetsu rows and confirm. In-game Direct: write
+ * selection WRAM for measured rects then pulse A (docs/ram-map.md).
  */
 EMSCRIPTEN_KEEPALIVE
 void dbz_web_canvas_tap(int x, int y) {

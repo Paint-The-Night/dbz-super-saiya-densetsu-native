@@ -99,7 +99,8 @@ python3 tools/run_scenes.py --binary build/dbz-port --rom "$ROM" \
 
 ## Direct touch / menu cursor
 
-Live list cursor is `$0D62` for `$0D66` modes `0` (command), `1` (party), and
-`$0A` (flight Land/Item/Menu); see `docs/ram-map.md`. Status `$0F` and card-battle
-Fight UI remain tap=A until hit-rects are measured. `en_menu_smoke` still validates
-EN chrome only; it does not exercise Direct read→pulse.
+Live list cursor is `$0D62` for `$0D66` modes `0` / `1` / `$0A`; Status `$0F`
+uses `$0D62` column + `$0D63` row (see `docs/ram-map.md`). Direct **writes** the
+cursor then pulses A. Card-battle Fight UI remains unreachable on the 1800f
+battle-route scout (flight `$0A` only). `en_menu_smoke` still validates EN chrome
+only; it does not exercise Direct write→A.
