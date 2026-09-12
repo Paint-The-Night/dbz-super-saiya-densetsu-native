@@ -3,6 +3,8 @@
  * and final seed. Exhaustively covers both RNG streams' 16-bit seed space. */
 #include "native.h"
 #include "rom.h"
+#include "i18n.h"
+#include "text_script.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11287,6 +11289,77 @@ int main(int argc,char **argv) {
     require(a->ram[0x04]==0xf4,"cfb2 stored F4 after space");
   }
 
-  printf("PASS: native equivalence suites including CD02/CD81/CD96/CDB6/CDCA/CC04/CC0E/CC25/CC92/CCA0/CCBB/CCC8/CCEE/CDE1/CDEE/CDF7/CE13/CE60/CE8B/CEFF/CF08/CF0F/CF60/CF65/CFB1/CFB9/D13E/D1D6/D05A/D06D/D095/D038/D118/D0BA/D260/D1E1/D1F4/D209/E24F/E253/E260/E2BD/E2F8/E31F/E342/E347/E446/E565/E7FF/E6D6/E6B1/E659/E61B/E5AA/EE5E/EE99/E97B/E9A2/E9D4/EA0E/ED88/E8DC/E87F/E845/EA52/EA6F/EB36/EB31/EC61/EAEB/ED4A/ED46/EDB4/EE01/E921/DE26/DEA1/DDF4-deep/EA8C/EED4/EF26/EF5A/EFCC/ECE4/1D8583/1D859B/DBF3/E073/DB65/DB2B/DC48/DC7C/DBC6/DDF4/B594/D3D6/D45F/DD29/D306-full/D274/D28D/D306/D30D/D330/D3C1/F0EA/F353/F167/D48F/D4D2/DA9C/F06A/F386/F76B/F77A/F782/F7B3/F7C2/F7CA/F820/F000/95C9/DA8D/F6A8/F685/F54F/F708/F82B/DA45/DA7C/B11D/A93D/A90D/A8E9/A5F7/F85E/E089/D8DB/D955/DA03/1D89D1/F480/B124/BDDC/95F6/9491/A9F4/D521/D55B/D566/F998/F91E/F952/A52E/1D8B46/1D8B7C/DD51/DD69/DFF3/CA8D/F548/D7F4/D81E/D849/D6E2/D743/D5B9/D60F/D6F6/D681/D873/D8B3/F410/A581/B6B2/B6C0/DF60/E102/93A9/A435/1D8AB3/1D8ABD/CA90/DEC3/DF51/CFB2/F719/B00A/9886/C41F/90A5/DA64/DFE3/C98F/C9FA/1D8A85/1D8AA2/F692/97C9/B0BE/B0F9/B582/9488/CA10/9115/1D8A77/E38E/E3CC/86DE/8857/B0B1/1D8843/9768/B110/B045/90CC/8116/1D8906/86F5/1D8807/C1EE/C20D/9626/96D7/96E2/96ED/B572/C1C8/9B37/9B91/C0ED/C116/C07B/C232/9AFF/AA70/BECB/C00A/F9A0/C5ED/C707/A9E9/AE38/C029/96F3/A99B/FA86/BE54/8282/83B2/8411/889E/C987/FBBC/FAE9/FC00/871E/FA1A/C8C8/C885/F53B/F660/F67B/8974/B55A/F4B2/F983/FB2A/B960/AB00/8938/89E2/B72B/B6ED/B700/F802/F375/FE0E/A956/A961/8674/9083/FD64/B65D/B67A/B6AC/B6BF/A95B/8FB2/F021/F06F/8514/C9F9/CA98/CAAB/CA34/C535/B61E/B647/8490/84B9/84E2/85F1/EBC1/85A1/844A/87E9/87F9/877E/8D4E/8DFA/8DAC/EAD4/EB52/8F46/8C84/E8EE/BB46/EFD7/EFEA/EFFD/F00F/E36B/E32E/EF29/E419/E42A/E461/E4D1/E4F4/E942/8B7A/8E96/A6CB/9255/E837/FC33/E340/9485/94E7/FC47/FC74/FBDA/849C/85E9/FB8D/EF11/F089/F14D/89B8/D812/9BBF/8D2B/85B6/C559/C68C/90E6/946F and 8DFE-to-F14D; CPU state and bus sequences match.\n");
+
+  /* $01CF3A: message resolve — JA identity vs lakesnes (far table planted in
+   * RAM mirror for bank $07; string ptrs from real bank-$06 ROM). */
+  {
+    dbz_i18n_set(DBZ_LANG_JA);
+    dbz_text_unbind();
+    /* Plant 07:8F16 far table into test-bus RAM (bank 7 not ROM-mapped). */
+    size_t ft = (size_t)0x07 * 0x8000u + (0x8f16u & 0x7fffu);
+    for(unsigned i=0;i<24;i++) a->ram[0x8f16u+i]=b->ram[0x8f16u+i]=rom[ft+i];
+    Cpu ca=make_cpu(a,0xcf3a,0), cb=make_cpu(b,0xcf3a,0);
+    ca.k=cb.k=1; ca.db=cb.db=0; ca.mf=cb.mf=true; ca.xf=cb.xf=false;
+    ca.sp=cb.sp=0x1ff; ca.dp=cb.dp=0;
+    a->ram[0x0733]=b->ram[0x0733]=2; /* main script bank sel */
+    word(a,0x0723,0); word(b,0x0723,0); /* string index 0 */
+    a->ram[0x071d]=b->ram[0x071d]=0;
+    a->ram[0x071e]=b->ram[0x071e]=0;
+    a->ram[0x071f]=b->ram[0x071f]=0;
+    word(a,0x0721,0); word(b,0x0721,0);
+    word(a,0x0731,0); word(b,0x0731,0); /* non-negative → take add path */
+    /* RTL return frame: [SP+1]=PCL [SP+2]=PCH [SP+3]=PBR of (ret-1) */
+    ca.sp=cb.sp=0x1fc;
+    a->ram[0x1fd]=b->ram[0x1fd]=0xff;
+    a->ram[0x1fe]=b->ram[0x1fe]=0x8f;
+    a->ram[0x1ff]=b->ram[0x1ff]=0x01;
+    unsigned steps=0;
+    while(ca.pc!=0x9000 && steps++<80) {
+      a->count=b->count=0;
+      require(dbz_native_step(&ca,stats),"expected cf3a text resolve");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    require(ca.pc==0x9000,"cf3a returned");
+    require(a->ram[0x02]==0x06,"cf3a bank 06");
+    /* string 0 ptr at 06:8000 = $82DC */
+    require(getword(a,0x00)==0x82dc,"cf3a string0 ptr");
+  }
+  /* EN pointer-swap: after resolve, DP+$00 → WRAM overlay with EN bytes. */
+  {
+    dbz_i18n_set(DBZ_LANG_EN);
+    dbz_text_unbind();
+    size_t ft = (size_t)0x07 * 0x8000u + (0x8f16u & 0x7fffu);
+    for(unsigned i=0;i<24;i++) a->ram[0x8f16u+i]=rom[ft+i];
+    Cpu ca=make_cpu(a,0xcf3a,0);
+    ca.k=1; ca.db=0; ca.mf=true; ca.xf=false; ca.dp=0;
+    a->ram[0x0733]=2; word(a,0x0723,0);
+    a->ram[0x071d]=a->ram[0x071e]=a->ram[0x071f]=0;
+    word(a,0x0721,0); word(a,0x0731,0);
+    ca.sp=0x1fc;
+    a->ram[0x1fd]=0xff; a->ram[0x1fe]=0x8f; a->ram[0x1ff]=0x01;
+    unsigned steps=0;
+    while(ca.pc!=0x9000 && steps++<80) {
+      a->count=0;
+      require(dbz_native_step(&ca,stats),"expected cf3a EN resolve");
+    }
+    require(ca.pc==0x9000,"cf3a EN returned");
+    require(a->ram[0x02]==DBZ_TEXT_EN_OVERLAY_BANK,"EN overlay bank");
+    require(getword(a,0x00)==DBZ_TEXT_EN_OVERLAY_OFF,"EN overlay off");
+    require(dbz_text_active_stream()->active,"EN stream active");
+    require(a->ram[DBZ_TEXT_EN_OVERLAY_OFF]==0xf4,"EN overlay starts F4");
+    /* CFB2 fetch should read EN glyph stream via [$00],Y */
+    ca.pc=0xcfb2; ca.y=0; ca.mf=true; ca.xf=false;
+    steps=0;
+    while(ca.pc!=0xcfc4 && steps++<16) {
+      a->count=0;
+      require(dbz_native_step(&ca,stats),"expected cfb2 EN fetch");
+    }
+    require(ca.pc==0xcfc4 && a->ram[0x04]==0xf4,"cfb2 EN first byte F4");
+    dbz_i18n_set(DBZ_LANG_JA);
+    dbz_text_unbind();
+  }
+
+
+  printf("PASS: native equivalence suites including CD02/CD81/CD96/CDB6/CDCA/CC04/CC0E/CC25/CC92/CCA0/CCBB/CCC8/CCEE/CDE1/CDEE/CDF7/CE13/CE60/CE8B/CEFF/CF08/CF0F/CF60/CF65/CFB1/CFB9/D13E/D1D6/D05A/D06D/D095/D038/D118/D0BA/D260/D1E1/D1F4/D209/E24F/E253/E260/E2BD/E2F8/E31F/E342/E347/E446/E565/E7FF/E6D6/E6B1/E659/E61B/E5AA/EE5E/EE99/E97B/E9A2/E9D4/EA0E/ED88/E8DC/E87F/E845/EA52/EA6F/EB36/EB31/EC61/EAEB/ED4A/ED46/EDB4/EE01/E921/DE26/DEA1/DDF4-deep/EA8C/EED4/EF26/EF5A/EFCC/ECE4/1D8583/1D859B/DBF3/E073/DB65/DB2B/DC48/DC7C/DBC6/DDF4/B594/D3D6/D45F/DD29/D306-full/D274/D28D/D306/D30D/D330/D3C1/F0EA/F353/F167/D48F/D4D2/DA9C/F06A/F386/F76B/F77A/F782/F7B3/F7C2/F7CA/F820/F000/95C9/DA8D/F6A8/F685/F54F/F708/F82B/DA45/DA7C/B11D/A93D/A90D/A8E9/A5F7/F85E/E089/D8DB/D955/DA03/1D89D1/F480/B124/BDDC/95F6/9491/A9F4/D521/D55B/D566/F998/F91E/F952/A52E/1D8B46/1D8B7C/DD51/DD69/DFF3/CA8D/F548/D7F4/D81E/D849/D6E2/D743/D5B9/D60F/D6F6/D681/D873/D8B3/F410/A581/B6B2/B6C0/DF60/E102/93A9/A435/1D8AB3/1D8ABD/CA90/DEC3/DF51/CF3A/CFB2/F719/B00A/9886/C41F/90A5/DA64/DFE3/C98F/C9FA/1D8A85/1D8AA2/F692/97C9/B0BE/B0F9/B582/9488/CA10/9115/1D8A77/E38E/E3CC/86DE/8857/B0B1/1D8843/9768/B110/B045/90CC/8116/1D8906/86F5/1D8807/C1EE/C20D/9626/96D7/96E2/96ED/B572/C1C8/9B37/9B91/C0ED/C116/C07B/C232/9AFF/AA70/BECB/C00A/F9A0/C5ED/C707/A9E9/AE38/C029/96F3/A99B/FA86/BE54/8282/83B2/8411/889E/C987/FBBC/FAE9/FC00/871E/FA1A/C8C8/C885/F53B/F660/F67B/8974/B55A/F4B2/F983/FB2A/B960/AB00/8938/89E2/B72B/B6ED/B700/F802/F375/FE0E/A956/A961/8674/9083/FD64/B65D/B67A/B6AC/B6BF/A95B/8FB2/F021/F06F/8514/C9F9/CA98/CAAB/CA34/C535/B61E/B647/8490/84B9/84E2/85F1/EBC1/85A1/844A/87E9/87F9/877E/8D4E/8DFA/8DAC/EAD4/EB52/8F46/8C84/E8EE/BB46/EFD7/EFEA/EFFD/F00F/E36B/E32E/EF29/E419/E42A/E461/E4D1/E4F4/E942/8B7A/8E96/A6CB/9255/E837/FC33/E340/9485/94E7/FC47/FC74/FBDA/849C/85E9/FB8D/EF11/F089/F14D/89B8/D812/9BBF/8D2B/85B6/C559/C68C/90E6/946F and 8DFE-to-F14D; CPU state and bus sequences match.\n");
   free(stats);free(a);free(b);free(rom);return 0;
 }

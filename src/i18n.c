@@ -1,4 +1,5 @@
 #include "i18n.h"
+#include "text_script.h"
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #define DBZ_KEEP EMSCRIPTEN_KEEPALIVE
@@ -25,9 +26,8 @@ typedef struct {
 
 /*
  * First intro lines — raw Klepto 1.02 glyph bytes (reference wording only).
- * Same control framing as JP (F4/7E/FF/FE/7F). Lengths differ from JP, so a
- * future pointer-swap hook is required before these can drive the decoder;
- * filter_script_byte currently only remaps within same-length windows.
+ * Same control framing as JP (F4/7E/FF/FE/7F). Lengths differ from JP; the
+ * 01:CF3A pointer-swap installs these into the WRAM overlay when lang==EN.
  */
 static const uint8_t EN_SCRIPT_0[] = {
   0xf4, 0x6a, 0x7e, 0xed, 0x1b, 0x1b, 0x0a, 0x01, 0x18, 0x55, 0x09, 0x17, 0x7b,
@@ -61,7 +61,9 @@ static const DbzEnScript EN_SCRIPTS[] = {
 };
 
 DBZ_KEEP void dbz_i18n_set(DbzLang lang) {
-  g_lang = (lang == DBZ_LANG_EN) ? DBZ_LANG_EN : DBZ_LANG_JA;
+  DbzLang next = (lang == DBZ_LANG_EN) ? DBZ_LANG_EN : DBZ_LANG_JA;
+  if(next != g_lang) dbz_text_unbind();
+  g_lang = next;
 }
 
 DBZ_KEEP DbzLang dbz_i18n_get(void) {
@@ -109,11 +111,6 @@ uint8_t dbz_i18n_filter_script_byte(uint32_t addr24, uint8_t rom_byte) {
 #if defined(DBZ_I18N_EXPERIMENTAL_HOOKS) && DBZ_I18N_EXPERIMENTAL_HOOKS
   if(dbz_i18n_remap_script_byte) return dbz_i18n_remap_script_byte(rom_byte);
 #endif
-  /*
-   * Same-length window remap only. Intro EN lines differ in length from JP, so
-   * they are exposed via dbz_i18n_en_script for a future pointer-swap hook and
-   * are not applied here (avoids walking off the JP stream).
-   */
-  (void)addr24;
-  return rom_byte;
+  /* EN different-length lines use text_script pointer-swap (WRAM overlay). */
+  return dbz_text_filter_script_byte(addr24, rom_byte);
 }

@@ -761,6 +761,10 @@ static void lda_long_x16(Cpu *c, uint32_t base) {
   c->a = value | ((uint16_t)c->read(c->mem, (low + 1) & 0xffffffu) << 8);
   zn(c, c->a, false);
 }
+static void lda_long_x8(Cpu *c, uint32_t base) {
+  (void)fetch(c); (void)fetch(c); (void)fetch(c); sample_interrupt(c);
+  set_a8(c, c->read(c->mem, (base + c->x) & 0xffffffu));
+}
 static void store_a_abs_y16(Cpu *c, uint16_t base) {
   (void)fetch(c); (void)fetch(c); idle(c);
   uint32_t address = (((uint32_t)c->db << 16) + base + c->y) & 0xffffffu;
@@ -11985,11 +11989,11 @@ static bool actor_timer_d00b_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
-/* $01:CFB2–CFC3: dialogue script fetch leaf.
- * LDX $20 / LDA [$00],Y (i18n filter) / STA $04 / INY / CMP #$01 /
- * BNE $CFC4 / INX / JSL $01D00B / BRA $CFB4.
- * JA: filter is identity → bit-identical to lakesnes. EN tables differ in
- * length from JP, so filter does not rewrite yet (see docs/i18n.md). */
+/* $01:CFB2–CFC3: dialogue script fetch leaf (text API).
+ * LDX $20 / LDA [$00],Y (dbz_i18n_filter_script_byte) / STA $04 / INY /
+ * CMP #$01 / BNE $CFC4 / INX / JSL $01D00B / BRA $CFB4.
+ * JA: filter identity. EN: 01:CF3A pointer-swap retargets DP+$00 to WRAM
+ * overlay so this leaf walks different-length C-table streams. */
 static void lda_indirect_long_y8_i18n(Cpu *c, uint8_t offset) {
   uint16_t dp = dp_address(c, offset);
   uint32_t pointer = c->read(c->mem, dp);
@@ -12019,6 +12023,100 @@ static bool text_script_cfb2_step(Cpu *c, uint16_t pc) {
     case 0xcfbd: implied(c); c->x++; zn(c, c->x, false); break;
     case 0xcfbe: jsl_to(c, 0xd00b); break;
     case 0xcfc2: branch_to(c, true, 0xcfb4); break;
+  }
+  return true;
+}
+
+/* $01:CF3A–CFA0: message resolve + text cursor setup (text API).
+ * $0733×3 indexes far table 07:8F16 → DP+$00 long bank base; $0723 ASL indexes
+ * the u16 pointer table; result replaces DP+$00 offset (bank stays in $02).
+ * Then WRMPY cursor math into DP+$20; Y ← $071D. JSL from CCC4/CDAE/CE6D.
+ * After STA $00 (string ptr), EN may pointer-swap DP+$00 to WRAM overlay via
+ * dbz_text_pointer_swap_after_resolve. JA path is bit-identical (no swap). */
+static bool text_script_cf3a_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7fu) != 0x01 || c->e || c->d) return false;
+  const bool m16 = (pc == 0xcf48 || pc == 0xcf4c || pc == 0xcf5a || pc == 0xcf5d ||
+                    pc == 0xcf5e || pc == 0xcf5f || pc == 0xcf61 || pc == 0xcf80 ||
+                    pc == 0xcf88 || pc == 0xcf89 || pc == 0xcf8a || pc == 0xcf8d ||
+                    pc == 0xcf8f || pc == 0xcf91 || pc == 0xcf94 || pc == 0xcf96 ||
+                    pc == 0xcf98 || pc == 0xcf99 || pc == 0xcf9c);
+  const bool rep_entry = (pc == 0xcf46 || pc == 0xcf58 || pc == 0xcf7e || pc == 0xcf86);
+  const bool sep_entry = (pc == 0xcf4e || pc == 0xcf63 || pc == 0xcf81 || pc == 0xcf9e);
+  if(m16 && c->mf) return false;
+  if(rep_entry && !c->mf) return false;
+  if(sep_entry && c->mf) return false;
+  if(!m16 && !rep_entry && !sep_entry && !c->mf) return false;
+  if(c->xf && (pc == 0xcf73 || pc == 0xcf76 || pc == 0xcf80)) return false;
+  switch(pc) {
+    case 0xcf3a: case 0xcf3c: case 0xcf3d: case 0xcf40: case 0xcf41: case 0xcf42:
+    case 0xcf45: case 0xcf46: case 0xcf48: case 0xcf4c: case 0xcf4e: case 0xcf50:
+    case 0xcf51: case 0xcf52: case 0xcf56: case 0xcf58: case 0xcf5a: case 0xcf5d:
+    case 0xcf5e: case 0xcf5f: case 0xcf61: case 0xcf63: case 0xcf65: case 0xcf68:
+    case 0xcf6b: case 0xcf6d: case 0xcf70: case 0xcf71: case 0xcf72: case 0xcf73:
+    case 0xcf76: case 0xcf78: case 0xcf7a: case 0xcf7b: case 0xcf7e: case 0xcf80:
+    case 0xcf81: case 0xcf83: case 0xcf86: case 0xcf88: case 0xcf89: case 0xcf8a:
+    case 0xcf8d: case 0xcf8f: case 0xcf91: case 0xcf94: case 0xcf96: case 0xcf98:
+    case 0xcf99: case 0xcf9c: case 0xcf9e: case 0xcfa0: break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0xcf3a: byte_constant(c, 0x00); break;
+    case 0xcf3c: xba_native(c); break;
+    case 0xcf3d: video_load(c, 0x0733, false); break;
+    case 0xcf40: asl_a8(c); break;
+    case 0xcf41: implied(c); c->c = false; break;
+    case 0xcf42: adc_abs8(c, 0x0733); break;
+    case 0xcf45: tax8(c); break;
+    case 0xcf46: sep_rep_native(c, 0x20, false); break;
+    case 0xcf48: lda_long_x16(c, 0x078f16u); break;
+    case 0xcf4c: store_dp(c, 0x00, false); break;
+    case 0xcf4e: sep_rep_native(c, 0x20, true); break;
+    case 0xcf50: implied(c); c->x++; zn(c, c->x, c->xf); break;
+    case 0xcf51: implied(c); c->x++; zn(c, c->x, c->xf); break;
+    case 0xcf52: lda_long_x8(c, 0x078f16u); break;
+    case 0xcf56: store_dp(c, 0x02, true); break;
+    case 0xcf58: sep_rep_native(c, 0x20, false); break;
+    case 0xcf5a: video_load(c, 0x0723, false); break;
+    case 0xcf5d: asl_a16(c); break;
+    case 0xcf5e: tay16(c); break;
+    case 0xcf5f: lda_indirect_long_y16(c, 0x00); break;
+    case 0xcf61:
+      store_dp(c, 0x00, false);
+      /* EN pointer-swap: retarget DP+$00 long to WRAM overlay if table hit. */
+      dbz_text_pointer_swap_after_resolve(c);
+      break;
+    case 0xcf63: sep_rep_native(c, 0x20, true); break;
+    case 0xcf65: video_load(c, 0x071e, false); break;
+    case 0xcf68: store_register8(c, 0x4202); break;
+    case 0xcf6b: byte_constant(c, 0x80); break;
+    case 0xcf6d: store_register8(c, 0x4203); break;
+    case 0xcf70: xba_native(c); break;
+    case 0xcf71: xba_native(c); break;
+    case 0xcf72: nop_native(c); break;
+    case 0xcf73: load_y_abs16(c, 0x4216); break;
+    case 0xcf76: sty_dp16(c, 0x03); break;
+    case 0xcf78: byte_constant(c, 0x00); break;
+    case 0xcf7a: xba_native(c); break;
+    case 0xcf7b: video_load(c, 0x071d, false); break;
+    case 0xcf7e: sep_rep_native(c, 0x20, false); break;
+    case 0xcf80: tay16(c); break;
+    case 0xcf81: sep_rep_native(c, 0x20, true); break;
+    case 0xcf83: video_load(c, 0x071f, false); break;
+    case 0xcf86: sep_rep_native(c, 0x20, false); break;
+    case 0xcf88: asl_a16(c); break;
+    case 0xcf89: implied(c); c->c = false; break;
+    case 0xcf8a: adc_abs16(c, 0x0721); break;
+    case 0xcf8d: adc_dp16(c, 0x03); break;
+    case 0xcf8f: store_dp(c, 0x20, false); break;
+    case 0xcf91: video_load(c, 0x0731, false); break;
+    case 0xcf94: branch_to(c, c->n, 0xcfa1); break;
+    case 0xcf96: load_dp16_to_a(c, 0x20); break;
+    case 0xcf98: implied(c); c->c = false; break;
+    case 0xcf99: adc_abs16(c, 0x0731); break;
+    case 0xcf9c: store_dp(c, 0x20, false); break;
+    case 0xcf9e: sep_rep_native(c, 0x20, true); break;
+    case 0xcfa0: return_long(c); break;
   }
   return true;
 }
