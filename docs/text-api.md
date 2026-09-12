@@ -211,10 +211,11 @@ gate). Title *data* (AE6A / F150 / BD86) is in the same chrome table.
 | Small-font legend | SNES BG3 tm=`$6C00` / chr=`$2000` — tile indices at `$00:AE6A` (Klepto-ref "LEGEND OF THE SAIYANS" / © BANDAI / BY SIRYOINK / PUSH START) |
 | `$10:A000` gate | 46 B at file `$082000`: font copy when `$83:$85==$08:8000`. Hooked from `$00:C704`→`$F400`. Native path uses `dbz_text_en_font_ensure` instead |
 | Skipped `$00` code | A296→FCF0, A3C6→FD30, C704→F400, FCF0/FD30/FDB5 stubs (tests assert these file offs stay JP) |
-| Native API | `dbz_text_en_title_ensure` on leave-vblank: fill BG0 tm with `$1464` (tileset empty). JA: no-op |
+| Katakana circles | OBJ — ten 16×16 sprites at y≈`$80`, tiles `$20/$22/…/$2E/$40/$42`, attr `$30`, OBJ CHR `$0000`/`$1000` (not BG0) |
+| Native API | `dbz_text_en_title_ensure` on leave-vblank: fill BG0 tm with `$1464` (tileset empty) + hide circle OAM (`Y=$F0` on tile/attr fingerprint). JA: no-op |
 | Data | `text_en_chrome.inc` (`tools/extract_chrome.py` — bank `$00` data + bank `$02`) |
 
-Idle boot: logo fly-in ~frame 1200 (EN=JA); subtitle/copyright ~1273 (EN≠JA).
+Idle boot: logo fly-in ~frame 1200 (EN=JA); subtitle/copyright ~1273 (EN≠JA). Circles blanked with kanji.
 
 ### Large-font EN subtitle — why left blanked
 
@@ -235,9 +236,9 @@ SAIYANS" (or similar) bitmap for BG0:
    `cartRomFilter`**, which the product policy rejects (and `test_native`
    asserts the stub offs stay identity).
 
-Safe EN title remains: blank BG0 kanji + AE6A small-font "LEGEND OF THE
-SAIYANS". A true large-font EN subtitle would be a **new native render** (not
-Klepto data recovery).
+Safe EN title remains: blank BG0 kanji + hide katakana-circle OBJ + AE6A
+small-font "LEGEND OF THE SAIYANS". A true large-font EN subtitle would be a
+**new native render** (not Klepto data recovery).
 
 ## Remaining JP surfaces (lang=EN)
 
@@ -245,7 +246,7 @@ Klepto data recovery).
 |---------|--------|
 | Opening crawl tilemaps | **EN** (`dbz_text_en_intro_ensure` + leave-vblank hook) |
 | Title logo + subtitle / copyright | **EN** (AE6A legend/copyright + `title_ensure` blanks JP kanji). Klepto has **no** large-font EN subtitle bitmap to install — see § above; left blanked |
-| Title katakana circles | **JP leak** — pink ドラゴンボールゼット circles between logo and legend survive BG0 blank (not on tm `$6000`); likely BG1/sprite chrome; not blanked this pass |
+| Title katakana circles | **EN** — OBJ fingerprint blanked in `title_ensure` (`Y=$F0` for tiles `$20…$42` / attr `$30` while title signature live). JA OAM untouched |
 | CF3A dialogue (main 366 + menu/battle 569) | **EN** pointer-swap + font. Font also re-ensures on successful pointer-swap so checkpoint resume without a fresh `00:90C1` still gets Latin tiles (e.g. “You have no items!”) |
 | Overworld command menu + bank `$02` field chrome | **EN** from clean EN boot (`cartRomFilter` + `text_en_chrome.inc`). **Caveat:** loading a JA-origin checkpoint then switching `--lang en` can leave WRAM-cached JP chrome indices under the EN font (mojibake) until a scene reload re-reads bank `$02` via the filter |
 | Battle encounter / command streams | **EN** via bank tables (sel 1/3/…); `en_battle_smoke` covers encounter messages on the scout battle route |

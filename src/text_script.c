@@ -201,12 +201,25 @@ void dbz_text_en_intro_ensure(Cpu *c) {
 /*
  * Title EN — BG0 tm=$6000 / chr=$5000 holds the JP 超サイヤ伝説 bitmap
  * (5×20 tiles; EFE3 unpatched in Klepto). Logo is BG1 tm=$6800 / chr=$4000.
+ * Pink ドラゴンボールゼット circles are OBJ (OAM), not BG0: ten 16×16 sprites
+ * at y=$80, tiles $20/$22/…/$2E/$40/$42, attr $30, OBJ CHR $0000.
  * Klepto has no large-font EN subtitle for BG0: $10:A000 is font-only;
  * A3C6→FD30/FDB5 bit-decodes F150 into intro-crawl tile indices, not a title
- * nametable. Stubs stay out (policy + test_native). Blank BG0 while the title
- * signature is live so only Latin DBZ logo + AE6A small-font legend remain.
- * JA: no-op.
+ * nametable. Stubs stay out (policy + test_native). Blank BG0 + hide circle
+ * sprites while the title signature is live so only Latin DBZ logo + AE6A
+ * small-font legend remain. JA: no-op.
  */
+static bool dbz_text_en_title_circle_tile(uint8_t tile) {
+  /* Even tile indices for the ten katakana-in-circle sprites (OBJ name 0). */
+  static const uint8_t k[] = {
+    0x20u, 0x22u, 0x24u, 0x26u, 0x28u, 0x2au, 0x2cu, 0x2eu, 0x40u, 0x42u
+  };
+  for(unsigned i = 0; i < sizeof k; i++) {
+    if(k[i] == tile) return true;
+  }
+  return false;
+}
+
 void dbz_text_en_title_ensure(Cpu *c) {
   if(!c || !c->mem) return;
   if(dbz_i18n_get() != DBZ_LANG_EN) {
@@ -239,6 +252,20 @@ void dbz_text_en_title_ensure(Cpu *c) {
    * in CHR $5000 is a hatch. BG1 tm=$6800 is the Latin DBZ logo — leave it. */
   for(uint32_t i = 0; i < 0x400u; i++) {
     snes->ppu->vram[(0x6000u + i) & 0x7fffu] = 0x1464u;
+  }
+
+  /* Hide katakana-circle OBJ. lakesnes OAM: oam[i*2]=x|(y<<8), oam[i*2+1]=tile|(attr<<8).
+   * Leave-vblank runs after NMI OAM DMA, so Y=$F0 sticks for this frame's ppu_runLine.
+   * Match tile+attr fingerprint only (Y animates on fly-in); JA never enters this path. */
+  for(int i = 0; i < 128; i++) {
+    uint16_t w0 = snes->ppu->oam[i * 2];
+    uint16_t w1 = snes->ppu->oam[i * 2 + 1];
+    uint8_t y = (uint8_t)(w0 >> 8);
+    if(y >= 0xe0u) continue;
+    uint8_t tile = (uint8_t)w1;
+    uint8_t attr = (uint8_t)(w1 >> 8);
+    if(attr != 0x30u || !dbz_text_en_title_circle_tile(tile)) continue;
+    snes->ppu->oam[i * 2] = (uint16_t)((w0 & 0x00ffu) | 0xf000u);
   }
   g_en_title_ready = true;
 }

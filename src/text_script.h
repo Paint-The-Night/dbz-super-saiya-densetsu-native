@@ -86,10 +86,12 @@ void dbz_text_en_intro_reset(void);
 
 /* Title screen (mode 1, BG0 chr=$5000 / BG1 chr=$4000 / BG2 chr=$2000):
  * DRAGON BALL Z logo is already Latin (BG1 tm=$6800). JP 超サイヤ伝説 lives
- * on BG0 tm=$6000 (CHR $5000; stream $00:EFE3 unpatched). Klepto has no
- * large-font EN subtitle bitmap for BG0 ($10/FCF0/FD30 stubs are font/intro,
- * not overlaid). EN blanks BG0 ($1464 fill) + AE6A small-font legend via cart
- * filter. JA: no-op. Same leave-vblank as intro. */
+ * on BG0 tm=$6000 (CHR $5000; stream $00:EFE3 unpatched). Pink ドラゴンボール
+ * ゼット circles are OBJ (10×16² sprites, tiles $20–$42 / attr $30). Klepto
+ * has no large-font EN subtitle bitmap for BG0 ($10/FCF0/FD30 stubs are
+ * font/intro, not overlaid). EN blanks BG0 ($1464 fill), hides circle OAM
+ * (Y=$F0), + AE6A small-font legend via cart filter. JA: no-op. Same
+ * leave-vblank as intro. */
 void dbz_text_en_title_ensure(Cpu *c);
 void dbz_text_en_title_reset(void);
 bool dbz_text_en_title_ready(void);

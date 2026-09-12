@@ -33,9 +33,10 @@ DEFAULT_OUT = ROOT / "src" / "text_en_chrome.inc"
 
 # Bank $00 *code* that JSLs $10:A000 or unused-space stubs. Title kanji is
 # BG0 tm=$6000 / chr=$5000 (stream $00:EFE3 unpatched). Logo is BG1 tm=$6800 /
-# chr=$4000. EN small-font legend/copyright is AE6A data (overlaid). $10-gate
-# equivalent for font is dbz_text_en_font_ensure. Kanji nametable is blanked
-# by dbz_text_en_title_ensure (leave-vblank).
+# chr=$4000. Katakana circles are OBJ (not in this chrome table). EN small-font
+# legend/copyright is AE6A data (overlaid). $10-gate equivalent for font is
+# dbz_text_en_font_ensure. Kanji nametable + circle OAM are blanked by
+# dbz_text_en_title_ensure (leave-vblank).
 BANK00_CODE_SKIP = (
     (0x02290, 0x022C0),  # $00:A296 JSR $FCF0 + DMA src/size/dest
     (0x023C0, 0x023D0),  # $00:A3C6 JSR $FD30

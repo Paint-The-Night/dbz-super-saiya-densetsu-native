@@ -7,19 +7,29 @@
   "diverge_after": 4200,
   "signatures": [
     {
-      "frame": 394,
-      "video_hash": "ba2bf2759be1d52d",
+      "frame": 336,
+      "video_hash": "1f81f5916de8a2fd",
       "pc": "00:a95e"
     },
     {
-      "frame": 444,
-      "video_hash": "b5d558e6ad1aca6d",
+      "frame": 386,
+      "video_hash": "0d72acb5c62bfaa5",
       "pc": "00:a95b"
     },
     {
-      "frame": 544,
-      "video_hash": "434729cc262d82ad",
+      "frame": 486,
+      "video_hash": "868aeaa4f6ed59ad",
       "pc": "00:a95b"
+    },
+    {
+      "frame": 586,
+      "video_hash": "3268052a5d8f232d",
+      "pc": "00:a95e"
+    },
+    {
+      "frame": 736,
+      "video_hash": "2bb920f8030eea35",
+      "pc": "00:80da"
     },
     {
       "frame": 750,
@@ -27,14 +37,9 @@
       "pc": "00:82a7"
     },
     {
-      "frame": 794,
-      "video_hash": "15d55e3eaaa08ff5",
-      "pc": "00:82c4"
-    },
-    {
-      "frame": 994,
-      "video_hash": "4298251ebccda57d",
-      "pc": "00:82be"
+      "frame": 936,
+      "video_hash": "504bba904f7f3fed",
+      "pc": "00:82ac"
     },
     {
       "frame": 1500,
@@ -62,33 +67,37 @@
       "pc": "00:82a3"
     }
   ],
-  "first_en_ja_video_diff_frame": 394,
+  "first_en_ja_video_diff_frame": 336,
   "ja_contrast": {
     "final_video_hash": "8dff4d9af60a6255",
     "signatures": [
       {
-        "frame": 394,
-        "video_hash": "7cd10bb5a7504d05"
+        "frame": 336,
+        "video_hash": "d27e295d09d64dfd"
       },
       {
-        "frame": 444,
-        "video_hash": "7bf4d7bb6d88fc05"
+        "frame": 386,
+        "video_hash": "479ee9f997cdea25"
       },
       {
-        "frame": 544,
+        "frame": 486,
         "video_hash": "c397436ee8a4a6c5"
+      },
+      {
+        "frame": 586,
+        "video_hash": "35c73704fc45d045"
+      },
+      {
+        "frame": 736,
+        "video_hash": "56087e6a0633de35"
       },
       {
         "frame": 750,
         "video_hash": "cebe1b1d9084af25"
       },
       {
-        "frame": 794,
-        "video_hash": "2c9f1541861a7035"
-      },
-      {
-        "frame": 994,
-        "video_hash": "0a69b71a5f92b1c5"
+        "frame": 936,
+        "video_hash": "f78191e66bb756fd"
       },
       {
         "frame": 1500,

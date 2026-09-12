@@ -49,7 +49,7 @@
       "verify": false,
       "golden": "tests/scenes/goldens/en/en_title_smoke.json",
       "extended": false,
-      "notes": "Title before Start: AE6A legend/copyright + BG0 kanji blank (dbz_text_en_title_ensure). EN\u2260JA after subtitle phase (~1270).",
+      "notes": "Title before Start: AE6A legend/copyright + BG0 kanji blank + katakana-circle OBJ hide (dbz_text_en_title_ensure). EN\u2260JA after subtitle phase (~1270).",
       "contrast_ja": true,
       "diverge_after": 1270
     },

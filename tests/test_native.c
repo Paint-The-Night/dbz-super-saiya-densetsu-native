@@ -11434,17 +11434,29 @@ int main(int argc,char **argv) {
     snes->ppu->vram[0x6000] = 0x1234;
     snes->ppu->vram[0x6000 + 0x3ff] = 0x5678;
     snes->ppu->vram[0x6800] = 0xABCD;
+    /* Seed title katakana-circle OAM (tile $20 attr $30 at y=$80). */
+    snes->ppu->oam[0] = (uint16_t)(0x30u | (0x80u << 8));
+    snes->ppu->oam[1] = (uint16_t)(0x20u | (0x30u << 8));
+    snes->ppu->oam[2] = (uint16_t)(0x40u | (0x80u << 8));
+    snes->ppu->oam[3] = (uint16_t)(0x22u | (0x30u << 8));
+    /* Non-circle sprite must stay (wrong tile). */
+    snes->ppu->oam[4] = (uint16_t)(0x10u | (0x90u << 8));
+    snes->ppu->oam[5] = (uint16_t)(0x10u | (0x30u << 8));
     dbz_i18n_set(DBZ_LANG_JA);
     dbz_text_en_title_reset();
     dbz_text_en_title_ensure(&ce);
     require(!dbz_text_en_title_ready(), "JA title no-op");
     require(snes->ppu->vram[0x6000] == 0x1234, "JA leaves kanji map");
+    require(((snes->ppu->oam[0] >> 8) & 0xff) == 0x80, "JA leaves circle Y");
     dbz_i18n_set(DBZ_LANG_EN);
     dbz_text_en_title_ensure(&ce);
     require(dbz_text_en_title_ready(), "EN title ready");
     require(snes->ppu->vram[0x6000] == 0x1464, "EN fills kanji tl");
     require(snes->ppu->vram[0x6000 + 0x3ff] == 0x1464, "EN fills kanji br");
     require(snes->ppu->vram[0x6800] == 0xABCD, "logo map untouched");
+    require(((snes->ppu->oam[0] >> 8) & 0xff) == 0xf0, "EN hides circle0 Y");
+    require(((snes->ppu->oam[2] >> 8) & 0xff) == 0xf0, "EN hides circle1 Y");
+    require(((snes->ppu->oam[4] >> 8) & 0xff) == 0x90, "EN keeps non-circle Y");
     /* Wrong signature must not stay armed. */
     snes->ppu->bgLayer[0].tileAdr = 0x2000;
     dbz_text_en_title_ensure(&ce);
