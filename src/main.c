@@ -198,6 +198,8 @@ int main(int argc,char **argv) {
   size_t rom_size;uint8_t *rom=dbz_read_rom(rom_path,&rom_size);
   if(!rom) { if(window) SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"Unsupported ROM","Use an unmodified Japanese Rev 1 ROM. The original file was not changed.",window);return 1; }
   Snes *game=snes_init(),*reference=verify?snes_init():NULL;
+  dbz_text_en_install_leave_vblank_hook(game);
+  if(reference) dbz_text_en_install_leave_vblank_hook(reference);
   if(!snes_loadRom(game,rom,(int)rom_size) || (verify&&!snes_loadRom(reference,rom,(int)rom_size))) die("Could not initialize ROM");
   free(rom);
   if(!headless && !save_dir) save_dir=preferences;
@@ -243,7 +245,6 @@ int main(int argc,char **argv) {
     unsigned mask=input_path?replay_mask(frame):keys;
     for(int b=0;b<12;b++) { snes_setButtonState(game,1,b,(mask>>b)&1u);if(verify) snes_setButtonState(reference,1,b,(mask>>b)&1u); }
     snes_runFrame(game);
-    if(dbz_i18n_get()==DBZ_LANG_EN) dbz_text_en_intro_ensure(game->cpu);
     if(verify) {
       if(trace_reference) { execution.cpu=reference->cpu; execution.enabled=false; }
       snes_runFrame(reference);

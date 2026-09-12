@@ -36,6 +36,7 @@ Snes* snes_init(void) {
   snes->input1 = input_init(snes);
   snes->input2 = input_init(snes);
   snes->palTiming = false;
+  snes->leaveVblankHook = NULL;
   return snes;
 }
 
@@ -118,6 +119,8 @@ void snes_runFrame(Snes* snes) {
   while(snes->inVblank) {
     cpu_runOpcode(snes->cpu);
   }
+  /* Host may retarget VRAM here (EN intro) after DMA, before ppu_runLine. */
+  if(snes->leaveVblankHook) snes->leaveVblankHook(snes);
   // then run until we are at vblank, or we end up at next frame (DMA caused vblank to be skipped)
   uint32_t frame = snes->frames;
   while(!snes->inVblank && frame == snes->frames) {

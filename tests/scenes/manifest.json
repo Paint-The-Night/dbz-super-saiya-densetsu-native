@@ -31,12 +31,14 @@
       "id": "en_intro_smoke",
       "mode": "smoke_en",
       "lang": "en",
-      "frames": 360,
+      "frames": 2400,
       "inputs": null,
       "verify": false,
       "golden": "tests/scenes/goldens/en/en_intro_smoke.json",
       "extended": false,
-      "notes": "OCR-free EN boot smoke: video_hash + PC signatures (no --verify)."
+      "notes": "OCR-free EN crawl smoke: leave-vblank intro ensure; video_hash goldens + EN\u2260JA after ~2100f (Latin tilemaps on screen).",
+      "contrast_ja": true,
+      "diverge_after": 2100
     },
     {
       "id": "ja_flight_event",

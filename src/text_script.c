@@ -129,9 +129,13 @@ void dbz_text_en_font_ensure(Cpu *c) {
 
 /*
  * Opening crawl EN — BG1/BG2 tilemaps at VRAM $6000/$6800 use Latin tile
- * indices (0xDA+) against CHR at $2000. Same scene keeps one static nametable
- * and scrolls it; CF3A never runs ($0733 stays 0). Data from Klepto 1.02
- * offline extract (text_en_intro.inc).
+ * indices (0xDA+) against CHR at $2000 (BG1 tileAdr=$2000 while BG3 is the
+ * $7000/$4000 speed-line layer). CF3A never runs ($0733 stays 0).
+ * Data from Klepto 1.02 offline extract (text_en_intro.inc).
+ *
+ * Timing: must run on leave-vblank (after NMI DMA, before ppu_runLine). A
+ * post-runFrame call loses to the next VBlank DMA and never affects pixels.
+ * Wire via dbz_text_en_install_leave_vblank_hook.
  */
 void dbz_text_en_intro_ensure(Cpu *c) {
   if(!c || !c->mem) return;
@@ -178,3 +182,14 @@ void dbz_text_en_intro_ensure(Cpu *c) {
   g_en_font_ready = false;
   g_en_intro_ready = true;
 }
+
+static void dbz_text_leave_vblank_hook(Snes *snes) {
+  if(!snes || !snes->cpu) return;
+  dbz_text_en_intro_ensure(snes->cpu);
+}
+
+void dbz_text_en_install_leave_vblank_hook(Snes *snes) {
+  if(!snes) return;
+  snes->leaveVblankHook = dbz_text_leave_vblank_hook;
+}
+

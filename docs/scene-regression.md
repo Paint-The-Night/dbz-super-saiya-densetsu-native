@@ -31,7 +31,7 @@ Replay scripts stay in `tests/*.inputs` and `research/scout/*.inputs`.
 | Mode | Host CLI | Assertion |
 |------|----------|-----------|
 | **verify** (JA) | `--lang ja --verify --frames N --inputs …` | `report.json` → `equivalence_passed == true` |
-| **smoke_en** | `--lang en --frames N` (**no** `--verify`) | Final `video_hash` + signature rows vs golden JSON |
+| **smoke_en** | `--lang en --frames N` (**no** `--verify`) | Final `video_hash` + signature rows vs golden JSON; optional `contrast_ja` also runs JA and asserts EN≠JA after `diverge_after` |
 | **chain** | `--load-checkpoint <dep>/final.dbzstate` + relative inputs | Same as verify after the dependency checkpoint |
 
 Chain dependencies are declared with `load_from` in the manifest. The runner
@@ -43,7 +43,7 @@ builds missing parents in the same work directory before the child scene.
 |----|------|--------|-------|
 | `ja_opening` | verify | 3000 | `tests/start-game.inputs` |
 | `ja_kame_flight` | chain ← opening | 600 | `tests/kame-flight.inputs` |
-| `en_intro_smoke` | smoke_en | 360 | No inputs; golden under `goldens/en/` |
+| `en_intro_smoke` | smoke_en | 2400 | No inputs; EN≠JA contrast after ~2093; golden under `goldens/en/` |
 | `ja_flight_event` | verify (extended) | 5700 | Stub; `--extended` or `--only` |
 | `ja_battle_route` | chain ← opening (extended) | 1800 | Stub; `research/scout/battle-route.inputs` |
 

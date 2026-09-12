@@ -186,29 +186,59 @@ def read_trace(dump_dir: Path) -> list[dict[str, Any]]:
     return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
 
 
-def write_en_golden(scene: dict[str, Any], dump_dir: Path, golden_path: Path) -> None:
+def write_en_golden(
+    scene: dict[str, Any],
+    dump_dir: Path,
+    golden_path: Path,
+    ja_trace: list[dict[str, Any]] | None = None,
+) -> None:
     trace = read_trace(dump_dir)
     if not trace:
         die(f"Empty trace for golden update: {scene['id']}")
     frames = int(scene["frames"])
     if len(trace) != frames:
         die(f"Trace length {len(trace)} != frames {frames} for {scene['id']}")
+    # Bias signatures toward the post-crawl window so Latin EN is covered.
+    diverge_after = int(scene.get("diverge_after") or max(1, (3 * frames) // 4))
     sig_frames = sorted(
         {
             max(1, frames // 6),
             max(1, frames // 3),
             max(1, (2 * frames) // 3),
-            max(1, (5 * frames) // 6),
+            max(diverge_after, (5 * frames) // 6),
+            max(diverge_after + 50, frames - 100) if frames > 100 else frames,
             frames,
         }
     )
+    if ja_trace is not None:
+        first_diff = next(
+            (
+                i
+                for i, (a, b) in enumerate(zip(trace, ja_trace), 1)
+                if a["video_hash"] != b["video_hash"]
+            ),
+            None,
+        )
+        if first_diff is not None:
+            # Ensure at least two post-diff signature frames (plus final).
+            sig_frames = sorted(
+                set(sig_frames)
+                | {
+                    first_diff,
+                    min(frames, first_diff + 50),
+                    min(frames, first_diff + 150),
+                    frames,
+                }
+            )
+            diverge_after = max(diverge_after, first_diff)
     last = trace[-1]
-    golden = {
+    golden: dict[str, Any] = {
         "scene_id": scene["id"],
         "lang": scene.get("lang") or "en",
         "frames": frames,
         "final_video_hash": last["video_hash"],
         "final_pc": last["pc"],
+        "diverge_after": diverge_after,
         "signatures": [
             {
                 "frame": n,
@@ -218,12 +248,52 @@ def write_en_golden(scene: dict[str, Any], dump_dir: Path, golden_path: Path) ->
             for n in sig_frames
         ],
     }
+    if ja_trace is not None:
+        if len(ja_trace) != frames:
+            die(f"JA contrast trace length {len(ja_trace)} != {frames}")
+        first_diff = next(
+            (
+                i
+                for i, (a, b) in enumerate(zip(trace, ja_trace), 1)
+                if a["video_hash"] != b["video_hash"]
+            ),
+            None,
+        )
+        if first_diff is None:
+            die(
+                f"{scene['id']}: EN and JA video hashes never diverge over "
+                f"{frames}f — intro EN path is not affecting pixels"
+            )
+        golden["first_en_ja_video_diff_frame"] = first_diff
+        golden["ja_contrast"] = {
+            "final_video_hash": ja_trace[-1]["video_hash"],
+            "signatures": [
+                {
+                    "frame": n,
+                    "video_hash": ja_trace[n - 1]["video_hash"],
+                }
+                for n in sig_frames
+            ],
+        }
+        # Require at least one post-diverge signature where EN != JA.
+        post = [n for n in sig_frames if n >= diverge_after]
+        if not any(trace[n - 1]["video_hash"] != ja_trace[n - 1]["video_hash"] for n in post):
+            die(
+                f"{scene['id']}: no EN!=JA signature at/after diverge_after="
+                f"{diverge_after} (first_diff={first_diff})"
+            )
+        # Drop pre-divergence frames from the contrast-critical set by raising
+        # diverge_after to first_diff (already done above); keep early EN goldens.
     golden_path.parent.mkdir(parents=True, exist_ok=True)
     golden_path.write_text(json.dumps(golden, indent=2) + "\n")
     print(f"UPDATED golden {golden_path}")
 
 
-def check_smoke_en(scene: dict[str, Any], dump_dir: Path) -> None:
+def check_smoke_en(
+    scene: dict[str, Any],
+    dump_dir: Path,
+    ja_trace: list[dict[str, Any]] | None = None,
+) -> None:
     report = read_report(dump_dir)
     if report.get("verification_enabled") is not False:
         die(f"{scene['id']}: expected verification_enabled false, got {report}")
@@ -264,6 +334,65 @@ def check_smoke_en(scene: dict[str, Any], dump_dir: Path) -> None:
         if sig.get("pc") and row["pc"] != sig["pc"]:
             die(
                 f"{scene['id']}: frame {frame} pc {row['pc']} != golden {sig['pc']}"
+            )
+
+    # EN must actually diverge from JA once the crawl Latin page is on-screen.
+    diverge_after = int(
+        golden.get("diverge_after")
+        or scene.get("diverge_after")
+        or 0
+    )
+    if golden.get("first_en_ja_video_diff_frame"):
+        diverge_after = max(diverge_after, int(golden["first_en_ja_video_diff_frame"]))
+    ja_contrast = golden.get("ja_contrast")
+    if scene.get("contrast_ja") and ja_contrast:
+        if ja_trace is None:
+            die(f"{scene['id']}: contrast_ja set but JA trace was not collected")
+        if len(ja_trace) != len(trace):
+            die(f"{scene['id']}: JA contrast length mismatch")
+        # Live EN≠JA after diverge_after
+        live_diffs = [
+            i
+            for i, (a, b) in enumerate(zip(trace, ja_trace), 1)
+            if i >= diverge_after and a["video_hash"] != b["video_hash"]
+        ]
+        if not live_diffs:
+            die(
+                f"{scene['id']}: EN video_hash never differs from JA after "
+                f"frame {diverge_after} (crawl EN not visible)"
+            )
+        # Golden JA contrast rows must disagree with EN signatures in that window
+        ja_by_frame = {int(s["frame"]): s["video_hash"] for s in ja_contrast.get("signatures", [])}
+        en_by_frame = {int(s["frame"]): s["video_hash"] for s in golden.get("signatures", [])}
+        disagreed = False
+        for frame, en_hash in en_by_frame.items():
+            if frame < diverge_after:
+                continue
+            ja_hash = ja_by_frame.get(frame)
+            if ja_hash is None:
+                continue
+            if en_hash == ja_hash:
+                die(
+                    f"{scene['id']}: golden EN signature @{frame} equals JA "
+                    f"contrast hash {ja_hash} — not a Latin/EN marker"
+                )
+            disagreed = True
+            if en_hash != trace[frame - 1]["video_hash"]:
+                die(f"{scene['id']}: internal EN signature mismatch @{frame}")
+            if ja_hash != ja_trace[frame - 1]["video_hash"]:
+                die(
+                    f"{scene['id']}: JA contrast golden @{frame} {ja_hash} "
+                    f"!= live JA {ja_trace[frame - 1]['video_hash']}"
+                )
+        if not disagreed:
+            die(
+                f"{scene['id']}: golden lacks EN≠JA signature frames at/after "
+                f"{diverge_after}"
+            )
+        if last["video_hash"] == ja_contrast.get("final_video_hash"):
+            die(
+                f"{scene['id']}: final EN video_hash equals JA contrast "
+                f"{last['video_hash']} — EN crawl not proven"
             )
 
 
@@ -315,18 +444,39 @@ def run_scene(
         )
 
     mode = scene.get("mode") or ("smoke_en" if scene.get("lang") == "en" else "verify")
+    ja_trace = None
+    if mode == "smoke_en" and scene.get("contrast_ja"):
+        ja_dir = dump_dir.parent / f"{scene_id}__ja_contrast"
+        if ja_dir.exists():
+            shutil.rmtree(ja_dir)
+        ja_dir.mkdir(parents=True)
+        ja_scene = dict(scene)
+        ja_scene["lang"] = "ja"
+        ja_scene["verify"] = False
+        ja_cmd = build_cmd(binary, rom, ja_scene, ja_dir, None, None)
+        print(f"RUN {scene_id} JA contrast: {' '.join(ja_cmd)}")
+        ja_result = subprocess.run(ja_cmd, capture_output=True, text=True)
+        if ja_result.returncode != 0:
+            die(
+                f"{scene_id} JA contrast: dbz-port exited {ja_result.returncode}\n"
+                f"stdout:\n{ja_result.stdout}\nstderr:\n{ja_result.stderr}"
+            )
+        ja_trace = read_trace(ja_dir)
+
     if update_golden == scene_id or (
         update_golden == "*" and mode == "smoke_en"
     ):
         golden_rel = scene.get("golden")
         if not golden_rel:
             die(f"{scene_id}: cannot update golden (no golden path in manifest)")
-        write_en_golden(scene, dump_dir, repo_path(golden_rel))  # type: ignore[arg-type]
+        write_en_golden(
+            scene, dump_dir, repo_path(golden_rel), ja_trace=ja_trace  # type: ignore[arg-type]
+        )
 
     if mode in ("verify", "chain"):
         check_verify(scene, dump_dir)
     elif mode == "smoke_en":
-        check_smoke_en(scene, dump_dir)
+        check_smoke_en(scene, dump_dir, ja_trace=ja_trace)
     else:
         die(f"{scene_id}: unknown mode {mode!r}")
 

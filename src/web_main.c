@@ -585,8 +585,6 @@ static void frame_tick(void) {
   unsigned keys = collect_keys();
   for(int b = 0; b < 12; b++) snes_setButtonState(game, 1, b, (keys >> b) & 1u);
   snes_runFrame(game);
-  if(dbz_i18n_get() == DBZ_LANG_EN)
-    dbz_text_en_intro_ensure(game->cpu);
   snes_setPixels(game, pixels);
   sample_phase += 320400000;
   int count = (int)(sample_phase / 600988);
@@ -657,6 +655,7 @@ static int boot_prepared_rom(uint8_t *rom, size_t rom_size) {
     return 3;
   }
   game = snes_init();
+  dbz_text_en_install_leave_vblank_hook(game);
   if(!game || !snes_loadRom(game, rom, (int)rom_size)) {
     free(rom);
     if(game) { snes_free(game); game = NULL; }

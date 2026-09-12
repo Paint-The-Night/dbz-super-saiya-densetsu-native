@@ -154,12 +154,39 @@ Do not hand-edit `text_en_scripts.inc` or `text_en_banks.inc`. Product path neve
 ## Opening crawl (not CF3A)
 
 The boot narration scroll uses BG1/BG2 tilemaps + CHR at VRAM `$2000` and never
-calls `01:CF3A` (`$0733` stays 0). EN path: `dbz_text_en_intro_ensure` copies
-offline Klepto-ref assets from `text_en_intro.inc` while the crawl BG3 signature
-is live. Dialogue still uses pointer-swap + `dbz_text_en_font_ensure` after intro.
+calls `01:CF3A` (`$0733` stays 0). Scene signature while the Latin page is armed:
+
+| Layer | tilemap | CHR |
+|-------|---------|-----|
+| BG1 | `$6000` | `$2000` |
+| BG2 | `$6800` | (pair) |
+| BG3 | `$7000` | `$4000` (speed lines) |
+
+EN path: `dbz_text_en_intro_ensure` copies offline Klepto-ref assets from
+`text_en_intro.inc` when BG3 is `$7000`/`$4000` and the JP BG1 FNV matches
+(or after the stream has already armed). **Timing:** install on leave-vblank
+via `dbz_text_en_install_leave_vblank_hook` (after NMI DMA, before
+`ppu_runLine`). A post-`snes_runFrame` call is overwritten by the next VBlank
+DMA and never reaches the framebuffer. Dialogue still uses pointer-swap +
+`dbz_text_en_font_ensure` after intro.
+
+Idle boot reaches the JP crawl page ~frame 1769; Latin EN is first visible in
+video_hash vs JA around frame **2093** (scroll-in).
+
+## Remaining JP surfaces (lang=EN)
+
+| Surface | Status |
+|---------|--------|
+| Opening crawl tilemaps | **EN** (`dbz_text_en_intro_ensure` + leave-vblank hook) |
+| CF3A dialogue (main 366 + menu/battle 569) | **EN** pointer-swap + font |
+| Far-table sel 7 trailing 7 unused slots | JP ROM bytes (also unused in JA) |
+| Host LANGUAGE boot menu | Host SDL strings (EN/JA), not ROM |
+| Name-entry / other Mode-7 chrome beyond crawl | Not separately tabled — no Klepto script bank; treat as unproven until playtested |
+| Non-script HUD numerals / face chrome | Shared graphics; not JP script |
 
 ## Regression
 
-See [`scene-regression.md`](scene-regression.md) for the declarative
-`en_intro_smoke` pack (OCR-free video_hash goldens against `--lang en`).
+See [`scene-regression.md`](scene-regression.md) for `en_intro_smoke` (2400f,
+OCR-free video_hash goldens + live **EN≠JA** contrast after crawl Latin is on
+screen).
 

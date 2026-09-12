@@ -16,7 +16,7 @@ Declarative replay scenes for systematic host-level regression. The runner is
 | Mode | Host flags | Pass criteria |
 |------|------------|---------------|
 | `verify` | `--lang ja --verify` | `report.json` → `equivalence_passed == true` |
-| `smoke_en` | `--lang en` (no `--verify`) | Final `video_hash` + signature frames match golden |
+| `smoke_en` | `--lang en` (no `--verify`) | Final `video_hash` + signatures match golden; `contrast_ja` asserts EN≠JA after crawl |
 | `chain` | `--load-checkpoint <prior>/final.dbzstate` + relative inputs | Same as `verify` (JA) after loading dependency |
 
 ## Quick start

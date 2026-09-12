@@ -59,6 +59,9 @@ struct Snes {
   // misc
   bool fastMem;
   uint8_t openBus;
+  /* Optional host hook: after NMI/VBlank DMA finishes, before active display.
+   * Not serialized. Used by densetsu EN intro tilemap install. */
+  void (*leaveVblankHook)(struct Snes* snes);
 };
 
 Snes* snes_init(void);
