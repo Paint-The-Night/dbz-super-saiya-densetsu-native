@@ -171,14 +171,15 @@ calls `01:CF3A` (`$0733` stays 0). Scene signature while the Latin page is armed
 | BG3 | `$7000` | `$4000` (speed lines) |
 
 EN path: `dbz_text_en_intro_ensure` copies offline Klepto-ref assets from
-`text_en_intro.inc` when BG3 is `$7000`/`$4000` and the JP BG1 FNV matches
+`text_en_intro.inc` when BG3 is `$7000`/`$4000` (signature arm — not JP FNV;
+F150 chrome can change the JP nametable fingerprint on clean ROM)
 (or after the stream has already armed). **Timing:** install on leave-vblank
 via `dbz_text_en_install_leave_vblank_hook` (after NMI DMA, before
 `ppu_runLine`). A post-`snes_runFrame` call is overwritten by the next VBlank
 DMA and never reaches the framebuffer. Dialogue still uses pointer-swap +
 `dbz_text_en_font_ensure` after intro.
 
-Idle boot: title EN≠JA from frame **1273** (kanji blank + AE6A legend). JP crawl
+Idle boot: title EN≠JA from frame **~1215** (kanji blank + circle hide + AE6A). JP crawl
 page ~1769; crawl Latin still differs from JA around **2093** (scroll-in).
 
 
@@ -212,10 +213,10 @@ gate). Title *data* (AE6A / F150 / BD86) is in the same chrome table.
 | `$10:A000` gate | 46 B at file `$082000`: font copy when `$83:$85==$08:8000`. Hooked from `$00:C704`→`$F400`. Native path uses `dbz_text_en_font_ensure` instead |
 | Skipped `$00` code | A296→FCF0, A3C6→FD30, C704→F400, FCF0/FD30/FDB5 stubs (tests assert these file offs stay JP) |
 | Katakana circles | OBJ — ten 16×16 sprites at y≈`$80`, tiles `$20/$22/…/$2E/$40/$42`, attr `$30`, OBJ CHR `$0000`/`$1000` (not BG0) |
-| Native API | `dbz_text_en_title_ensure` on leave-vblank: fill BG0 tm with `$1464` (tileset empty) + hide circle OAM (`Y=$F0` on tile/attr fingerprint). JA: no-op |
+| Native API | `dbz_text_en_title_ensure` on leave-vblank: blank JP kanji cells only (`attr $14`, tiles `1–$63` → `$1464`) + hide circle OAM (`Y=$F0`); skipped when intro BG3 `$7000`/`$4000` is live. JA: no-op |
 | Data | `text_en_chrome.inc` (`tools/extract_chrome.py` — bank `$00` data + bank `$02`) |
 
-Idle boot: logo fly-in ~frame 1200 (EN=JA); subtitle/copyright ~1273 (EN≠JA). Circles blanked with kanji.
+Idle boot: logo fly-in ~frame 1200 (EN=JA); subtitle/copyright ~1215 (EN≠JA). Circles blanked with kanji cells only.
 
 ### Large-font EN subtitle — why left blanked
 

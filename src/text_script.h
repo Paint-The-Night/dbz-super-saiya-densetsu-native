@@ -78,9 +78,10 @@ void dbz_text_en_font_reset(void);
 
 /* Opening crawl (BG3 tm=$7000 / chr=$4000, BG1 chr=$2000): EN uses Klepto-ref
  * CHR@$2000 plus BG1/BG2 tilemaps with Latin indices. Not CF3A.
- * Must run after VBlank DMA and before active display (see
- * dbz_text_en_install_leave_vblank_hook) — a post-runFrame call is too late
- * because the next NMI rewrites JP tiles before ppu_runLine. JA: no-op. */
+ * Arms on BG3 intro signature (not JP FNV — F150 chrome can change the JP
+ * nametable fingerprint). Must run after VBlank DMA and before active display
+ * (see dbz_text_en_install_leave_vblank_hook). Mutually excludes title_ensure.
+ * JA: no-op. */
 void dbz_text_en_intro_ensure(Cpu *c);
 void dbz_text_en_intro_reset(void);
 
@@ -89,9 +90,10 @@ void dbz_text_en_intro_reset(void);
  * on BG0 tm=$6000 (CHR $5000; stream $00:EFE3 unpatched). Pink ドラゴンボール
  * ゼット circles are OBJ (10×16² sprites, tiles $20–$42 / attr $30). Klepto
  * has no large-font EN subtitle bitmap for BG0 ($10/FCF0/FD30 stubs are
- * font/intro, not overlaid). EN blanks BG0 ($1464 fill), hides circle OAM
- * (Y=$F0), + AE6A small-font legend via cart filter. JA: no-op. Same
- * leave-vblank as intro. */
+ * font/intro, not overlaid). EN blanks JP kanji cells only ($1464), hides
+ * circle OAM (Y=$F0) on title signature only (never during crawl), + AE6A
+ * small-font legend via cart filter. JA: no-op. Same leave-vblank as intro;
+ * intro signature mutually excludes title. */
 void dbz_text_en_title_ensure(Cpu *c);
 void dbz_text_en_title_reset(void);
 bool dbz_text_en_title_ready(void);

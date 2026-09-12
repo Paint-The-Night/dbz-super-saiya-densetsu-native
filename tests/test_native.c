@@ -11431,7 +11431,8 @@ int main(int argc,char **argv) {
     snes->ppu->bgLayer[0].tilemapAdr = 0x6000;
     snes->ppu->bgLayer[1].tilemapAdr = 0x6800;
     snes->ppu->bgLayer[2].tileAdr = 0x2000;
-    snes->ppu->vram[0x6000] = 0x1234;
+    /* Kanji cell (tile $21 attr $14) vs non-kanji corner + logo. */
+    snes->ppu->vram[0x6000] = 0x1421;
     snes->ppu->vram[0x6000 + 0x3ff] = 0x5678;
     snes->ppu->vram[0x6800] = 0xABCD;
     /* Seed title katakana-circle OAM (tile $20 attr $30 at y=$80). */
@@ -11446,18 +11447,27 @@ int main(int argc,char **argv) {
     dbz_text_en_title_reset();
     dbz_text_en_title_ensure(&ce);
     require(!dbz_text_en_title_ready(), "JA title no-op");
-    require(snes->ppu->vram[0x6000] == 0x1234, "JA leaves kanji map");
+    require(snes->ppu->vram[0x6000] == 0x1421, "JA leaves kanji map");
     require(((snes->ppu->oam[0] >> 8) & 0xff) == 0x80, "JA leaves circle Y");
     dbz_i18n_set(DBZ_LANG_EN);
     dbz_text_en_title_ensure(&ce);
     require(dbz_text_en_title_ready(), "EN title ready");
-    require(snes->ppu->vram[0x6000] == 0x1464, "EN fills kanji tl");
-    require(snes->ppu->vram[0x6000 + 0x3ff] == 0x1464, "EN fills kanji br");
+    require(snes->ppu->vram[0x6000] == 0x1464, "EN blanks kanji cell");
+    require(snes->ppu->vram[0x6000 + 0x3ff] == 0x5678, "EN leaves non-kanji cell");
     require(snes->ppu->vram[0x6800] == 0xABCD, "logo map untouched");
     require(((snes->ppu->oam[0] >> 8) & 0xff) == 0xf0, "EN hides circle0 Y");
     require(((snes->ppu->oam[2] >> 8) & 0xff) == 0xf0, "EN hides circle1 Y");
     require(((snes->ppu->oam[4] >> 8) & 0xff) == 0x90, "EN keeps non-circle Y");
-    /* Wrong signature must not stay armed. */
+    /* Intro signature must disarm title (no crawl corruption). */
+    snes->ppu->bgLayer[2].tilemapAdr = 0x7000;
+    snes->ppu->bgLayer[2].tileAdr = 0x4000;
+    snes->ppu->vram[0x6000] = 0x1421;
+    dbz_text_en_title_ensure(&ce);
+    require(!dbz_text_en_title_ready(), "title disarmed on intro sig");
+    require(snes->ppu->vram[0x6000] == 0x1421, "intro sig leaves map");
+    /* Wrong title CHR signature must not stay armed. */
+    snes->ppu->bgLayer[2].tilemapAdr = 0x6c00;
+    snes->ppu->bgLayer[2].tileAdr = 0x2000;
     snes->ppu->bgLayer[0].tileAdr = 0x2000;
     dbz_text_en_title_ensure(&ce);
     require(!dbz_text_en_title_ready(), "title disarmed off signature");

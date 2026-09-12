@@ -2,7 +2,7 @@
   "scene_id": "en_title_smoke",
   "lang": "en",
   "frames": 1650,
-  "final_video_hash": "868aeaa4f6ed59ad",
+  "final_video_hash": "3025e05c0331ffd5",
   "final_pc": "00:a95e",
   "diverge_after": 1270,
   "signatures": [
@@ -33,32 +33,32 @@
     },
     {
       "frame": 1365,
-      "video_hash": "868aeaa4f6ed59ad",
+      "video_hash": "3025e05c0331ffd5",
       "pc": "00:a95b"
     },
     {
       "frame": 1375,
-      "video_hash": "868aeaa4f6ed59ad",
+      "video_hash": "3025e05c0331ffd5",
       "pc": "00:a95e"
     },
     {
       "frame": 1465,
-      "video_hash": "3268052a5d8f232d",
+      "video_hash": "2b5e80442c593155",
       "pc": "00:a95e"
     },
     {
       "frame": 1550,
-      "video_hash": "3268052a5d8f232d",
+      "video_hash": "2b5e80442c593155",
       "pc": "00:a95e"
     },
     {
       "frame": 1615,
-      "video_hash": "868aeaa4f6ed59ad",
+      "video_hash": "3025e05c0331ffd5",
       "pc": "00:a95e"
     },
     {
       "frame": 1650,
-      "video_hash": "868aeaa4f6ed59ad",
+      "video_hash": "3025e05c0331ffd5",
       "pc": "00:a95e"
     }
   ],

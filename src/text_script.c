@@ -168,17 +168,12 @@ void dbz_text_en_intro_ensure(Cpu *c) {
     return;
   }
 
-  /* Fingerprint JP crawl page — only swap when that nametable is resident. */
-  uint64_t h = 14695981039346656037ull;
-  for(uint32_t i = 0; i < 0x800u; i++) {
-    uint16_t w = snes->ppu->vram[(0x6000u + i) & 0x7fffu];
-    h ^= (uint8_t)w; h *= 1099511628211ull;
-    h ^= (uint8_t)(w >> 8); h *= 1099511628211ull;
-  }
-  /* Arm on JP crawl nametable; keep refreshing while intro stays active
-   * (JP DMA can rewrite BG1 mid-scene — re-apply EN without waiting for FNV). */
-  if(h != DBZ_TEXT_EN_INTRO_JP_BG1_FNV && !g_en_intro_ready)
-    return;
+  /* Install EN crawl whenever the intro signature is live. Do not require the
+   * historic JP BG1 FNV: bank-$00 F150 chrome (title data) is also consumed by
+   * the JP crawl decompressor on clean ROM (Klepto redirects that through
+   * stubs we do not overlay), so the nametable often never matches the JP
+   * fingerprint and the FNV gate left JP glyphs + garble on screen. Refresh
+   * every leave-vblank while active (JP DMA can rewrite BG1 mid-scene). */
 
   for(uint32_t i = 0; i < DBZ_TEXT_EN_INTRO_CHR_BYTES / 2u; i++) {
     uint16_t w = (uint16_t)DBZ_TEXT_EN_INTRO_CHR[i * 2u] |
@@ -205,9 +200,9 @@ void dbz_text_en_intro_ensure(Cpu *c) {
  * at y=$80, tiles $20/$22/…/$2E/$40/$42, attr $30, OBJ CHR $0000.
  * Klepto has no large-font EN subtitle for BG0: $10:A000 is font-only;
  * A3C6→FD30/FDB5 bit-decodes F150 into intro-crawl tile indices, not a title
- * nametable. Stubs stay out (policy + test_native). Blank BG0 + hide circle
- * sprites while the title signature is live so only Latin DBZ logo + AE6A
- * small-font legend remain. JA: no-op.
+ * nametable. Stubs stay out (policy + test_native). Blank JP kanji cells
+ * only + hide circle sprites while the title signature is live (never during
+ * crawl/intro) so Latin DBZ logo + AE6A small-font legend remain. JA: no-op.
  */
 static bool dbz_text_en_title_circle_tile(uint8_t tile) {
   /* Even tile indices for the ten katakana-in-circle sprites (OBJ name 0). */
@@ -220,6 +215,26 @@ static bool dbz_text_en_title_circle_tile(uint8_t tile) {
   return false;
 }
 
+static bool dbz_text_en_intro_signature(const Snes *snes) {
+  if(!snes || !snes->ppu) return false;
+  const BgLayer *bg3 = &snes->ppu->bgLayer[2];
+  return bg3->tilemapAdr == 0x7000u && bg3->tileAdr == 0x4000u;
+}
+
+static bool dbz_text_en_title_signature(const Snes *snes) {
+  if(!snes || !snes->ppu) return false;
+  if(snes->ppu->mode != 1u) return false;
+  const BgLayer *bg0 = &snes->ppu->bgLayer[0];
+  const BgLayer *bg1 = &snes->ppu->bgLayer[1];
+  const BgLayer *bg2 = &snes->ppu->bgLayer[2];
+  if(bg0->tileAdr != 0x5000u || bg1->tileAdr != 0x4000u || bg2->tileAdr != 0x2000u)
+    return false;
+  if(bg0->tilemapAdr != 0x6000u) return false;
+  /* Intro crawl owns BG3 $7000/$4000 — never treat that as title. */
+  if(dbz_text_en_intro_signature(snes)) return false;
+  return true;
+}
+
 void dbz_text_en_title_ensure(Cpu *c) {
   if(!c || !c->mem) return;
   if(dbz_i18n_get() != DBZ_LANG_EN) {
@@ -229,34 +244,28 @@ void dbz_text_en_title_ensure(Cpu *c) {
   Snes *snes = (Snes *)c->mem;
   if(!snes->ppu) return;
 
-  /* Title signature: mode 1, kanji CHR $5000 (BG0), logo CHR $4000 (BG1), small font $2000.
-   * Intro crawl uses BG3 $7000/$4000 and must not hit this path. */
-  if(snes->ppu->mode != 1u) {
-    g_en_title_ready = false;
-    return;
-  }
-  BgLayer *bg0 = &snes->ppu->bgLayer[0];
-  BgLayer *bg1 = &snes->ppu->bgLayer[1];
-  BgLayer *bg2 = &snes->ppu->bgLayer[2];
-  if(bg0->tileAdr != 0x5000u || bg1->tileAdr != 0x4000u || bg2->tileAdr != 0x2000u) {
-    g_en_title_ready = false;
-    return;
-  }
-  if(bg0->tilemapAdr != 0x6000u) {
+  /* Strict title-only: never run during crawl/intro or after intro has armed.
+   * Full-map $1464 fills during the title→crawl handoff wiped JP BG1 before
+   * intro_ensure could FNV-match, and fought EN CHR/tilemaps (severe garble). */
+  if(g_en_intro_ready || dbz_text_en_intro_signature(snes) ||
+     !dbz_text_en_title_signature(snes)) {
     g_en_title_ready = false;
     return;
   }
 
-  /* BG0 tm=$6000 is the 5-row 超サイヤ伝説 bitmap (tiles 1–$63, attr $14).
-   * Tile $64 is the layer's empty fill (word $1464). Do not write 0 — tile 0
-   * in CHR $5000 is a hatch. BG1 tm=$6800 is the Latin DBZ logo — leave it. */
+  /* Blank only JP kanji cells (tiles 1–$63, attr $14). Do NOT flood the whole
+   * nametable: a full $1464 fill races crawl DMA and can cover BG3 AE6A legend
+   * if tile $64 is not fully transparent under EN F150 CHR. Tile 0 is a hatch. */
   for(uint32_t i = 0; i < 0x400u; i++) {
+    uint16_t w = snes->ppu->vram[(0x6000u + i) & 0x7fffu];
+    uint8_t tile = (uint8_t)w;
+    uint8_t attr = (uint8_t)(w >> 8);
+    if(attr != 0x14u || tile < 0x01u || tile > 0x63u) continue;
     snes->ppu->vram[(0x6000u + i) & 0x7fffu] = 0x1464u;
   }
 
-  /* Hide katakana-circle OBJ. lakesnes OAM: oam[i*2]=x|(y<<8), oam[i*2+1]=tile|(attr<<8).
-   * Leave-vblank runs after NMI OAM DMA, so Y=$F0 sticks for this frame's ppu_runLine.
-   * Match tile+attr fingerprint only (Y animates on fly-in); JA never enters this path. */
+  /* Hide katakana-circle OBJ on title only. lakesnes OAM: oam[i*2]=x|(y<<8),
+   * oam[i*2+1]=tile|(attr<<8). Leave-vblank is after NMI OAM DMA. */
   for(int i = 0; i < 128; i++) {
     uint16_t w0 = snes->ppu->oam[i * 2];
     uint16_t w1 = snes->ppu->oam[i * 2 + 1];
@@ -272,8 +281,15 @@ void dbz_text_en_title_ensure(Cpu *c) {
 
 static void dbz_text_leave_vblank_hook(Snes *snes) {
   if(!snes || !snes->cpu) return;
-  dbz_text_en_title_ensure(snes->cpu);
-  dbz_text_en_intro_ensure(snes->cpu);
+  /* Intro wins over title: mutual exclusion prevents BG0 $1464 / OAM hide from
+   * running into the crawl and corrupting intro_ensure CHR/tilemaps. */
+  if(dbz_text_en_intro_signature(snes) || g_en_intro_ready) {
+    g_en_title_ready = false;
+    dbz_text_en_intro_ensure(snes->cpu);
+  } else {
+    dbz_text_en_title_ensure(snes->cpu);
+    dbz_text_en_intro_ensure(snes->cpu);
+  }
   /* Do NOT blanket-ensure the dialogue font here: VRAM $2000 is shared with
    * map/Mode-7 CHR outside 00:90C1 windows, and stomping it every frame
    * corrupts the overworld. Font refresh stays on 00:90C1 RTL + EN

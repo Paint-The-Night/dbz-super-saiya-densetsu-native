@@ -46,7 +46,7 @@ contrast run (so EN≠JA compares one route, not reset vs resume).
 | `ja_opening` | verify | 3000 | `tests/start-game.inputs` |
 | `ja_kame_flight` | chain ← opening | 600 | `tests/kame-flight.inputs` |
 | `en_intro_smoke` | smoke_en | 2400 | No inputs; EN≠JA contrast after ~2093; golden under `goldens/en/` |
-| `en_title_smoke` | smoke_en | 1650 | Title before Start; kanji blank + circle OBJ hide + AE6A legend; EN≠JA after ~1270 |
+| `en_title_smoke` | smoke_en | 1650 | Title before Start; kanji-cell blank + circle OBJ hide + AE6A legend; EN≠JA after ~1215 |
 | `en_menu_smoke` | smoke_en | 4500 | `tests/en-to-overworld.inputs`; command menu EN≠JA after ~4200 |
 | `en_battle_smoke` | smoke_en | 1800 | chain ← `ja_opening`; encounter messages EN≠JA after ~750 |
 | `ja_flight_event` | verify (extended) | 5700 | Stub; `--extended` or `--only` |
