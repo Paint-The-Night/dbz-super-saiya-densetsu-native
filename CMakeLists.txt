@@ -15,11 +15,11 @@ target_compile_definitions(lakesnes_cpu PRIVATE cpu_runOpcode=lakesnes_cpu_runOp
 file(GLOB LAKE_SOURCES CONFIGURE_DEPENDS ${LAKE}/*.c)
 list(REMOVE_ITEM LAKE_SOURCES ${LAKE}/cpu.c)
 add_library(dbz_core STATIC ${LAKE_SOURCES} $<TARGET_OBJECTS:lakesnes_cpu>
-  src/native.c src/rom.c)
+  src/native.c src/rom.c src/i18n.c)
 target_include_directories(dbz_core PUBLIC src ${LAKE})
 if(NOT MSVC)
   target_link_libraries(dbz_core PUBLIC m)
-  set_source_files_properties(src/native.c src/rom.c PROPERTIES
+  set_source_files_properties(src/native.c src/rom.c src/i18n.c PROPERTIES
     COMPILE_OPTIONS "-Wall;-Wextra;-Werror")
 endif()
 
@@ -36,7 +36,7 @@ if(EMSCRIPTEN)
     "SHELL:-sSTACK_SIZE=1048576"
     "SHELL:-sFORCE_FILESYSTEM=1"
     "SHELL:-lidbfs.js"
-    "SHELL:-sEXPORTED_FUNCTIONS=['_main','_malloc','_free','_dbz_web_load_rom','_dbz_web_load_prepared_rom','_dbz_web_expected_sha256','_dbz_web_set_button','_dbz_web_set_gesture_mask','_dbz_web_pulse_button','_dbz_web_set_turbo','_dbz_web_toggle_pause','_dbz_web_enter_lang_menu']"
+    "SHELL:-sEXPORTED_FUNCTIONS=['_main','_malloc','_free','_dbz_web_load_rom','_dbz_web_load_prepared_rom','_dbz_web_expected_sha256','_dbz_web_set_button','_dbz_web_set_gesture_mask','_dbz_web_pulse_button','_dbz_web_set_turbo','_dbz_web_toggle_pause','_dbz_web_enter_lang_menu','_dbz_i18n_set','_dbz_i18n_get']"
     "SHELL:-sEXPORTED_RUNTIME_METHODS=['ccall','cwrap','UTF8ToString','HEAPU8','FS']"
     "SHELL:-sNO_EXIT_RUNTIME=1"
     "SHELL:-sENVIRONMENT=web"

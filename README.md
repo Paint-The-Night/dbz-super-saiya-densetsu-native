@@ -6,10 +6,9 @@ An evidence-driven reconstruction of **Dragon Ball Z: Super Saiya Densetsu**
 > This repository does **not** contain the commercial game ROM, extracted game
 > assets, save files, or generated ROM data. You must supply a legally obtained,
 > unmodified copy locally. The project accepts only the verified Japanese Rev 1
-> ROM and checks its SHA-256 before use. The web build may also ship the public
-> **Klepto Software** English IPS (patch only); English play = same JP base +
-> that text/font patch applied in browser RAM. Gameplay natives still run; some
-> patched code bytes may interpreter-fallback if the IPS touches replaced code.
+> ROM and checks its SHA-256 before use. Language (JP/EN) is a **native C**
+> i18n setting (`src/i18n.*`); both languages boot the same clean Rev 1 image.
+> There is **no** runtime IPS/ROM patching. See [docs/i18n.md](docs/i18n.md).
 
 ## What exists today
 

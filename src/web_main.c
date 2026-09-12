@@ -1,7 +1,9 @@
 /* Browser host for the DBZ native port. ROM is never embedded: the player
  * supplies Japanese Rev 1 via the File API; validation uses dbz_load_rom_bytes.
  * After a validated ROM is offered, an in-game LANGUAGE boot menu (SDL) is the
- * first screen in the game viewport — not a website HTML panel. */
+ * first screen in the game viewport — not a website HTML panel.
+ * Language selects native i18n state only; the same clean JP ROM always boots
+ * (no IPS / ROM patching). */
 #include <SDL.h>
 #include <emscripten.h>
 #include <stdbool.h>
@@ -9,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "i18n.h"
 #include "native.h"
 #include "rom.h"
 #include "snes.h"
@@ -233,7 +236,7 @@ static void draw_lang_menu(void) {
   draw_frame(win_x + 6, win_y + 6, win_w - 12, win_h - 12, 58, 72, 110, 1);
 
   /* Title */
-  const char *title = "LANGUAGE";
+  const char *title = dbz_i18n_str(DBZ_STR_LANG_TITLE);
   int tw = (int)strlen(title) * 8 * 2;
   draw_text(win_x + (win_w - tw) / 2, win_y + 22, title, 255, 213, 106, 2);
 
@@ -264,7 +267,7 @@ static void draw_lang_menu(void) {
     }
   }
 
-  draw_text(win_x + 28, win_y + win_h - 28, "UP/DOWN  A=OK", 154, 163, 189, 1);
+  draw_text(win_x + 28, win_y + win_h - 28, dbz_i18n_str(DBZ_STR_LANG_HINT), 154, 163, 189, 1);
 }
 
 static void lang_confirm(void);
@@ -355,7 +358,10 @@ static void poll_input_events(void) {
 }
 
 static void lang_confirm(void) {
-  const char *lang = lang_sel == 1 ? "ja" : "en";
+  /* Prefer setting lang from C; web may also call dbz_i18n_set as a backup. */
+  DbzLang chosen = lang_sel == 1 ? DBZ_LANG_JA : DBZ_LANG_EN;
+  dbz_i18n_set(chosen);
+  const char *lang = chosen == DBZ_LANG_JA ? "ja" : "en";
   boot_phase = BOOT_NONE;
   lang_confirm_lock = 8;
   keys_kb = 0;
@@ -505,7 +511,10 @@ static int boot_prepared_rom(uint8_t *rom, size_t rom_size) {
   deadline = SDL_GetPerformanceCounter();
 
   enter_playing_chrome();
-  set_status("Playing — drag/tap on canvas · keyboard still works. P pause, Tab turbo.");
+  if(dbz_i18n_get() == DBZ_LANG_EN)
+    set_status(dbz_i18n_str(DBZ_STR_EN_WIP_STATUS));
+  else
+    set_status(dbz_i18n_str(DBZ_STR_PLAYING_STATUS));
   emscripten_set_main_loop(frame_tick, 0, 0);
   return 0;
 }
@@ -531,9 +540,8 @@ int dbz_web_load_rom(const uint8_t *data, int length) {
   return boot_prepared_rom(rom, rom_size);
 }
 
-/* Load an already-validated 1 MiB buffer (JP clean or EN patched in JS).
- * Security: only call after JS SHA-256 of the clean JP Rev 1 succeeds.
- * Skips the C hash gate so English (Klepto IPS in RAM) can boot. */
+/* Load a clean 1 MiB Japanese Rev 1 buffer (same bytes for EN and JP).
+ * Re-checks SHA-256 so patched images cannot boot. Prefer dbz_web_load_rom. */
 EMSCRIPTEN_KEEPALIVE
 int dbz_web_load_prepared_rom(const uint8_t *data, int length) {
   if(game) {
@@ -543,6 +551,12 @@ int dbz_web_load_prepared_rom(const uint8_t *data, int length) {
   if(!data || length != 1048576) {
     set_status("Prepared ROM must be exactly 1,048,576 bytes.");
     return 1;
+  }
+  char digest[65];
+  dbz_sha256(data, 1048576, digest);
+  if(strcmp(digest, DBZ_ROM_SHA256) != 0) {
+    set_status("ROM hash mismatch. Only the unmodified Japanese Rev 1 is accepted.");
+    return 2;
   }
   uint8_t *rom = malloc(1048576);
   if(!rom) {

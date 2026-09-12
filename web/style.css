@@ -347,7 +347,7 @@ body.playing .stage {
   max-width: 960px;
 }
 
-#loader .klepto-credit {
+#loader .i18n-note /* was klepto-credit */ {
   margin-top: 0.75rem;
   color: var(--muted);
   font-size: 0.8rem;

@@ -28,7 +28,7 @@ cmake --build "${BUILD}" --target dbz-port --parallel "$(nproc 2>/dev/null || ec
 echo "==> Assembling ${DIST}"
 rm -rf "${DIST}"
 mkdir -p "${DIST}"
-cp -f "${ROOT}/web/style.css" "${ROOT}/web/ips.js" "${DIST}/"
+cp -f "${ROOT}/web/style.css" "${DIST}/"
 # Content-hash wasm/js so CloudFront immutable cache cannot serve stale exports
 JS_HASH=$(sha256sum "${BUILD}/dbz.js" | cut -c1-8)
 WASM_HASH=$(sha256sum "${BUILD}/dbz.wasm" | cut -c1-8)
@@ -58,16 +58,7 @@ html = html.replace(old_lf, new_lf, 1)
 Path("${DIST}/index.html").write_text(html)
 print(f"index uses {js_name} + {wasm_name}")
 PY2
-# Translation patches only (never ROMs)
-mkdir -p "${DIST}/patches"
-if [[ -d "${ROOT}/web/patches" ]]; then
-  cp -f "${ROOT}/web/patches/"* "${DIST}/patches/" 2>/dev/null || true
-fi
-# Refuse accidental ROM drop into patches/
-if find "${DIST}/patches" -type f \( -name '*.sfc' -o -name '*.smc' \) 2>/dev/null | grep -q .; then
-  echo "ERROR: ROM found under dist/patches — aborting" >&2
-  exit 2
-fi
+# No IPS/patches in dist — native i18n only (see docs/i18n.md)
 
 # Sanity: refuse if any ROM-like payload slipped in
 if find "${DIST}" -type f \( -name '*.sfc' -o -name '*.smc' -o -name '*.srm' \) | grep -q .; then
@@ -102,12 +93,6 @@ cat > "${DIST}/_headers" << 'HDR'
 
 /style.css
   Cache-Control: public, max-age=3600
-
-/ips.js
-  Cache-Control: public, max-age=3600
-
-/patches/*
-  Cache-Control: public, max-age=86400
 
 /dbz.*.js
   Cache-Control: public, max-age=31536000, immutable

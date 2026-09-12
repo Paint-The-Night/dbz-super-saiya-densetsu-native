@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="description" content="Browser playable native port of Dragon Ball Z: Super Saiya Densetsu. Bring your own Japanese Rev 1 ROM — language is chosen in-game (JP clean or Klepto English IPS in RAM). Nothing is embedded.">
+  <meta name="description" content="Browser playable native port of Dragon Ball Z: Super Saiya Densetsu. Bring your own Japanese Rev 1 ROM — language is chosen in-game. Same clean ROM for JP and EN; English uses a native C translation layer (in progress). Nothing is embedded.">
   <title>Dragon Ball Z — Super Saiya Densetsu (Web)</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -21,15 +21,11 @@
         You must supply a <strong>legally obtained, unmodified</strong>
         <em>Dragon Ball Z — Super Saiya Densetsu (Japan) (Rev&nbsp;1)</em>
         <code>.sfc</code> / <code>.smc</code> file. After the SHA-256 gate, the
-        <strong>in-game</strong> LANGUAGE / 言語 menu lets you play Japanese or apply the
-        Klepto English IPS locally in RAM.
+        <strong>in-game</strong> LANGUAGE / 言語 menu sets native i18n state; the same
+        clean Rev&nbsp;1 image always boots (no ROM patching).
       </p>
       <p class="hash">Expected SHA-256:
         <code id="expected-hash">962aa7a09765a97164af67098877a8fe5b7f1ea9db738561eb466b7600fd241c</code>
-      </p>
-      <p id="klepto-credit" class="klepto-credit">
-        English (in-game menu) applies the public <strong>Klepto Software</strong> IPS 1.02 in your browser after the clean JP hash check.
-        The patched image never leaves this session; no translated ROM is hosted.
       </p>
       <label class="file-btn">
         <input type="file" id="rom-input" accept=".sfc,.smc,application/octet-stream" hidden>
@@ -113,7 +109,7 @@
         <input type="checkbox" id="classic-pad-toggle">
         Show classic pad (accessibility)
       </label>
-      <p class="note">After ROM load, the <strong>in-game</strong> LANGUAGE menu (first canvas screen) chooses Japanese (unmodified Rev&nbsp;1) or English (Klepto Software fan translation 1.02 applied locally in RAM). Audio uses SDL2 → Web Audio after you load a ROM (user gesture). Emulated input still only uses SNES controller bits 0–11 via <code>snes_setButtonState</code> — touch synthesizes those bits; no menu RAM poke.</p>
+      <p class="note">After ROM load, the <strong>in-game</strong> LANGUAGE menu (first canvas screen) chooses Japanese or English. Both boot the same unmodified Rev&nbsp;1; English enables the native i18n layer (dialogue translation still in progress — game text stays Japanese until hooks ship). Audio uses SDL2 → Web Audio after you load a ROM (user gesture). Emulated input still only uses SNES controller bits 0–11 via <code>snes_setButtonState</code> — touch synthesizes those bits; no menu RAM poke.</p>
     </section>
 
     <footer>
@@ -121,7 +117,6 @@
     </footer>
   </div>
 
-  <script src="ips.js"></script>
   <script>
     var Module = {
       canvas: (function() { return document.getElementById('canvas'); })(),
@@ -223,28 +218,57 @@
         forgotten: 'Forgotten. Choose a ROM file to play.'
       };
 
-      /* Prefetch Klepto IPS so EN confirm is instant. */
-      if(typeof DbzPatch !== 'undefined' && DbzPatch.fetchPatchBytes) {
-        DbzPatch.fetchPatchBytes().catch(function(err) {
-          console.warn('English IPS prefetch:', err);
-        });
+      var JP_SHA256 = '962aa7a09765a97164af67098877a8fe5b7f1ea9db738561eb466b7600fd241c';
+
+      async function sha256Hex(u8) {
+        var digest = await crypto.subtle.digest('SHA-256', u8);
+        var bytes = new Uint8Array(digest);
+        var hex = '';
+        for(var i = 0; i < bytes.length; i++)
+          hex += bytes[i].toString(16).padStart(2, '0');
+        return hex;
       }
 
-      async function startPrepared(prepared) {
-        if(!engineHasLangMenu() || typeof Module._dbz_web_load_prepared_rom !== 'function') {
+      /** Validate clean JP Rev 1; returns owned 1 MiB Uint8Array. No patching. */
+      async function validateCleanRom(u8) {
+        if(!(u8 instanceof Uint8Array)) u8 = new Uint8Array(u8);
+        var payload;
+        if(u8.length === 1049088) payload = u8.subarray(512);
+        else if(u8.length === 1048576) payload = u8;
+        else {
+          var err = new Error('Wrong file size. Need 1,048,576 bytes (or +512-byte copier header).');
+          err.code = 1;
+          throw err;
+        }
+        var digest = await sha256Hex(payload);
+        if(digest !== JP_SHA256) {
+          var err2 = new Error('SHA-256 mismatch. Only unmodified Japanese Rev 1 is accepted.');
+          err2.code = 2;
+          throw err2;
+        }
+        return new Uint8Array(payload);
+      }
+
+      async function startCleanRom(clean) {
+        /* Prefer hash-gated load_rom; prepared_rom also re-checks SHA-256. */
+        var loadFn = typeof Module._dbz_web_load_rom === 'function'
+          ? Module._dbz_web_load_rom
+          : Module._dbz_web_load_prepared_rom;
+        if(!engineHasLangMenu() || typeof loadFn !== 'function') {
           setError('Engine lost exports — hard-refresh (Ctrl/Cmd-Shift-R).');
           return false;
         }
-        const ptr = Module._malloc(prepared.length);
+        const ptr = Module._malloc(clean.length);
         if(!ptr) { setError('Out of memory allocating ROM buffer.'); return false; }
-        Module.HEAPU8.set(prepared, ptr);
-        const rc = Module._dbz_web_load_prepared_rom(ptr, prepared.length);
+        Module.HEAPU8.set(clean, ptr);
+        const rc = loadFn(ptr, clean.length);
         Module._free(ptr);
         if(rc === 0) {
           document.getElementById('canvas').focus();
           return true;
         }
-        if(rc === 1) setError('Prepared ROM rejected (bad size).');
+        if(rc === 1) setError('ROM rejected (bad size).');
+        else if(rc === 2) setError('SHA-256 mismatch. Only unmodified Japanese Rev 1 is accepted.');
         else setError('Could not start the game with this file.');
         statusEl.textContent = 'ROM rejected.';
         return false;
@@ -261,21 +285,8 @@
           return;
         }
         try { localStorage.setItem('dbz-lang', lang); } catch (e) {}
-        var prepared;
-        try {
-          /* JP: hash-identical clean copy. EN: header+Klepto IPS+strip in RAM. */
-          prepared = await DbzPatch.prepareRom(clean, lang === 'en' ? 'en' : 'ja');
-        } catch (e) {
-          setError((e && e.message) ? e.message : String(e));
-          statusEl.textContent = 'Could not prepare ROM for language.';
-          bootBusy = false;
-          /* Re-show loader so user can retry */
-          document.body.classList.remove('playing');
-          var loader = document.getElementById('loader');
-          if(loader) loader.classList.remove('hidden');
-          return;
-        }
-        var ok = await startPrepared(prepared);
+        /* Same clean 1 MiB for EN and JP — language was set in C via dbz_i18n_set. */
+        var ok = await startCleanRom(clean);
         bootBusy = false;
         if(!ok) {
           document.body.classList.remove('playing');
@@ -300,15 +311,10 @@
           statusEl.textContent = 'Loading engine… will open language select when ready.';
           return;
         }
-        if(typeof DbzPatch === 'undefined' || !DbzPatch.prepareRom) {
-          setError('Patch helper (ips.js) failed to load.');
-          return;
-        }
         statusEl.textContent = COPY.validating;
         var clean;
         try {
-          /* Always validate as clean JP first — language chosen in-game next. */
-          clean = await DbzPatch.prepareRom(u8, 'ja');
+          clean = await validateCleanRom(u8);
         } catch (e) {
           if(e && e.code === 1) {
             setError('Wrong file size. Need 1,048,576 bytes (or +512-byte copier header).');
@@ -321,7 +327,6 @@
           return;
         }
         window.__dbzCleanRom = clean;
-        /* Remember original upload (may include copier header); clean is 1 MiB. */
         rememberRom(u8);
         statusEl.textContent = COPY.menu;
 
@@ -358,7 +363,10 @@
           if(Module._dbz_web_expected_sha256) {
             const p = Module._dbz_web_expected_sha256();
             const s = Module.UTF8ToString(p);
-            if(s) document.getElementById('expected-hash').textContent = s;
+            if(s) {
+              document.getElementById('expected-hash').textContent = s;
+              JP_SHA256 = s;
+            }
           }
         } catch (e) {}
         const remembered = await loadRemembered();

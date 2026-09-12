@@ -8,6 +8,8 @@ Static browser build of the hybrid native port for **densetsu.garyperrigo.com**.
 - Players load their own legally obtained **Japanese Rev 1** `.sfc` via the File API.
 - Optional IndexedDB remember stores the ROM **only in the player’s browser**.
 - Battery saves use IDBFS under `/dbz-saves` (also local to the browser).
+- **No IPS / ROM patching** at runtime. EN and JP boot the same clean 1 MiB image;
+  language is native C i18n (`src/i18n.*`). See `docs/i18n.md`.
 
 Expected ROM SHA-256:
 
@@ -33,37 +35,46 @@ source /workspace/emsdk/emsdk_env.sh
 ./tools/build-web.sh
 ```
 
-Output: `web/dist/` containing `index.html`, `style.css`, `ips.js`, `dbz.js`, `dbz.wasm`,
-`patches/*` (IPS only), and helper `_headers` / `mime.types.example`.
+Output: `web/dist/` containing `index.html`, `style.css`, content-hashed
+`dbz.<hash>.js` / `dbz.<hash>.wasm`, and helper `_headers` / `mime.types.example`.
+**Does not** copy `ips.js` or `patches/`.
 
 Reproducible flags are set in `CMakeLists.txt` when `EMSCRIPTEN` is detected
 (`src/web_main.c`, `-sUSE_SDL=2`, single-threaded, no pthreads).
 
-## Deploy (S3 + CloudFront example)
+## Deploy (S3 + CloudFront)
+
+Distribution id: **E2QBWNDG548RRY** · bucket `densetsu-garyperrigo-com`.
 
 ```sh
-# Sync static assets; do NOT upload any .sfc
-aws s3 sync web/dist/ s3://YOUR_BUCKET/ \
-  --delete \
+DIST=web/dist
+BUCKET=s3://densetsu-garyperrigo-com
+# Sync hashed assets + index/css; drop legacy ips/patches from the bucket
+aws s3 sync "$DIST/" "$BUCKET/" --delete \
   --exclude '*' \
-  --include 'index.html' --include 'style.css' --include 'ips.js' \
-  --include 'dbz.js' --include 'dbz.wasm' --include '_headers' \
-  --include 'patches/*'
+  --include 'index.html' --include 'style.css' \
+  --include 'dbz.*.js' --include 'dbz.*.wasm' --include '_headers'
 
-aws s3 cp web/dist/index.html s3://YOUR_BUCKET/index.html \
+aws s3 cp "$DIST/index.html" "$BUCKET/index.html" \
   --cache-control 'no-cache' \
   --content-type 'text/html; charset=utf-8'
 
-aws s3 cp web/dist/dbz.wasm s3://YOUR_BUCKET/dbz.wasm \
-  --cache-control 'public,max-age=31536000,immutable' \
-  --content-type 'application/wasm'
+# Hashed wasm/js (example — use actual names from dist)
+for f in "$DIST"/dbz.*.wasm; do
+  aws s3 cp "$f" "$BUCKET/$(basename "$f")" \
+    --cache-control 'public,max-age=31536000,immutable' \
+    --content-type 'application/wasm'
+done
+for f in "$DIST"/dbz.*.js; do
+  aws s3 cp "$f" "$BUCKET/$(basename "$f")" \
+    --cache-control 'public,max-age=31536000,immutable' \
+    --content-type 'application/javascript'
+done
 
-aws s3 cp web/dist/dbz.js s3://YOUR_BUCKET/dbz.js \
-  --cache-control 'public,max-age=31536000,immutable' \
-  --content-type 'application/javascript'
+aws cloudfront create-invalidation --distribution-id E2QBWNDG548RRY --paths '/*'
 ```
 
-Point the densetsu.garyperrigo.com distribution at that bucket/prefix.
+Point densetsu.garyperrigo.com at that distribution.
 
 ### Headers
 
@@ -71,52 +82,47 @@ Point the densetsu.garyperrigo.com distribution at that bucket/prefix.
 |------|----------------|---------------|
 | `index.html` | `text/html` | `no-cache` (or short max-age) |
 | `style.css` | `text/css` | `public, max-age=3600` |
-| `dbz.js` | `application/javascript` | long / immutable if hashed later |
-| `dbz.wasm` | **`application/wasm`** | long / immutable if hashed later |
+| `dbz.*.js` | `application/javascript` | long / immutable |
+| `dbz.*.wasm` | **`application/wasm`** | long / immutable |
 
 **No COOP/COEP** (or `Cross-Origin-Embedder-Policy`) headers are required:
 this build is **single-threaded** (no `-pthread`).
 
-
-## Language select + English patch
+## Language select + native i18n
 
 Language is **not** a website HTML panel. After a validated Japanese Rev 1 ROM is
 loaded, the **first screen in the game viewport** is an SDL-drawn
-**LANGUAGE / 言語** boot menu (`src/web_main.c`) styled like Super Saiya Densetsu
-menus (dark blue window, gold/orange border, chunky cursor).
+**LANGUAGE / 言語** boot menu (`src/web_main.c`).
 
-- **Japanese** — unmodified Rev 1 (same SHA-256 gate; hash-identical until EN is chosen).
-- **English** — after the clean JP hash check, the browser fetches
-  `patches/klepto-ssd-en-1.02.ips` (Klepto Software 1.02 / romhacking.net #326),
-  prepends a 512-byte zero header, applies the IPS **in RAM**, strips the header,
-  then calls `_dbz_web_load_prepared_rom` (skips the C hash so the patched image
-  can boot). No patched ROM is ever hosted or uploaded.
+- **Japanese** — `dbz_i18n_set(DBZ_LANG_JA)` then boot clean Rev 1.
+- **English** — `dbz_i18n_set(DBZ_LANG_EN)` then boot the **same** clean Rev 1.
+  Dialogue remains Japanese until native text/font hooks and EN tables exist
+  (status may note the translation layer is in progress). No mojibake from IPS.
 
-Controls match the game: D-pad / flick Up·Down, A / tap confirm (wired through the
-existing gesture + keyboard pulse path into the boot-menu state machine).
+Controls: D-pad / flick Up·Down, A / tap confirm.
 
 Choice is remembered in `localStorage` key `dbz-lang` (cursor default), but the
 in-game boot menu is shown every session. Quiet override: hold **Start** while
 confirming the ROM load to skip the menu and use the remembered language.
 
-See `web/patches/README.md` for the IPS SHA-256 and credit.
+Klepto IPS lives under `research/klepto-reference/` as wording reference only.
 
 ## How ROM load works
 
-1. Page loads `dbz.js` / `dbz.wasm` (engine only). Loader is the first **site** screen.
+1. Page loads hashed `dbz.js` / `dbz.wasm` (engine only). Loader is the first **site** screen.
 2. User picks or drops a `.sfc`, or clicks **Play remembered ROM** (IndexedDB; click required for Web Audio unlock).
-3. JS validates JP SHA-256 (`ips.js` / `DbzPatch.prepareRom` with `ja`) and holds the clean 1 MiB image.
-4. C `_dbz_web_enter_lang_menu` draws the in-game LANGUAGE menu on the SDL canvas (page chrome hidden).
-5. On confirm, JS prepares JP clean or EN (Klepto IPS in RAM) and calls `_dbz_web_load_prepared_rom`.
+3. JS validates JP SHA-256 and holds the clean 1 MiB image (no patch step).
+4. C `_dbz_web_enter_lang_menu` draws the in-game LANGUAGE menu on the SDL canvas.
+5. On confirm, C sets `dbz_i18n_set`; JS calls `_dbz_web_load_rom` / `_dbz_web_load_prepared_rom` with the **clean** buffer (C re-checks SHA-256).
 6. Emulator frame loop starts; real title/boot proceeds.
 
 ## Smoke test
 
 ```sh
 # After build-web.sh:
-test -f web/dist/dbz.wasm && test -f web/dist/dbz.js
-# Optional: Node can instantiate the module object, but full SDL/WebAudio
-# play requires a real browser (manual).
+test -f web/dist/index.html
+test -z "$(find web/dist -name 'ips.js' -o -path '*/patches/*')"
+ls web/dist/dbz.*.js web/dist/dbz.*.wasm
 ```
 
 ## Controls
