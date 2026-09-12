@@ -44,6 +44,7 @@ builds missing parents in the same work directory before the child scene.
 | `ja_opening` | verify | 3000 | `tests/start-game.inputs` |
 | `ja_kame_flight` | chain ← opening | 600 | `tests/kame-flight.inputs` |
 | `en_intro_smoke` | smoke_en | 2400 | No inputs; EN≠JA contrast after ~2093; golden under `goldens/en/` |
+| `en_menu_smoke` | smoke_en | 4500 | `tests/en-to-overworld.inputs`; command menu EN≠JA after ~4200 |
 | `ja_flight_event` | verify (extended) | 5700 | Stub; `--extended` or `--only` |
 | `ja_battle_route` | chain ← opening (extended) | 1800 | Stub; `research/scout/battle-route.inputs` |
 

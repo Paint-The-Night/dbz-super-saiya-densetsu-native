@@ -1,0 +1,97 @@
+{
+  "scene_id": "en_menu_smoke",
+  "lang": "en",
+  "frames": 4500,
+  "final_video_hash": "dbf518db42300b3d",
+  "final_pc": "00:82a3",
+  "diverge_after": 4200,
+  "signatures": [
+    {
+      "frame": 722,
+      "video_hash": "de5ad259d7cea3dd",
+      "pc": "00:82b5"
+    },
+    {
+      "frame": 750,
+      "video_hash": "26de661e3f97ce65",
+      "pc": "00:82b7"
+    },
+    {
+      "frame": 772,
+      "video_hash": "8fa1cea2bec75d35",
+      "pc": "00:82a7"
+    },
+    {
+      "frame": 872,
+      "video_hash": "437ade925515e635",
+      "pc": "00:82ad"
+    },
+    {
+      "frame": 1500,
+      "video_hash": "b70228adc30a48ed",
+      "pc": "00:82b2"
+    },
+    {
+      "frame": 3000,
+      "video_hash": "7de3179e64bcbaf5",
+      "pc": "00:80d2"
+    },
+    {
+      "frame": 4200,
+      "video_hash": "4a7409954ff6c4a5",
+      "pc": "00:82bc"
+    },
+    {
+      "frame": 4400,
+      "video_hash": "dbf518db42300b3d",
+      "pc": "00:82a3"
+    },
+    {
+      "frame": 4500,
+      "video_hash": "dbf518db42300b3d",
+      "pc": "00:82a3"
+    }
+  ],
+  "first_en_ja_video_diff_frame": 722,
+  "ja_contrast": {
+    "final_video_hash": "8dff4d9af60a6255",
+    "signatures": [
+      {
+        "frame": 722,
+        "video_hash": "57df1c2248cd2d7d"
+      },
+      {
+        "frame": 750,
+        "video_hash": "cebe1b1d9084af25"
+      },
+      {
+        "frame": 772,
+        "video_hash": "da9889ed1dd2bcad"
+      },
+      {
+        "frame": 872,
+        "video_hash": "922f44094cbd3a75"
+      },
+      {
+        "frame": 1500,
+        "video_hash": "6eb769c0ce0fa465"
+      },
+      {
+        "frame": 3000,
+        "video_hash": "ec61dd5b2ea24db5"
+      },
+      {
+        "frame": 4200,
+        "video_hash": "8dff4d9af60a6255"
+      },
+      {
+        "frame": 4400,
+        "video_hash": "491c115ed6a0927d"
+      },
+      {
+        "frame": 4500,
+        "video_hash": "8dff4d9af60a6255"
+      }
+    ]
+  }
+}

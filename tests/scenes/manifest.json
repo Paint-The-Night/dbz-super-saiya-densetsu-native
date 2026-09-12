@@ -41,6 +41,19 @@
       "diverge_after": 2100
     },
     {
+      "id": "en_menu_smoke",
+      "mode": "smoke_en",
+      "lang": "en",
+      "frames": 4500,
+      "inputs": "tests/en-to-overworld.inputs",
+      "verify": false,
+      "golden": "tests/scenes/goldens/en/en_menu_smoke.json",
+      "extended": false,
+      "notes": "Overworld command menu EN (bank-$02 chrome cart filter + font re-ensure); EN\u2260JA after menu is up.",
+      "contrast_ja": true,
+      "diverge_after": 4200
+    },
+    {
       "id": "ja_flight_event",
       "mode": "verify",
       "lang": "ja",

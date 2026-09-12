@@ -137,7 +137,13 @@ python3 tools/extract_script_strings.py --klepto \
   --c-inc-banks src/text_en_banks.inc
 ```
 
-Do not hand-edit `text_en_scripts.inc` or `text_en_banks.inc`. Product path never applies IPS.
+Do not hand-edit `text_en_scripts.inc`, `text_en_banks.inc`, or `text_en_chrome.inc`. Product path never applies IPS.
+
+Chrome (bank `$02`):
+
+```sh
+python3 tools/extract_chrome.py
+```
 
 ## Files
 
@@ -147,6 +153,8 @@ Do not hand-edit `text_en_scripts.inc` or `text_en_banks.inc`. Product path neve
 | `src/text_en_font.inc` | Embedded 2bpp EN tileset (`$1800`) |
 | `src/text_en_scripts.inc` | Generated EN main-script glyph tables (366 entries / 346 unique) |
 | `src/text_en_banks.inc` | Generated EN menu/battle tables (569 entries) |
+| `src/text_en_chrome.inc` | Bank `$02` overworld/menu chrome overlays |
+| `src/text_en_intro.inc` | Opening crawl EN CHR + BG1/BG2 |
 | `src/i18n.h` / `.c` | Language + `dbz_i18n_en_script` API (includes both tables) |
 | `src/native_video.inc` | `text_script_cf3a_step`, `text_script_cfb2_step` |
 | `docs/i18n.md` | Policy + ship state |
@@ -173,20 +181,41 @@ DMA and never reaches the framebuffer. Dialogue still uses pointer-swap +
 Idle boot reaches the JP crawl page ~frame 1769; Latin EN is first visible in
 video_hash vs JA around frame **2093** (scroll-in).
 
+
+## Overworld / menu chrome (bank `$02`, not CF3A)
+
+Command-menu labels (Talk / Look / Fly / Item / Menu) and related field strings
+live as **packed tile-index bytes in LoROM bank `$02`** (e.g. `02:DABA`), not
+in the `07:8F16` script far-table. The game copies them into BG3 (`tm=$2C00`,
+`chr=$2000`) on the Mode‑7-looking overworld (PPU mode **1**).
+
+| Item | Value |
+|------|-------|
+| Klepto ref | Bank `$02` string + local pointer diffs (~1580 B) |
+| Native API | `dbz_text_en_chrome_cart_filter` via `snes->cartRomFilter` |
+| Install | Bundled in `dbz_text_en_install_leave_vblank_hook` |
+| Data | `src/text_en_chrome.inc` (`tools/extract_chrome.py`) |
+| JA | Filter returns `rom_byte` unchanged |
+| Font | `dbz_text_en_font_ensure` **re-writes** on every `00:90C1` (overworld reloads JP font) |
+
+Bank `$00` Klepto code hooks are **not** overlaid (they JSL the `$10:A000` gate).
+
 ## Remaining JP surfaces (lang=EN)
 
 | Surface | Status |
 |---------|--------|
 | Opening crawl tilemaps | **EN** (`dbz_text_en_intro_ensure` + leave-vblank hook) |
 | CF3A dialogue (main 366 + menu/battle 569) | **EN** pointer-swap + font |
+| Overworld command menu + bank `$02` field chrome | **EN** (`cartRomFilter` + `text_en_chrome.inc`) |
 | Far-table sel 7 trailing 7 unused slots | JP ROM bytes (also unused in JA) |
 | Host LANGUAGE boot menu | Host SDL strings (EN/JA), not ROM |
-| Name-entry / other Mode-7 chrome beyond crawl | Not separately tabled — no Klepto script bank; treat as unproven until playtested |
+| Title-logo JP subtitle / bank `$00` title CHR | Still JP (Klepto `$00` graphics; code hooks skipped) |
+| Player name-entry screen | **Not observed** on new-game → overworld route (fixed cast names) |
 | Non-script HUD numerals / face chrome | Shared graphics; not JP script |
 
 ## Regression
 
-See [`scene-regression.md`](scene-regression.md) for `en_intro_smoke` (2400f,
-OCR-free video_hash goldens + live **EN≠JA** contrast after crawl Latin is on
-screen).
+See [`scene-regression.md`](scene-regression.md) for `en_intro_smoke` (2400f crawl) and `en_menu_smoke` (4500f overworld
+menu via `tests/en-to-overworld.inputs`) — OCR-free video_hash goldens + live
+**EN≠JA** contrast.
 

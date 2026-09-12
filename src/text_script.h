@@ -68,6 +68,7 @@ uint8_t dbz_text_filter_script_byte(uint32_t addr24, uint8_t rom_byte);
 
 /* EN font (2bpp Latin tileset). Ready after a successful ensure while lang==EN.
  * ensure: copies tiles into $7E9000 + PPU VRAM[$2000..] (00:90C1 DMA dest).
+ * Always re-writes on each 90C1 when lang==EN (overworld reloads JP font).
  * reset: clear ready (called on language change). JA paths never upload. */
 bool dbz_text_en_font_ready(void);
 void dbz_text_en_font_ensure(Cpu *c);
@@ -82,6 +83,13 @@ void dbz_text_en_intro_ensure(Cpu *c);
 void dbz_text_en_intro_reset(void);
 /* Wire snes->leaveVblankHook so ensure runs at the correct phase. */
 void dbz_text_en_install_leave_vblank_hook(Snes *snes);
+
+/* Bank-$02 overworld/menu chrome (Talk/Search/Fly/…). Not CF3A — game reads
+ * packed label bytes from LoROM bank $02 into BG3. EN overlays those file
+ * offsets via snes->cartRomFilter (Klepto-ref text_en_chrome.inc). JA: identity.
+ * Install with leave-vblank hook (shares installer). */
+uint8_t dbz_text_en_chrome_cart_filter(Snes *snes, uint32_t file_off, uint8_t rom_byte);
+void dbz_text_en_install_cart_filter(Snes *snes);
 
 #ifdef __cplusplus
 }

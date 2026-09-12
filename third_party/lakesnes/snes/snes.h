@@ -62,6 +62,9 @@ struct Snes {
   /* Optional host hook: after NMI/VBlank DMA finishes, before active display.
    * Not serialized. Used by densetsu EN intro tilemap install. */
   void (*leaveVblankHook)(struct Snes* snes);
+  /* Optional LoROM cart read filter (file offset → byte). Not serialized.
+   * Used by densetsu EN bank-$02 menu/chrome overlay; JA must return romByte. */
+  uint8_t (*cartRomFilter)(struct Snes* snes, uint32_t fileOff, uint8_t romByte);
 };
 
 Snes* snes_init(void);

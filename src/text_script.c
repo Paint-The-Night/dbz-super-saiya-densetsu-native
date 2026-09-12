@@ -6,6 +6,7 @@
 
 #include "text_en_font.inc"
 #include "text_en_intro.inc"
+#include "text_en_chrome.inc"
 
 static DbzTextStream g_stream;
 static bool g_en_font_ready;
@@ -103,7 +104,8 @@ void dbz_text_en_font_ensure(Cpu *c) {
     g_en_font_ready = false;
     return;
   }
-  if(g_en_font_ready) return;
+  /* Always re-install: overworld / scene loads re-run 00:90C1 and would leave
+   * JP tiles in VRAM $2000 if we skipped after the first ensure. */
 
   Snes *snes = (Snes *)c->mem;
   if(!snes->ppu) return;
@@ -188,8 +190,29 @@ static void dbz_text_leave_vblank_hook(Snes *snes) {
   dbz_text_en_intro_ensure(snes->cpu);
 }
 
+uint8_t dbz_text_en_chrome_cart_filter(Snes *snes, uint32_t file_off, uint8_t rom_byte) {
+  (void)snes;
+  if(dbz_i18n_get() != DBZ_LANG_EN) return rom_byte;
+  /* Binary search chrome runs (sorted by file_off). */
+  uint32_t lo = 0, hi = DBZ_TEXT_EN_CHROME_RUNS;
+  while(lo < hi) {
+    uint32_t mid = lo + (hi - lo) / 2u;
+    const DbzTextEnChromeRun *r = &DBZ_TEXT_EN_CHROME[mid];
+    if(file_off < r->file_off) hi = mid;
+    else if(file_off >= r->file_off + (uint32_t)r->len) lo = mid + 1u;
+    else return r->bytes[file_off - r->file_off];
+  }
+  return rom_byte;
+}
+
+void dbz_text_en_install_cart_filter(Snes *snes) {
+  if(!snes) return;
+  snes->cartRomFilter = dbz_text_en_chrome_cart_filter;
+}
+
 void dbz_text_en_install_leave_vblank_hook(Snes *snes) {
   if(!snes) return;
   snes->leaveVblankHook = dbz_text_leave_vblank_hook;
+  dbz_text_en_install_cart_filter(snes);
 }
 

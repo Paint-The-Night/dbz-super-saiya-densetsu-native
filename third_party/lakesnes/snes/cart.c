@@ -113,7 +113,11 @@ static uint8_t cart_readLorom(Cart* cart, uint8_t bank, uint16_t adr) {
   bank &= 0x7f;
   if(adr >= 0x8000 || bank >= 0x40) {
     // adr 8000-ffff in all banks or all addresses in banks 40-7f and c0-ff
-    return cart->rom[((bank << 15) | (adr & 0x7fff)) & (cart->romSize - 1)];
+    uint32_t fileOff = ((bank << 15) | (adr & 0x7fff)) & (cart->romSize - 1);
+    uint8_t b = cart->rom[fileOff];
+    if(cart->snes && cart->snes->cartRomFilter)
+      b = cart->snes->cartRomFilter(cart->snes, fileOff, b);
+    return b;
   }
   return cart->snes->openBus;
 }

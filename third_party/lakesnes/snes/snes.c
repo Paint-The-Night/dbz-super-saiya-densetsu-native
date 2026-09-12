@@ -37,6 +37,7 @@ Snes* snes_init(void) {
   snes->input2 = input_init(snes);
   snes->palTiming = false;
   snes->leaveVblankHook = NULL;
+  snes->cartRomFilter = NULL;
   return snes;
 }
 
