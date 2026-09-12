@@ -231,8 +231,8 @@
       }
 
       async function startPrepared(prepared) {
-        if(typeof Module._dbz_web_load_prepared_rom !== 'function') {
-          setError('Engine is not ready yet.');
+        if(!engineHasLangMenu() || typeof Module._dbz_web_load_prepared_rom !== 'function') {
+          setError('Engine lost exports — hard-refresh (Ctrl/Cmd-Shift-R).');
           return false;
         }
         const ptr = Module._malloc(prepared.length);
@@ -284,11 +284,20 @@
         }
       };
 
+      var pendingRom = null;
+
+      function engineHasLangMenu() {
+        return typeof Module !== 'undefined'
+          && typeof Module._dbz_web_enter_lang_menu === 'function'
+          && typeof Module._malloc === 'function';
+      }
+
       async function feedRom(u8) {
         setError('');
         if(bootBusy) return;
-        if(typeof Module._dbz_web_enter_lang_menu !== 'function') {
-          setError('Engine is not ready yet.');
+        if(!engineReady || !engineHasLangMenu()) {
+          pendingRom = u8;
+          statusEl.textContent = 'Loading engine… will open language select when ready.';
           return;
         }
         if(typeof DbzPatch === 'undefined' || !DbzPatch.prepareRom) {
@@ -356,6 +365,13 @@
         if(remembered) {
           window.__dbzRemembered = remembered;
           document.getElementById('play-remembered').classList.remove('hidden');
+        }
+        if(pendingRom) {
+          var queued = pendingRom;
+          pendingRom = null;
+          statusEl.textContent = COPY.validating;
+          await feedRom(queued);
+          return;
         }
         statusEl.textContent = remembered ? COPY.remembered : COPY.ready;
       });

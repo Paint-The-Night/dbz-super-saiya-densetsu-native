@@ -28,10 +28,36 @@ cmake --build "${BUILD}" --target dbz-port --parallel "$(nproc 2>/dev/null || ec
 echo "==> Assembling ${DIST}"
 rm -rf "${DIST}"
 mkdir -p "${DIST}"
-cp -f "${ROOT}/web/index.html" "${ROOT}/web/style.css" "${ROOT}/web/ips.js" "${DIST}/"
-cp -f "${BUILD}/dbz.js" "${BUILD}/dbz.wasm" "${DIST}/"
+cp -f "${ROOT}/web/style.css" "${ROOT}/web/ips.js" "${DIST}/"
+# Content-hash wasm/js so CloudFront immutable cache cannot serve stale exports
+JS_HASH=$(sha256sum "${BUILD}/dbz.js" | cut -c1-8)
+WASM_HASH=$(sha256sum "${BUILD}/dbz.wasm" | cut -c1-8)
+JS_NAME="dbz.${JS_HASH}.js"
+WASM_NAME="dbz.${WASM_HASH}.wasm"
+cp -f "${BUILD}/dbz.js" "${DIST}/${JS_NAME}"
+cp -f "${BUILD}/dbz.wasm" "${DIST}/${WASM_NAME}"
 # Optional source map if present
-[[ -f "${BUILD}/dbz.wasm.map" ]] && cp -f "${BUILD}/dbz.wasm.map" "${DIST}/" || true
+[[ -f "${BUILD}/dbz.wasm.map" ]] && cp -f "${BUILD}/dbz.wasm.map" "${DIST}/${WASM_NAME}.map" || true
+# Rewrite index.html to hashed assets
+python3 - << PY2
+from pathlib import Path
+html = Path("${ROOT}/web/index.html").read_text()
+js_name = "${JS_NAME}"
+wasm_name = "${WASM_NAME}"
+html = html.replace('src="dbz.js"', f'src="{js_name}"')
+# locateFile must map dbz.wasm -> hashed name; also map dbz.js if requested
+old_lf = """locateFile: function(path) { return path; },"""
+new_lf = f"""locateFile: function(path) {{
+        if(path === 'dbz.wasm' || path.endsWith('.wasm')) return '{wasm_name}';
+        if(path === 'dbz.js') return '{js_name}';
+        return path;
+      }},"""
+if old_lf not in html:
+    raise SystemExit('locateFile stub not found in index.html')
+html = html.replace(old_lf, new_lf, 1)
+Path("${DIST}/index.html").write_text(html)
+print(f"index uses {js_name} + {wasm_name}")
+PY2
 # Translation patches only (never ROMs)
 mkdir -p "${DIST}/patches"
 if [[ -d "${ROOT}/web/patches" ]]; then
@@ -83,10 +109,10 @@ cat > "${DIST}/_headers" << 'HDR'
 /patches/*
   Cache-Control: public, max-age=86400
 
-/dbz.js
+/dbz.*.js
   Cache-Control: public, max-age=31536000, immutable
 
-/dbz.wasm
+/dbz.*.wasm
   Content-Type: application/wasm
   Cache-Control: public, max-age=31536000, immutable
 HDR
