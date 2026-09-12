@@ -1,6 +1,7 @@
 #ifndef DBZ_I18N_H
 #define DBZ_I18N_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -30,9 +31,24 @@ DbzLang dbz_i18n_get(void);
 const char *dbz_i18n_str(int id);
 
 /*
+ * Dialogue script-byte filter used by the 01:CFB4 fetch leaf.
+ * JA (default): always returns `rom_byte` unchanged (bit-identical path).
+ * EN: returns an override byte when an active C-table remaps `addr24`;
+ * otherwise returns `rom_byte`. Does not modify ROM.
+ */
+uint8_t dbz_i18n_filter_script_byte(uint32_t addr24, uint8_t rom_byte);
+
+/*
+ * Look up a raw EN script blob for far-table index ($0733) + string index ($0723).
+ * Returns NULL when no C override exists (caller must keep JP stream).
+ * Bytes use the game's glyph encoding (Klepto-compatible); not UTF-8.
+ */
+const uint8_t *dbz_i18n_en_script(uint8_t bank_sel, uint16_t str_idx, size_t *out_len);
+
+/*
  * Experimental dialogue remap hook (off unless DBZ_I18N_EXPERIMENTAL_HOOKS=1).
  * When set and lang==EN, natives may call this while walking script bytes.
- * Default is NULL (no remap). Do not enable until a leaf is verified.
+ * Default is NULL (no remap). Prefer dbz_i18n_filter_script_byte + tables.
  */
 #if defined(DBZ_I18N_EXPERIMENTAL_HOOKS) && DBZ_I18N_EXPERIMENTAL_HOOKS
 extern uint8_t (*dbz_i18n_remap_script_byte)(uint8_t jp_byte);

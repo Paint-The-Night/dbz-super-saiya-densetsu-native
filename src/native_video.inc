@@ -11974,12 +11974,52 @@ static bool actor_init_a3db_step(Cpu *c, uint16_t pc) {
   return true;
 }
 
-/* $01:D00B–D012: advance the actor timer pair and return. */
+/* $01:D00B–D012: shared tail — INC $071D/$071F (+ optional INX) / RTL.
+ * Used as dialogue gap advance from 01:CFBE (byte $01) and as the end of the
+ * $7E3000 glyph-pair emit path at 01:D000. */
 static bool actor_timer_d00b_step(Cpu *c, uint16_t pc) {
   if((c->k & 0x7f) != 1 || c->e || c->xf || c->d || !c->mf) return false;
   switch(pc) { case 0xd00b: case 0xd00c: case 0xd00f: case 0xd012: break; default: return false; }
   (void)fetch(c);
   switch(pc) { case 0xd00b: implied(c); c->x++; zn(c, c->x, false); break; case 0xd00c: inc_abs8_native(c, 0x071d); break; case 0xd00f: inc_abs8_native(c, 0x071f); break; case 0xd012: return_long(c); break; }
+  return true;
+}
+
+/* $01:CFB2–CFC3: dialogue script fetch leaf.
+ * LDX $20 / LDA [$00],Y (i18n filter) / STA $04 / INY / CMP #$01 /
+ * BNE $CFC4 / INX / JSL $01D00B / BRA $CFB4.
+ * JA: filter is identity → bit-identical to lakesnes. EN tables differ in
+ * length from JP, so filter does not rewrite yet (see docs/i18n.md). */
+static void lda_indirect_long_y8_i18n(Cpu *c, uint8_t offset) {
+  uint16_t dp = dp_address(c, offset);
+  uint32_t pointer = c->read(c->mem, dp);
+  pointer |= (uint32_t)c->read(c->mem, (uint16_t)(dp + 1)) << 8;
+  pointer |= (uint32_t)c->read(c->mem, (uint16_t)(dp + 2)) << 16;
+  sample_interrupt(c);
+  uint32_t addr = (pointer + c->y) & 0xffffffu;
+  uint8_t b = c->read(c->mem, addr);
+  b = dbz_i18n_filter_script_byte(addr, b);
+  set_a8(c, b);
+}
+static bool text_script_cfb2_step(Cpu *c, uint16_t pc) {
+  if((c->k & 0x7fu) != 0x01 || c->e || c->xf || c->d || !c->mf) return false;
+  switch(pc) {
+    case 0xcfb2: case 0xcfb4: case 0xcfb6: case 0xcfb8: case 0xcfb9:
+    case 0xcfbb: case 0xcfbd: case 0xcfbe: case 0xcfc2: break;
+    default: return false;
+  }
+  (void)fetch(c);
+  switch(pc) {
+    case 0xcfb2: ldx_dp16(c, 0x20); break;
+    case 0xcfb4: lda_indirect_long_y8_i18n(c, 0x00); break;
+    case 0xcfb6: store_dp(c, 0x04, true); break;
+    case 0xcfb8: implied(c); c->y++; zn(c, c->y, false); break;
+    case 0xcfb9: cmp_constant8(c, 0x01); break;
+    case 0xcfbb: branch_to(c, !c->z, 0xcfc4); break;
+    case 0xcfbd: implied(c); c->x++; zn(c, c->x, false); break;
+    case 0xcfbe: jsl_to(c, 0xd00b); break;
+    case 0xcfc2: branch_to(c, true, 0xcfb4); break;
+  }
   return true;
 }
 
