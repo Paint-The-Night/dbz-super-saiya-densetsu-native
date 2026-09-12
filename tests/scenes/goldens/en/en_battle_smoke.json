@@ -1,0 +1,97 @@
+{
+  "scene_id": "en_battle_smoke",
+  "lang": "en",
+  "frames": 1800,
+  "final_video_hash": "3a4765782e68db6d",
+  "final_pc": "00:82bf",
+  "diverge_after": 763,
+  "signatures": [
+    {
+      "frame": 300,
+      "video_hash": "d868ebe4445f5935",
+      "pc": "00:82ad"
+    },
+    {
+      "frame": 600,
+      "video_hash": "790b440c7bce2325",
+      "pc": "00:c6fa"
+    },
+    {
+      "frame": 763,
+      "video_hash": "c87f13071219af2d",
+      "pc": "00:82b7"
+    },
+    {
+      "frame": 813,
+      "video_hash": "5ef997c9fd8dc87d",
+      "pc": "00:82ac"
+    },
+    {
+      "frame": 913,
+      "video_hash": "3901a5cea3f1ea75",
+      "pc": "00:82b5"
+    },
+    {
+      "frame": 1363,
+      "video_hash": "7508fbf656369abd",
+      "pc": "00:c58c"
+    },
+    {
+      "frame": 1500,
+      "video_hash": "3a4765782e68db6d",
+      "pc": "00:82a3"
+    },
+    {
+      "frame": 1700,
+      "video_hash": "2280bfd2a74dc9fd",
+      "pc": "00:82a8"
+    },
+    {
+      "frame": 1800,
+      "video_hash": "3a4765782e68db6d",
+      "pc": "00:82bf"
+    }
+  ],
+  "first_en_ja_video_diff_frame": 763,
+  "ja_contrast": {
+    "final_video_hash": "e4d1ceab1846a2ed",
+    "signatures": [
+      {
+        "frame": 300,
+        "video_hash": "d868ebe4445f5935"
+      },
+      {
+        "frame": 600,
+        "video_hash": "790b440c7bce2325"
+      },
+      {
+        "frame": 763,
+        "video_hash": "86df2b1aac546ccd"
+      },
+      {
+        "frame": 813,
+        "video_hash": "797d192c46d3a49d"
+      },
+      {
+        "frame": 913,
+        "video_hash": "9e122d3da8a8d7f5"
+      },
+      {
+        "frame": 1363,
+        "video_hash": "0f8fc6c850ed96cd"
+      },
+      {
+        "frame": 1500,
+        "video_hash": "e4d1ceab1846a2ed"
+      },
+      {
+        "frame": 1700,
+        "video_hash": "c9ef992ec98f0d8d"
+      },
+      {
+        "frame": 1800,
+        "video_hash": "e4d1ceab1846a2ed"
+      }
+    ]
+  }
+}

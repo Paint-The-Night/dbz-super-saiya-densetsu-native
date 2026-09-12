@@ -36,6 +36,8 @@ Replay scripts stay in `tests/*.inputs` and `research/scout/*.inputs`.
 
 Chain dependencies are declared with `load_from` in the manifest. The runner
 builds missing parents in the same work directory before the child scene.
+`smoke_en` + `contrast_ja` reuses the same `load_from` checkpoint for the JA
+contrast run (so EN≠JA compares one route, not reset vs resume).
 
 ## MVP scenes
 
@@ -46,6 +48,7 @@ builds missing parents in the same work directory before the child scene.
 | `en_intro_smoke` | smoke_en | 2400 | No inputs; EN≠JA contrast after ~2093; golden under `goldens/en/` |
 | `en_title_smoke` | smoke_en | 1650 | Title before Start; kanji blank + AE6A legend; EN≠JA after ~1270 |
 | `en_menu_smoke` | smoke_en | 4500 | `tests/en-to-overworld.inputs`; command menu EN≠JA after ~4200 |
+| `en_battle_smoke` | smoke_en | 1800 | chain ← `ja_opening`; encounter messages EN≠JA after ~750 |
 | `ja_flight_event` | verify (extended) | 5700 | Stub; `--extended` or `--only` |
 | `ja_battle_route` | chain ← opening (extended) | 1800 | Stub; `research/scout/battle-route.inputs` |
 

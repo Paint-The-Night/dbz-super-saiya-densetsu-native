@@ -55,6 +55,9 @@ void dbz_text_pointer_swap_after_resolve(Cpu *c) {
     c->write(c->mem, (base + (uint32_t)i) & 0xffffffu, bytes[i]);
   }
   write_dp_long(c, base);
+  /* Checkpoint resume / menu paths may never re-hit 00:90C1 — install Latin
+   * tiles before EN glyph indices hit the tilemap. */
+  dbz_text_en_font_ensure(c);
 
   g_stream.active = true;
   g_stream.bank_sel = bank_sel;
@@ -242,6 +245,10 @@ static void dbz_text_leave_vblank_hook(Snes *snes) {
   if(!snes || !snes->cpu) return;
   dbz_text_en_title_ensure(snes->cpu);
   dbz_text_en_intro_ensure(snes->cpu);
+  /* Do NOT blanket-ensure the dialogue font here: VRAM $2000 is shared with
+   * map/Mode-7 CHR outside 00:90C1 windows, and stomping it every frame
+   * corrupts the overworld. Font refresh stays on 00:90C1 RTL + EN
+   * pointer-swap (checkpoint dialogue without a fresh 90C1). */
 }
 
 uint8_t dbz_text_en_chrome_cart_filter(Snes *snes, uint32_t file_off, uint8_t rom_byte) {

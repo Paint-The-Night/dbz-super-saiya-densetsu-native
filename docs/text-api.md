@@ -84,7 +84,7 @@ With EN pointer-swap, `[$00]` points at the overlay, so different-length streams
 | JP upload leaf | `00:90C1`: DP+`$83/$85` = `$08:8000` → `C559` decompress → `$7E9000` → `C68C` rearrange → DMA (`90E6`) to VRAM word **`$2000`** |
 | Klepto ref tiles | 2bpp SNES, **`$1800`** bytes (384 tiles) at CPU `$91:8036` / file `$088036` (JP lead-in was `$FF`; gate stub at `$10:A000` copies when `$83:$85==$08:8000`) — **data source only** |
 | Native API | `dbz_text_en_font_ensure(cpu)` / `dbz_text_en_font_ready()` / `dbz_text_en_font_reset()` |
-| EN behavior | On `00:90C1` RTL, ensure installs tiles into `$7E9000` + PPU `vram[$2000..]` and sets DP+`$89=$1800`. Idempotent while `lang==EN`. |
+| EN behavior | On `00:90C1` RTL, ensure installs tiles into `$7E9000` + PPU `vram[$2000..]`. Also after a successful EN pointer-swap (checkpoint dialogue without a fresh `90C1`). **Not** on leave-vblank — `$2000` is shared with map CHR. |
 | JA | Ensure is a no-op; never writes VRAM / `$7E9000` |
 | Glyph indices | Script bytes map 1:1 to 2bpp tile numbers (attr `#$24` in `$7E3000`); Latin lowercase starts ~`$05`=`a` |
 | Data file | `src/text_en_font.inc` (extracted from Klepto IPS offline; not applied at runtime) |
@@ -221,17 +221,22 @@ Idle boot: logo fly-in ~frame 1200 (EN=JA); subtitle/copyright ~1273 (EN≠JA).
 | Surface | Status |
 |---------|--------|
 | Opening crawl tilemaps | **EN** (`dbz_text_en_intro_ensure` + leave-vblank hook) |
-| Title logo + subtitle / copyright | **EN** (AE6A legend/copyright + `title_ensure` blanks JP kanji). Large-font Klepto subtitle bitmap is **not** installed (`$10` stubs skipped) |
-| CF3A dialogue (main 366 + menu/battle 569) | **EN** pointer-swap + font |
-| Overworld command menu + bank `$02` field chrome | **EN** (`cartRomFilter` + `text_en_chrome.inc`) |
+| Title logo + subtitle / copyright | **EN** (AE6A legend/copyright + `title_ensure` blanks JP kanji). Large-font Klepto subtitle bitmap is **not** installed (`$10` stubs skipped — would need unused-space `$10:A000` gate; left blanked + documented) |
+| CF3A dialogue (main 366 + menu/battle 569) | **EN** pointer-swap + font. Font also re-ensures on successful pointer-swap so checkpoint resume without a fresh `00:90C1` still gets Latin tiles (e.g. “You have no items!”) |
+| Overworld command menu + bank `$02` field chrome | **EN** from clean EN boot (`cartRomFilter` + `text_en_chrome.inc`). **Caveat:** loading a JA-origin checkpoint then switching `--lang en` can leave WRAM-cached JP chrome indices under the EN font (mojibake) until a scene reload re-reads bank `$02` via the filter |
+| Battle encounter / command streams | **EN** via bank tables (sel 1/3/…); `en_battle_smoke` covers encounter messages on the scout battle route |
+| Item empty-bag message | **EN** (CF3A bank 0 + pointer-swap font ensure) |
+| Party submenu (Cards / Status / Order / Text / Save) | **EN** when opened from a clean EN boot (bank `$02` / bank tables) |
 | Far-table sel 7 trailing 7 unused slots | JP ROM bytes (also unused in JA) |
 | Host LANGUAGE boot menu | Host SDL strings (EN/JA), not ROM |
 | Player name-entry screen | **Not observed** on new-game → overworld (fixed cast names). BD86 glyph tables are overlaid if that screen is ever reached |
+| Shop / inn counters | **Not reached** on early routes (no smoke yet); Klepto has no bank outside `$00/$02/$06/$07/$08/$10/$11`, so any shop copy is expected to sit in CF3A banks or bank `$02` chrome already covered |
 | Non-script HUD numerals / face chrome | Shared graphics; not JP script. Bank `$08` 102 B Klepto glyph diffs are already covered by the full EN font upload |
 
 ## Regression
 
 See [`scene-regression.md`](scene-regression.md) for `en_title_smoke` (1650f title
-before Start), `en_intro_smoke` (2400f crawl) and `en_menu_smoke` (4500f
-overworld menu) — OCR-free video_hash goldens + live **EN≠JA** contrast.
+before Start), `en_intro_smoke` (2400f crawl), `en_menu_smoke` (4500f
+overworld menu), and `en_battle_smoke` (1800f from opening) — OCR-free
+video_hash goldens + live **EN≠JA** contrast.
 

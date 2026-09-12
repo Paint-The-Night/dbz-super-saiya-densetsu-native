@@ -67,6 +67,20 @@
       "diverge_after": 4200
     },
     {
+      "id": "en_battle_smoke",
+      "mode": "smoke_en",
+      "lang": "en",
+      "frames": 1800,
+      "inputs": "research/scout/battle-route.inputs",
+      "verify": false,
+      "load_from": "ja_opening",
+      "golden": "tests/scenes/goldens/en/en_battle_smoke.json",
+      "extended": false,
+      "notes": "Battle route from opening: encounter messages EN (CF3A banks + font ensure on pointer-swap / 90C1). EN\u2260JA after first dialogue.",
+      "contrast_ja": true,
+      "diverge_after": 750
+    },
+    {
       "id": "ja_flight_event",
       "mode": "verify",
       "lang": "ja",

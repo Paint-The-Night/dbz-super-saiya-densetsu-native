@@ -69,6 +69,8 @@ uint8_t dbz_text_filter_script_byte(uint32_t addr24, uint8_t rom_byte);
 /* EN font (2bpp Latin tileset). Ready after a successful ensure while lang==EN.
  * ensure: copies tiles into $7E9000 + PPU VRAM[$2000..] (00:90C1 DMA dest).
  * Always re-writes on each 90C1 when lang==EN (overworld reloads JP font).
+ * Also after a successful EN pointer-swap (checkpoint dialogue may never
+ * re-hit 90C1). Not on leave-vblank — $2000 is shared with map CHR.
  * reset: clear ready (called on language change). JA paths never upload. */
 bool dbz_text_en_font_ready(void);
 void dbz_text_en_font_ensure(Cpu *c);

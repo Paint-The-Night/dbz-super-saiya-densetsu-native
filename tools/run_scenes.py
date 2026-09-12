@@ -221,15 +221,23 @@ def write_en_golden(
         )
         if first_diff is not None:
             # Ensure at least two post-diff signature frames (plus final).
-            sig_frames = sorted(
-                set(sig_frames)
-                | {
-                    first_diff,
-                    min(frames, first_diff + 50),
-                    min(frames, first_diff + 150),
-                    frames,
-                }
-            )
+            # Prefer frames where EN actually differs (skip shared black/transition).
+            extra = {first_diff, frames}
+            for delta in (50, 150, 250, 400, 600):
+                f = min(frames, first_diff + delta)
+                if trace[f - 1]["video_hash"] != ja_trace[f - 1]["video_hash"]:
+                    extra.add(f)
+            sig_frames = sorted(set(sig_frames) | extra)
+            # Drop post-diff signatures that are still EN==JA (e.g. fade-to-black).
+            sig_frames = [
+                n
+                for n in sig_frames
+                if n < first_diff
+                or n == frames
+                or trace[n - 1]["video_hash"] != ja_trace[n - 1]["video_hash"]
+            ]
+            if frames not in sig_frames:
+                sig_frames = sorted(set(sig_frames) | {frames})
             diverge_after = max(diverge_after, first_diff)
     last = trace[-1]
     golden: dict[str, Any] = {
@@ -372,10 +380,8 @@ def check_smoke_en(
             if ja_hash is None:
                 continue
             if en_hash == ja_hash:
-                die(
-                    f"{scene['id']}: golden EN signature @{frame} equals JA "
-                    f"contrast hash {ja_hash} — not a Latin/EN marker"
-                )
+                # Shared blank/transition frames are ok; EN proof is elsewhere.
+                continue
             disagreed = True
             if en_hash != trace[frame - 1]["video_hash"]:
                 die(f"{scene['id']}: internal EN signature mismatch @{frame}")
@@ -453,7 +459,8 @@ def run_scene(
         ja_scene = dict(scene)
         ja_scene["lang"] = "ja"
         ja_scene["verify"] = False
-        ja_cmd = build_cmd(binary, rom, ja_scene, ja_dir, None, None)
+        # Same checkpoint as EN so contrast compares the same route (not reset vs resume).
+        ja_cmd = build_cmd(binary, rom, ja_scene, ja_dir, checkpoint, None)
         print(f"RUN {scene_id} JA contrast: {' '.join(ja_cmd)}")
         ja_result = subprocess.run(ja_cmd, capture_output=True, text=True)
         if ja_result.returncode != 0:

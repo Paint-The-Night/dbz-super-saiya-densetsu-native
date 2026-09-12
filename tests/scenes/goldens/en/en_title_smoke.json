@@ -42,6 +42,11 @@
       "pc": "00:a95e"
     },
     {
+      "frame": 1523,
+      "video_hash": "434729cc262d82ad",
+      "pc": "00:a95e"
+    },
+    {
       "frame": 1550,
       "video_hash": "b360aafeb5f7a82d",
       "pc": "00:a95e"
@@ -82,6 +87,10 @@
       },
       {
         "frame": 1423,
+        "video_hash": "c397436ee8a4a6c5"
+      },
+      {
+        "frame": 1523,
         "video_hash": "c397436ee8a4a6c5"
       },
       {
