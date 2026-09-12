@@ -256,7 +256,7 @@ small-font "LEGEND OF THE SAIYANS". A true large-font EN subtitle would be a
 | Far-table sel 7 trailing 7 unused slots | JP ROM bytes (also unused in JA) |
 | Host LANGUAGE boot menu | Host SDL strings (EN/JA), not ROM |
 | Player name-entry screen | **Not observed** on new-game → overworld (fixed cast names). BD86 glyph tables are overlaid if that screen is ever reached |
-| Shop / inn counters | **EN in tables, unreached on early routes.** Main-script face `$74` shopkeeper set (idxs **72–80**, **122–129**: price/sell/buy prompts) and inn/rest (**83–86**: “Rest here a while” / “You can eat and rest here”) are in `text_en_scripts.inc` → pointer-swap. Klepto has no bank outside `$00/$02/$06/$07/$08/$10/$11`. Baba’s shop (gray brick) and the inn sit on the **mainland** past Kame House flight — not on `start-game` / `battle-route` / `flight-event`; no short deterministic smoke without a new scout |
+| Shop / inn counters | **EN in tables; still no cheap smoke.** Face `$74` idxs **72–80** / **122–129** and inn **83–86** are in `text_en_scripts.inc` → pointer-swap. Scout 2026-09-12 (`research/scout/shop-smoke-route.md`): battle-route + B + Left reaches mainland on foot ~2.3k f after opening, but Baba/inn buildings were **not** hit within ~8.5k f (random encounters dominate). **No `en_shop_smoke`** — not short enough; do not grind a scene until a building route exists |
 | Non-script HUD numerals / face chrome | Shared graphics; not JP script. Bank `$08` 102 B Klepto glyph diffs are already covered by the full EN font upload |
 
 ## Regression
