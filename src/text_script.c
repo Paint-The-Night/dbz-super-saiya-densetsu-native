@@ -200,10 +200,12 @@ void dbz_text_en_intro_ensure(Cpu *c) {
 
 /*
  * Title EN — BG0 tm=$6000 / chr=$5000 holds the JP 超サイヤ伝説 bitmap
- * (5×20 tiles; unpatched stream). Logo is BG1 tm=$6800 / chr=$4000. Klepto's replacement
- * rides unused-space stubs + $10:A000, which we do not overlay. Blank that
- * nametable while the title signature is live so only the already-Latin
- * DRAGON BALL Z logo + AE6A small-font legend/copyright remain. JA: no-op.
+ * (5×20 tiles; EFE3 unpatched in Klepto). Logo is BG1 tm=$6800 / chr=$4000.
+ * Klepto has no large-font EN subtitle for BG0: $10:A000 is font-only;
+ * A3C6→FD30/FDB5 bit-decodes F150 into intro-crawl tile indices, not a title
+ * nametable. Stubs stay out (policy + test_native). Blank BG0 while the title
+ * signature is live so only Latin DBZ logo + AE6A small-font legend remain.
+ * JA: no-op.
  */
 void dbz_text_en_title_ensure(Cpu *c) {
   if(!c || !c->mem) return;

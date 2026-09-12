@@ -209,19 +209,43 @@ gate). Title *data* (AE6A / F150 / BD86) is in the same chrome table.
 | Logo | SNES BG1 tm=`$6800` / chr=`$4000` — already Latin "DRAGON BALL Z" |
 | JP subtitle | SNES BG0 tm=`$6000` / chr=`$5000` — 5×20 tiles `1–$63` attr `$14` (超サイヤ伝説). Stream `$00:EFE3` is **unpatched** in Klepto 1.02 |
 | Small-font legend | SNES BG3 tm=`$6C00` / chr=`$2000` — tile indices at `$00:AE6A` (Klepto-ref "LEGEND OF THE SAIYANS" / © BANDAI / BY SIRYOINK / PUSH START) |
-| `$10:A000` gate | 46 B at file `$082000`: `SEP/LDA $85/CMP #$08/LDA $83/CMP #$8000/JSR $A015` copies `$91:8036` font. Hooked from `$00:C704` (`JMP $F400`). Native C68C never fetches C704; font is `dbz_text_en_font_ensure` |
-| Skipped `$00` code | A296→FCF0, A3C6→FD30, C704→F400, FCF0/FD30/FDB5 stubs |
+| `$10:A000` gate | 46 B at file `$082000`: font copy when `$83:$85==$08:8000`. Hooked from `$00:C704`→`$F400`. Native path uses `dbz_text_en_font_ensure` instead |
+| Skipped `$00` code | A296→FCF0, A3C6→FD30, C704→F400, FCF0/FD30/FDB5 stubs (tests assert these file offs stay JP) |
 | Native API | `dbz_text_en_title_ensure` on leave-vblank: fill BG0 tm with `$1464` (tileset empty). JA: no-op |
 | Data | `text_en_chrome.inc` (`tools/extract_chrome.py` — bank `$00` data + bank `$02`) |
 
 Idle boot: logo fly-in ~frame 1200 (EN=JA); subtitle/copyright ~1273 (EN≠JA).
+
+### Large-font EN subtitle — why left blanked
+
+Klepto 1.02 does **not** provide a recoverable large-font "LEGEND OF THE SUPER
+SAIYANS" (or similar) bitmap for BG0:
+
+1. **EFE3 kanji stream is unpatched** — the 超サイヤ伝説 CHR/tm source stays JP.
+2. **`$10:A000` is font-only** (dialogue Latin → VRAM `$2000`), already replaced
+   by `dbz_text_en_font_ensure`. It does not draw a title subtitle.
+3. **A3C6→FD30/FDB5** redirects the title `AE29($F130)` decompress into an
+   unused-space stub that bit-decodes `$00:F150` into `$7E9000`. Offline
+   simulation of FDB5 yields the **opening-crawl English prose** tile indices
+   ("LONG LONG AGO THERE WERE SEVEN…"), not a title subtitle nametable.
+4. **Research probe** (temporary cart-filter overlay of the skipped `$00` code
+   stubs + `$10` gate, clean ROM hash unchanged) still shows blank kanji area +
+   AE6A small-font legend only — no large EN subtitle appears.
+5. Overlaying those stubs permanently would be **runtime code patching via
+   `cartRomFilter`**, which the product policy rejects (and `test_native`
+   asserts the stub offs stay identity).
+
+Safe EN title remains: blank BG0 kanji + AE6A small-font "LEGEND OF THE
+SAIYANS". A true large-font EN subtitle would be a **new native render** (not
+Klepto data recovery).
 
 ## Remaining JP surfaces (lang=EN)
 
 | Surface | Status |
 |---------|--------|
 | Opening crawl tilemaps | **EN** (`dbz_text_en_intro_ensure` + leave-vblank hook) |
-| Title logo + subtitle / copyright | **EN** (AE6A legend/copyright + `title_ensure` blanks JP kanji). Large-font Klepto subtitle bitmap is **not** installed (`$10` stubs skipped — would need unused-space `$10:A000` gate; left blanked + documented) |
+| Title logo + subtitle / copyright | **EN** (AE6A legend/copyright + `title_ensure` blanks JP kanji). Klepto has **no** large-font EN subtitle bitmap to install — see § above; left blanked |
+| Title katakana circles | **JP leak** — pink ドラゴンボールゼット circles between logo and legend survive BG0 blank (not on tm `$6000`); likely BG1/sprite chrome; not blanked this pass |
 | CF3A dialogue (main 366 + menu/battle 569) | **EN** pointer-swap + font. Font also re-ensures on successful pointer-swap so checkpoint resume without a fresh `00:90C1` still gets Latin tiles (e.g. “You have no items!”) |
 | Overworld command menu + bank `$02` field chrome | **EN** from clean EN boot (`cartRomFilter` + `text_en_chrome.inc`). **Caveat:** loading a JA-origin checkpoint then switching `--lang en` can leave WRAM-cached JP chrome indices under the EN font (mojibake) until a scene reload re-reads bank `$02` via the filter |
 | Battle encounter / command streams | **EN** via bank tables (sel 1/3/…); `en_battle_smoke` covers encounter messages on the scout battle route |
@@ -230,7 +254,7 @@ Idle boot: logo fly-in ~frame 1200 (EN=JA); subtitle/copyright ~1273 (EN≠JA).
 | Far-table sel 7 trailing 7 unused slots | JP ROM bytes (also unused in JA) |
 | Host LANGUAGE boot menu | Host SDL strings (EN/JA), not ROM |
 | Player name-entry screen | **Not observed** on new-game → overworld (fixed cast names). BD86 glyph tables are overlaid if that screen is ever reached |
-| Shop / inn counters | **Not reached** on early routes (no smoke yet); Klepto has no bank outside `$00/$02/$06/$07/$08/$10/$11`, so any shop copy is expected to sit in CF3A banks or bank `$02` chrome already covered |
+| Shop / inn counters | **EN in tables, unreached on early routes.** Main-script face `$74` shopkeeper set (idxs **72–80**, **122–129**: price/sell/buy prompts) and inn/rest (**83–86**: “Rest here a while” / “You can eat and rest here”) are in `text_en_scripts.inc` → pointer-swap. Klepto has no bank outside `$00/$02/$06/$07/$08/$10/$11`. Baba’s shop (gray brick) and the inn sit on the **mainland** past Kame House flight — not on `start-game` / `battle-route` / `flight-event`; no short deterministic smoke without a new scout |
 | Non-script HUD numerals / face chrome | Shared graphics; not JP script. Bank `$08` 102 B Klepto glyph diffs are already covered by the full EN font upload |
 
 ## Regression
