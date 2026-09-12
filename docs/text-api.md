@@ -91,28 +91,53 @@ With EN pointer-swap, `[$00]` points at the overlay, so different-length streams
 
 ## EN script table coverage
 
+### Main dialogue — `$0733==2` / `06:8000`
+
 | Item | Value |
 |------|-------|
-| Far bank | `$0733==2` → `06:8000` (366 u16 pointers) |
-| Covered EN indices | **345 / 366** (`DBZ_EN_MAIN_SCRIPT_COUNT`) |
-| Skipped empty | indices **23–42** (20 zero-length Klepto slots) |
-| Skipped over-overlay | index **365** (2745 bytes > `$0800` max) |
-| Data | `src/text_en_scripts.inc` (generated; behind `dbz_i18n_en_script`) |
-| Other far banks | `07:8F2E` / `07:8F82` / … — menu/battle; Klepto differs; **not** in this table yet |
+| Pointers | 366 u16 at `06:8000` |
+| Covered EN indices | **366 / 366** (`DBZ_EN_MAIN_SCRIPT_COUNT`; 346 unique dests) |
+| Aliases 23–42 | Same dest as **43** in JP *and* Klepto (unused slots, not missing lines). Table entries share `EN_SCRIPT_23`. |
+| Index 365 | Last dest. Klepto packed earlier strings to `06:C64F`; a naïve end at file `$35108` is **2745** leftover JP bytes, not one line. Length is a **7F-not-FE walk → 90 bytes** (3 boxes, matches JP shape). Fits `$0800`. |
+| Overlay | Keep `$7E:E000` / `$0800`. Max main blob 171 B; 365 is 90 B. ROM has no `00 E0 7E` long; high `$7E` unused in `docs/ram-map.md`. No split / no larger window. |
+| Data | `src/text_en_scripts.inc` |
+
+### Menu / battle — far table `07:8F16` sels 0/1/3–7
+
+Bank-`$07` pointer tables are **packed sequentially** `07:8F2E` … `07:93AE` (first string of sel 0). Counts = span/2. Same 1-byte Klepto glyph encoding (often `FF FF` / `FD FF FF`, no `F4` face). Same pointer-swap overlay.
+
+| `$0733` | Table | EN hits | Notes |
+|---------|--------|---------|-------|
+| 0 | `07:8F2E` | **42 / 42** | Menu / status |
+| 1 | `07:8F82` | **338 / 338** | Battle / command |
+| 3 | `07:9226` | **167 / 167** | Battle / event |
+| 4 | `07:9374` | **9 / 9** | Short battle set |
+| 5 | `07:9386` | **2 / 2** | Alias set |
+| 6 | `07:938A` | **2 / 2** | Alias set |
+| 7 | `07:938E` | **9 / 16** | Trailing 7 point at `93AE` (sel 0 string 0) — unused, skipped |
+| **Banks total** | | **569** | `DBZ_EN_BANK_SCRIPT_COUNT`; max blob 147 B |
+
+Data: `src/text_en_banks.inc` (parallel module; `dbz_i18n_en_script` searches it after main).
+
+**Combined: 366 + 569 = 935 EN streams.** Misses: 7 unused sel-7 slots (JA also unused).
 
 ## Tooling
 
 `tools/extract_script_strings.py` — dump JP pointers/strings; `--klepto` aligns EN
-reference bytes by index.
+reference bytes by index. Lengths are **dest-based** (next higher unique dest;
+aliases share bytes). Last dest walks 7F-not-FE (dialogue) or `FF FF`/`FD FF FF`
+(menu). Do not use file `$35108` as a Klepto last-string end.
 
-Regenerate the C include (requires pinned Rev 1 ROM + Klepto IPS under
+Regenerate (requires pinned Rev 1 ROM + Klepto IPS under
 `research/klepto-reference/`):
 
 ```sh
-python3 tools/extract_script_strings.py --klepto --c-inc src/text_en_scripts.inc
+python3 tools/extract_script_strings.py --klepto \
+  --c-inc src/text_en_scripts.inc \
+  --c-inc-banks src/text_en_banks.inc
 ```
 
-Do not hand-edit `text_en_scripts.inc`. Product path never applies IPS.
+Do not hand-edit `text_en_scripts.inc` or `text_en_banks.inc`. Product path never applies IPS.
 
 ## Files
 
@@ -120,7 +145,8 @@ Do not hand-edit `text_en_scripts.inc`. Product path never applies IPS.
 |------|------|
 | `src/text_script.h` / `.c` | Bind / overlay / filter / EN font API |
 | `src/text_en_font.inc` | Embedded 2bpp EN tileset (`$1800`) |
-| `src/text_en_scripts.inc` | Generated EN main-script glyph tables (345 entries) |
-| `src/i18n.h` / `.c` | Language + `dbz_i18n_en_script` API (includes tables) |
+| `src/text_en_scripts.inc` | Generated EN main-script glyph tables (366 entries / 346 unique) |
+| `src/text_en_banks.inc` | Generated EN menu/battle tables (569 entries) |
+| `src/i18n.h` / `.c` | Language + `dbz_i18n_en_script` API (includes both tables) |
 | `src/native_video.inc` | `text_script_cf3a_step`, `text_script_cfb2_step` |
 | `docs/i18n.md` | Policy + ship state |

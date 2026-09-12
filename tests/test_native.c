@@ -11382,8 +11382,21 @@ int main(int argc,char **argv) {
     size_t n=0; require(dbz_i18n_en_script(2, 3, &n) && n > 0, "EN script idx 3");
     require(dbz_i18n_en_script(2, 100, &n) && n > 0, "EN script idx 100");
     require(dbz_i18n_en_script(2, 364, &n) && n > 0, "EN script idx 364");
-    require(!dbz_i18n_en_script(2, 365, &n), "idx 365 over overlay skipped");
-    require(!dbz_i18n_en_script(2, 23, &n), "empty idx 23 no table");
+    require(dbz_i18n_en_script(2, 365, &n) && n == 90, "idx 365 7F-not-FE walk");
+    require(n <= DBZ_TEXT_EN_OVERLAY_MAX, "365 fits overlay");
+    require(dbz_i18n_en_script(2, 23, &n) && n > 0, "alias 23 shares dest 43");
+    require(dbz_i18n_en_script(2, 43, &n) && n > 0, "canonical dest 43");
+    {
+      size_t n23=0, n43=0;
+      const uint8_t *a = dbz_i18n_en_script(2, 23, &n23);
+      const uint8_t *b = dbz_i18n_en_script(2, 43, &n43);
+      require(a && b && a == b && n23 == n43, "23–42 alias same blob as 43");
+    }
+    require(dbz_i18n_en_script(0, 0, &n) && n > 0, "menu bank 0 idx 0");
+    require(dbz_i18n_en_script(1, 0, &n) && n > 0, "battle bank 1 idx 0");
+    require(dbz_i18n_en_script(3, 0, &n) && n > 0, "bank 3 idx 0");
+    require(dbz_i18n_en_script(7, 0, &n) && n > 0, "bank 7 idx 0");
+    require(!dbz_i18n_en_script(7, 15, &n), "bank 7 trailing 93AE unused");
     dbz_i18n_set(DBZ_LANG_JA);
     require(!dbz_text_en_font_ready(), "font reset on JA");
     snes_free(snes);

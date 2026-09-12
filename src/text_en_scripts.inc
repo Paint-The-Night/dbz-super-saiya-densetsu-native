@@ -2,7 +2,10 @@
  * DO NOT EDIT BY HAND — regenerate:
  *   python3 tools/extract_script_strings.py --klepto --c-inc src/text_en_scripts.inc
  * Policy: offline IPS apply for research extract only; product never patches ROM.
- * Bank sel = $0733 index 2 → 06:8000. Skips empty / len>$0800 (overlay max).
+ * Bank sel = $0733 index 2 → 06:8000.
+ * Lengths are dest-based (aliases share bytes). Last slot uses 7F-not-FE walk
+ * (do not use file $35108 as Klepto end — leftover JP after the real line).
+ * Indices 23–42 share dest with 43 in JP *and* Klepto (unused alias slots).
  */
 #ifndef DBZ_TEXT_EN_SCRIPTS_INC
 #define DBZ_TEXT_EN_SCRIPTS_INC
@@ -184,7 +187,7 @@ static const uint8_t EN_SCRIPT_22[] = {
   0x1b, 0x53, 0x54, 0x0c, 0x52, 0x3f, 0x3e, 0x7f, 0xff, 0xff
 };
 
-static const uint8_t EN_SCRIPT_43[] = {
+static const uint8_t EN_SCRIPT_23[] = {
   0xf4, 0x6d, 0x7e, 0x8a, 0x15, 0x01, 0x0d, 0x52, 0x15, 0x0c, 0x1a, 0x0a,
   0x53, 0x3f, 0xff, 0x01, 0x8e, 0x42, 0x19, 0x01, 0x07, 0x0c, 0x11, 0x15,
   0x1a, 0x0a, 0x01, 0x5b, 0x1b, 0x55, 0x01, 0x05, 0x18, 0x18, 0xff, 0x01,
@@ -2652,9 +2655,21 @@ static const uint8_t EN_SCRIPT_364[] = {
   0x40, 0x7f, 0xff, 0xff
 };
 
-#define DBZ_EN_MAIN_SCRIPT_COUNT 345u
+static const uint8_t EN_SCRIPT_365[] = {
+  0xf4, 0x00, 0x7e, 0x8e, 0x42, 0x18, 0x18, 0x01, 0x07, 0x0c, 0x01, 0x54,
+  0x11, 0x0c, 0x52, 0x0c, 0xff, 0x01, 0x53, 0x1b, 0x1b, 0x1a, 0x3f, 0x7f,
+  0xfe, 0xff, 0xf4, 0x09, 0x7e, 0xea, 0x05, 0x0a, 0x0a, 0x5b, 0x3f, 0x7f,
+  0xfe, 0xff, 0xf4, 0x00, 0x7e, 0xed, 0x1b, 0x11, 0x05, 0x1a, 0x7b, 0x01,
+  0x0e, 0x1b, 0xff, 0x01, 0x05, 0x1a, 0x0a, 0x01, 0x11, 0x15, 0x0a, 0x0c,
+  0x3f, 0xff, 0x01, 0x8e, 0x42, 0x18, 0x18, 0x01, 0x54, 0x05, 0x17, 0x0c,
+  0xff, 0x01, 0x09, 0x05, 0x52, 0x0c, 0x01, 0x1b, 0x0d, 0x01, 0x54, 0x11,
+  0x0c, 0x19, 0x3f, 0x7f, 0xff, 0xff
+};
+
+#define DBZ_EN_MAIN_SCRIPT_COUNT 366u
 #define DBZ_EN_MAIN_SCRIPT_PTR_TOTAL 366u
-/* Skipped empty: 23–42 (20); over-overlay: 365(2745) */
+#define DBZ_EN_MAIN_SCRIPT_UNIQUE 346u
+/* skipped empty: none; over-overlay: none; aliases: 24–43 (20) share dest with next distinct */
 
 static const DbzEnScript EN_SCRIPTS[] = {
   {DBZ_MAIN_SCRIPT_BANK_SEL, 0u, EN_SCRIPT_0, sizeof EN_SCRIPT_0, 0x0682DCu},
@@ -2680,7 +2695,27 @@ static const DbzEnScript EN_SCRIPTS[] = {
   {DBZ_MAIN_SCRIPT_BANK_SEL, 20u, EN_SCRIPT_20, sizeof EN_SCRIPT_20, 0x068660u},
   {DBZ_MAIN_SCRIPT_BANK_SEL, 21u, EN_SCRIPT_21, sizeof EN_SCRIPT_21, 0x068682u},
   {DBZ_MAIN_SCRIPT_BANK_SEL, 22u, EN_SCRIPT_22, sizeof EN_SCRIPT_22, 0x0686A3u},
-  {DBZ_MAIN_SCRIPT_BANK_SEL, 43u, EN_SCRIPT_43, sizeof EN_SCRIPT_43, 0x0686CBu},
+  {DBZ_MAIN_SCRIPT_BANK_SEL, 23u, EN_SCRIPT_23, sizeof EN_SCRIPT_23, 0x0686CBu},
+  {DBZ_MAIN_SCRIPT_BANK_SEL, 24u, EN_SCRIPT_23, sizeof EN_SCRIPT_23, 0x0686CBu},
+  {DBZ_MAIN_SCRIPT_BANK_SEL, 25u, EN_SCRIPT_23, sizeof EN_SCRIPT_23, 0x0686CBu},
+  {DBZ_MAIN_SCRIPT_BANK_SEL, 26u, EN_SCRIPT_23, sizeof EN_SCRIPT_23, 0x0686CBu},
+  {DBZ_MAIN_SCRIPT_BANK_SEL, 27u, EN_SCRIPT_23, sizeof EN_SCRIPT_23, 0x0686CBu},
+  {DBZ_MAIN_SCRIPT_BANK_SEL, 28u, EN_SCRIPT_23, sizeof EN_SCRIPT_23, 0x0686CBu},
+  {DBZ_MAIN_SCRIPT_BANK_SEL, 29u, EN_SCRIPT_23, sizeof EN_SCRIPT_23, 0x0686CBu},
+  {DBZ_MAIN_SCRIPT_BANK_SEL, 30u, EN_SCRIPT_23, sizeof EN_SCRIPT_23, 0x0686CBu},
+  {DBZ_MAIN_SCRIPT_BANK_SEL, 31u, EN_SCRIPT_23, sizeof EN_SCRIPT_23, 0x0686CBu},
+  {DBZ_MAIN_SCRIPT_BANK_SEL, 32u, EN_SCRIPT_23, sizeof EN_SCRIPT_23, 0x0686CBu},
+  {DBZ_MAIN_SCRIPT_BANK_SEL, 33u, EN_SCRIPT_23, sizeof EN_SCRIPT_23, 0x0686CBu},
+  {DBZ_MAIN_SCRIPT_BANK_SEL, 34u, EN_SCRIPT_23, sizeof EN_SCRIPT_23, 0x0686CBu},
+  {DBZ_MAIN_SCRIPT_BANK_SEL, 35u, EN_SCRIPT_23, sizeof EN_SCRIPT_23, 0x0686CBu},
+  {DBZ_MAIN_SCRIPT_BANK_SEL, 36u, EN_SCRIPT_23, sizeof EN_SCRIPT_23, 0x0686CBu},
+  {DBZ_MAIN_SCRIPT_BANK_SEL, 37u, EN_SCRIPT_23, sizeof EN_SCRIPT_23, 0x0686CBu},
+  {DBZ_MAIN_SCRIPT_BANK_SEL, 38u, EN_SCRIPT_23, sizeof EN_SCRIPT_23, 0x0686CBu},
+  {DBZ_MAIN_SCRIPT_BANK_SEL, 39u, EN_SCRIPT_23, sizeof EN_SCRIPT_23, 0x0686CBu},
+  {DBZ_MAIN_SCRIPT_BANK_SEL, 40u, EN_SCRIPT_23, sizeof EN_SCRIPT_23, 0x0686CBu},
+  {DBZ_MAIN_SCRIPT_BANK_SEL, 41u, EN_SCRIPT_23, sizeof EN_SCRIPT_23, 0x0686CBu},
+  {DBZ_MAIN_SCRIPT_BANK_SEL, 42u, EN_SCRIPT_23, sizeof EN_SCRIPT_23, 0x0686CBu},
+  {DBZ_MAIN_SCRIPT_BANK_SEL, 43u, EN_SCRIPT_23, sizeof EN_SCRIPT_23, 0x0686CBu},
   {DBZ_MAIN_SCRIPT_BANK_SEL, 44u, EN_SCRIPT_44, sizeof EN_SCRIPT_44, 0x06876Du},
   {DBZ_MAIN_SCRIPT_BANK_SEL, 45u, EN_SCRIPT_45, sizeof EN_SCRIPT_45, 0x068793u},
   {DBZ_MAIN_SCRIPT_BANK_SEL, 46u, EN_SCRIPT_46, sizeof EN_SCRIPT_46, 0x0687DCu},
@@ -3002,6 +3037,7 @@ static const DbzEnScript EN_SCRIPTS[] = {
   {DBZ_MAIN_SCRIPT_BANK_SEL, 362u, EN_SCRIPT_362, sizeof EN_SCRIPT_362, 0x06CF87u},
   {DBZ_MAIN_SCRIPT_BANK_SEL, 363u, EN_SCRIPT_363, sizeof EN_SCRIPT_363, 0x06CFE6u},
   {DBZ_MAIN_SCRIPT_BANK_SEL, 364u, EN_SCRIPT_364, sizeof EN_SCRIPT_364, 0x06D028u},
+  {DBZ_MAIN_SCRIPT_BANK_SEL, 365u, EN_SCRIPT_365, sizeof EN_SCRIPT_365, 0x06D08Eu},
 };
 
 #endif /* DBZ_TEXT_EN_SCRIPTS_INC */

@@ -53,6 +53,7 @@ Names describe observed use and are not recovered original source identifiers.
 | DP+8D / DP+8F | byte/word | Backref length / distance scratch | C559, C68C |
 | DP+95..A4 | 16 bytes | Tile rearrange scratch (planar shuffle) | C68C |
 | 7E9000 onward | bytes | Decompress / rearrange working buffer | C559, C68C, 90E6 |
+| 7EE000–7EE7FF | 2 KiB | Host EN script overlay (`DBZ_TEXT_EN_OVERLAY_*`); not a recovered game buffer. ROM has no `$7E:E000` long. JA never writes. | text API |
 | 1309–1310 | 8 bytes | Slot ID table; $80 clears / sentinel at $1309 | 04:85B6 |
 | 01DE / 01E0 | words | Scroll snapshot copy of $01A2 / $01A4 | 8E76 |
 | 01A1 | byte | Scene flag set to $80 in mode[1] path | 8E76 |

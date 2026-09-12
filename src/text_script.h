@@ -32,7 +32,7 @@ extern "C" {
  * ($E000+) is unused in docs/ram-map; JA never writes here. */
 #define DBZ_TEXT_EN_OVERLAY_BANK 0x7Eu
 #define DBZ_TEXT_EN_OVERLAY_OFF  0xE000u
-#define DBZ_TEXT_EN_OVERLAY_MAX  0x0800u
+#define DBZ_TEXT_EN_OVERLAY_MAX  0x0800u /* enough: main max 171, banks max 147, idx 365 = 90 */
 
 #define DBZ_TEXT_MAIN_BANK_SEL   2u /* $0733 index → 06:8000 at 07:8F16 */
 

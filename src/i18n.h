@@ -40,7 +40,8 @@ uint8_t dbz_i18n_filter_script_byte(uint32_t addr24, uint8_t rom_byte);
 
 /*
  * Look up a raw EN script blob for far-table index ($0733) + string index ($0723).
- * Returns NULL when no C override exists (caller must keep JP stream).
+ * Covers main 06:8000 (sel 2) and menu/battle sels 0/1/3–7. Returns NULL when no
+ * C override exists (caller must keep JP stream).
  * Bytes use the game's glyph encoding (Klepto-compatible); not UTF-8.
  */
 const uint8_t *dbz_i18n_en_script(uint8_t bank_sel, uint16_t str_idx, size_t *out_len);
