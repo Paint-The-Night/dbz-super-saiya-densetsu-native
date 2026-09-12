@@ -330,6 +330,39 @@ footer { color: var(--muted); font-size: 0.8rem; margin-top: 0.5rem; }
   header h1 { font-size: 1.35rem; }
 }
 
+/* Opening SKIP — Densetsu cream/orange/dark, pinned top-right of the stage. */
+.skip-cutscene {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 6;
+  appearance: none;
+  margin: 0;
+  padding: 0.42rem 0.85rem;
+  background: #ffefce;
+  color: #000031;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  border: 3px solid #ff5200;
+  box-shadow: 3px 3px 0 #840000;
+  border-radius: 2px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.skip-cutscene:hover,
+.skip-cutscene:focus-visible {
+  filter: brightness(1.05);
+  outline: none;
+}
+.skip-cutscene:active {
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0 #840000;
+}
+
 /* ---- Playing / boot: hide page chrome so canvas feels like the game ---- */
 body.playing header,
 body.playing #loader,

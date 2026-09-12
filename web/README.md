@@ -173,7 +173,7 @@ N× D-pad scroll.
 | Surface | Behavior |
 |---------|----------|
 | Host LANGUAGE / CONTROLS | Hit-test the two Densetsu rows; set host cursor and confirm |
-| In-game | **Write→A:** if DP+`$25==1` and tap hits a measured rect (command 0 / party 1 / flight `$0A` / Status `$0F`), write `$0D62` (Status also `$0D63` + `$1100,Y` mirror) then pulse A. Party Text opens host CONTROLS. See `docs/ram-map.md`. |
+| In-game | **Write→A:** if DP+`$25==1` and tap hits a measured rect (command 0 / party 1 / flight `$0A` / Status `$0F`), write `$0D62` (Status also `$0D63` + `$1100,Y` mirror) then pulse A. Party Text opens host CONTROLS. Hit-rect **Y origins are one `DBZ_UI_ROW_PITCH` (32px @2×) above** the raw tip/divider measurements — playtest 2026-09-12 had to tap the row below; Status 3×3 gets the same 32px lift. See `docs/ram-map.md`. |
 
 Two-finger Start / three-finger Select still work in Direct (system shortcuts,
 not a virtual pad overlay). Classic pad stays **hidden by default** in Direct;
@@ -181,6 +181,10 @@ the a11y checkbox can still show it.
 
 Chrome strip below the canvas (text links, not a fake SNES pad):
 **Select · L · R · Controls · Pause · Turbo**.
+
+Host **SKIP** (Densetsu cream/orange, top-right of the stage) appears once
+the ROM is running and hides after the overworld command UI is seeded. Tap
+it to jump the opening cutscene via Start then A as above.
 
 Optional **Show classic pad** checkbox is Traditional / accessibility-only;
 default UX hides `#touch-pad`.
@@ -193,4 +197,10 @@ C APIs (frame-synced in `web_main.c`):
 - `dbz_web_set_controls_mode` / `dbz_web_get_controls_mode` — 0 Traditional, 1 Direct
 - `dbz_web_canvas_tap(x, y)` — Direct hit-test / in-game write→A
 - `dbz_web_open_controls_menu` — reopen CONTROLS parchment mid-play
+- `dbz_web_skip_cutscene` — host **SKIP** (top-right). Visible only during
+  the opening (title / crawl / early Raditz), then latches off on overworld.
+  Synthesizes the game’s own skip: **Start** on title/crawl/clouds
+  (`tests/start-game.inputs` frames 300/600), then **A** through Raditz
+  dialogue. Not a WRAM warp; Start is not sent after dialogue begins
+  (Start on overworld would pause).
 - Each frame: `keys_kb | keys_touch | keys_gesture | pulse` → `snes_setButtonState`

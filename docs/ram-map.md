@@ -669,13 +669,18 @@ When Controls = Direct and DP+`$25==1`, a canvas tap in a measured mode rect
 **writes** the live cursor (host-driven selection) and pulses **A** only — no
 N× D-pad scroll. Integrity = selection WRAM + SNES A, not a fake pad UI.
 
-| `$0D66` | Writes | Hit-rect (2×) | Notes |
+| `$0D66` | Writes | Hit-rect (2×, Y lifted 32) | Notes |
 |---|---|---|---|
-| `0` | `$0D62` + `$1100` | `x∈[30,280)`, `y∈[290,460)`, row0=294 pitch 32 | Talk…Menu |
-| `1` | `$0D62` + `$1101` | `x∈[160,320)`, `y∈[290,460)`, row0=294 | Cards…Save; **Text** (index 3) opens host CONTROLS |
-| `$0A` | `$0D62` + `$110A` | `x∈[30,280)`, `y∈[358,460)`, row0=358 | Land/Item/Menu |
-| `$0F` | `$0D62` col, `$0D63` row, `$110F` | 3×3 cells via dividers 214/342 × 168/296 | Status grid |
+| `0` | `$0D62` + `$1100` | `x∈[30,280)`, `y∈[258,460)`, row0=262 pitch 32 | Talk…Menu |
+| `1` | `$0D62` + `$1101` | `x∈[160,320)`, `y∈[258,460)`, row0=262 | Cards…Save; **Text** (index 3) opens host CONTROLS |
+| `$0A` | `$0D62` + `$110A` | `x∈[30,280)`, `y∈[326,460)`, row0=326 | Land/Item/Menu |
+| `$0F` | `$0D62` col, `$0D63` row, `$110F` | 3×3 cells via dividers 214/342 × 136/264 | Status grid |
 | other | — | — | **tap = A** only |
+
+Y origins are **one `DBZ_UI_ROW_PITCH` (32px @2×) above** the raw tip /
+divider measurements (command tips ≈ `310+i*32`, Status lines `168`/`296`).
+Playtest 2026-09-12: hit-rects sat one row too low (had to tap the row
+below). Status uses the same 32px lift, not a full ~128px cell.
 
 Menu closed → A. CONTROLS parchment also reopens mid-play via chrome **Controls**
 (`dbz_web_open_controls_menu`) and updates `dbz-controls` live without reboot.

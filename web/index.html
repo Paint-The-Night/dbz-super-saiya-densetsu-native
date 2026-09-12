@@ -40,6 +40,7 @@
 
     <div class="stage">
       <canvas id="canvas" tabindex="0" width="960" height="720" aria-label="Game display — touch to control"></canvas>
+      <button type="button" id="skip-cutscene" class="skip-cutscene hidden" aria-label="Skip opening cutscene">SKIP</button>
       <div id="gesture-hint" class="gesture-hint hidden" role="dialog" aria-label="Touch gesture help">
         <p><strong>Touch the game</strong></p>
         <ul>
@@ -113,7 +114,7 @@
         <input type="checkbox" id="classic-pad-toggle">
         Show classic pad (accessibility)
       </label>
-      <p class="note">After ROM load, the <strong>in-game</strong> LANGUAGE menu then the CONTROLS menu (Traditional vs Direct touch) run on the canvas. Re-open CONTROLS anytime from the chrome strip (or Direct→party Text) without rebooting. Choice is stored as <code>dbz-lang</code> and <code>dbz-controls</code>. Hold Start on load to skip both with the remembered pair. Direct is host-driven selection + SNES A (writes measured cursor WRAM), not a fake D-pad scroll.</p>
+      <p class="note">After ROM load, the <strong>in-game</strong> LANGUAGE menu then the CONTROLS menu (Traditional vs Direct touch) run on the canvas. Re-open CONTROLS anytime from the chrome strip (or Direct→party Text) without rebooting. Choice is stored as <code>dbz-lang</code> and <code>dbz-controls</code>. Hold Start on load to skip both with the remembered pair. Direct is host-driven selection + SNES A (writes measured cursor WRAM), not a fake D-pad scroll. During the opening crawl / Raditz sequence a top-right <strong>SKIP</strong> synthesizes the game’s own skip (Start, then A) into playable overworld.</p>
     </section>
 
     <footer>
@@ -668,6 +669,18 @@
             if(e.target === canvas || canvas.contains(e.target)) e.preventDefault();
           }, { passive: false });
         }
+      })();
+
+      /* Opening SKIP — host overlay, top-right; C shows it only during intro. */
+      (function setupSkip() {
+        const btn = document.getElementById('skip-cutscene');
+        if(!btn) return;
+        btn.addEventListener('pointerdown', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          if(typeof Module._dbz_web_skip_cutscene === 'function')
+            Module._dbz_web_skip_cutscene();
+        });
       })();
 
       /* Chrome strip: Select / L / R / Pause / Turbo */

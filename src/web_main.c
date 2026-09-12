@@ -8,6 +8,10 @@
  * writes the live selection cursor ($0D62 / Status $0D63) plus $1100,Y
  * mirror, then pulses A only — tap-the-thing UX (host-driven selection +
  * SNES A), not N× D-pad scroll. CONTROLS also reopens in-game via chrome.
+ * Opening SKIP (host overlay, top-right) synthesizes the game's own
+ * intro skip: Start on title/crawl (tests/start-game.inputs), then A
+ * through Raditz dialogue — not a WRAM warp. Direct Y origins are lifted
+ * one DBZ_UI_ROW_PITCH vs the raw tip measurements (playtest offset).
  * The same clean JP ROM always boots (no IPS / ROM patching). */
 #include <SDL.h>
 #include <emscripten.h>
@@ -52,6 +56,12 @@ static int lang_sel;          /* 0 = ENGLISH, 1 = 日本語 */
 static int ctrl_mode = CTRL_TRADITIONAL;
 static int ctrl_sel;          /* 0 = Traditional, 1 = Direct touch */
 static int controls_live;     /* 1 = CONTROLS overlay mid-play (not boot) */
+static int opening_done;      /* 1 = reached playable overworld; hide Skip */
+static int skip_arm;          /* 1 = Skip sequencer running */
+static int skip_cooldown;     /* frames until next Start/A pulse */
+static int skip_saw_dialogue; /* $0733 seen nonzero — stay on A, not Start */
+static int overworld_streak;  /* consecutive overworld-ready frames */
+static int skip_btn_shown = -1;
 static unsigned lang_prev_keys;
 static int lang_confirm_lock; /* debounce frames after enter */
 /* Raster strips from JS (BGRX): JP labels for LANGUAGE + CONTROLS */
@@ -551,6 +561,9 @@ static void lang_confirm(void);
 static void controls_confirm(void);
 static void menu_tick(void);
 static void frame_tick(void);
+static void opening_skip_tick(void);
+static void opening_reset(void);
+static void sync_skip_button(int show);
 
 static void enter_playing_chrome(void) {
   EM_ASM({
@@ -748,6 +761,7 @@ void dbz_web_open_controls_menu(void) {
                    &ctrl_labels_ready);
   boot_phase = BOOT_CONTROLS;
   paused = true;
+  sync_skip_button(0);
   set_status(ctrl_mode == CTRL_DIRECT
     ? "Controls — tap a row (B cancels)"
     : "Controls — ↑↓ / A · B cancels");
@@ -817,6 +831,7 @@ static void frame_tick(void) {
     SDL_QueueAudio(audio, samples, (unsigned)count * 4);
 
   present_pixels();
+  opening_skip_tick();
 
   deadline += (uint64_t)((double)frequency / 60.0988);
   if(!turbo) {
@@ -889,43 +904,50 @@ int dbz_web_get_controls_mode(void) {
 }
 
 /*
- * In-game menu geometry at 2× (512×480), measured from WRAM-correlated
- * triangle tips / Status grid lines (docs/ram-map.md). List pitch is
- * DBZ_UI_ROW_PITCH (32). Direct writes the live cursor then pulses A.
+ * In-game menu geometry at 2× (512×480). Triangle tips / Status grid lines
+ * were measured from scout frames (docs/ram-map.md): command tips ≈ 310+i*32,
+ * party ≈ 312+i*32, flight ≈ 374+i*32, Status dividers 168/296. List pitch
+ * is DBZ_UI_ROW_PITCH (32). Direct writes the live cursor then pulses A.
+ *
+ * Playtest 2026-09-12: those hit-rects sat ~1 row pitch too low vs the
+ * finger (had to tap the row below the item). Shift every Direct Y origin
+ * up by DBZ_UI_ROW_PITCH. Status 3×3 gets the same 32px lift — cell pitch
+ * is ~128, but the error was the shared origin bias, not a full Status row.
  */
 enum {
   DBZ_CMD_MENU_X0 = 30,
   DBZ_CMD_MENU_X1 = 280,
-  DBZ_CMD_MENU_Y0 = 290,
+  DBZ_CMD_MENU_Y0 = 258, /* 290 − ROW_PITCH */
   DBZ_CMD_MENU_Y1 = 460,
-  DBZ_CMD_MENU_ROW0_Y = 294, /* tip centers ≈ 310 + i*32 (Talk…Menu) */
+  DBZ_CMD_MENU_ROW0_Y = 262, /* 294 − ROW_PITCH */
   /* Party Cards/Status/Order/Text/Save — right of command window */
   DBZ_PARTY_MENU_X0 = 160,
   DBZ_PARTY_MENU_X1 = 320,
-  DBZ_PARTY_MENU_Y0 = 290,
+  DBZ_PARTY_MENU_Y0 = 258,
   DBZ_PARTY_MENU_Y1 = 460,
-  DBZ_PARTY_MENU_ROW0_Y = 294, /* tip centers ≈ 312 + i*32 */
+  DBZ_PARTY_MENU_ROW0_Y = 262,
   /* Flight Land/Item/Menu ($0D66=$0A) — bottom three slots of command window */
   DBZ_FLY_MENU_X0 = 30,
   DBZ_FLY_MENU_X1 = 280,
-  DBZ_FLY_MENU_Y0 = 358,
+  DBZ_FLY_MENU_Y0 = 326, /* 358 − ROW_PITCH */
   DBZ_FLY_MENU_Y1 = 460,
-  DBZ_FLY_MENU_ROW0_Y = 358, /* tip centers ≈ 374 + i*32 */
+  DBZ_FLY_MENU_ROW0_Y = 326,
   /* Status 3×3 portrait grid ($0D66=$0F): col=$0D62, row=$0D63 */
   DBZ_STATUS_X0 = 42,
   DBZ_STATUS_X1 = 476,
-  DBZ_STATUS_Y0 = 42,
+  DBZ_STATUS_Y0 = 10, /* 42 − ROW_PITCH */
   DBZ_STATUS_Y1 = 428,
-  DBZ_STATUS_COL1_X = 214, /* vertical dividers */
+  DBZ_STATUS_COL1_X = 214, /* vertical dividers (X unchanged) */
   DBZ_STATUS_COL2_X = 342,
-  DBZ_STATUS_ROW1_Y = 168, /* horizontal dividers */
-  DBZ_STATUS_ROW2_Y = 296,
+  DBZ_STATUS_ROW1_Y = 136, /* 168 − ROW_PITCH */
+  DBZ_STATUS_ROW2_Y = 264, /* 296 − ROW_PITCH */
   DBZ_WRAM_UI_OPEN = 0x0025,   /* DP+$25 == 1 while a UI menu is open */
   DBZ_WRAM_MENU_CURSOR = 0x0D62,
   DBZ_WRAM_MENU_ROW = 0x0D63,  /* Status row axis (Up/Down) */
   DBZ_WRAM_MENU_MAX = 0x0D64,  /* exclusive max (list modes) */
   DBZ_WRAM_MENU_MODE = 0x0D66, /* 0=cmd, 1=party, $0A=flight, $0F=Status */
   DBZ_WRAM_MENU_SAVE = 0x1100, /* per-mode mirror; Y = $0D66 */
+  DBZ_WRAM_MSG_BANK = 0x0733,  /* dialogue bank; 0 on title/crawl */
   DBZ_PARTY_TEXT_INDEX = 3     /* party Text row → host CONTROLS */
 };
 
@@ -1002,6 +1024,112 @@ static void direct_in_game_tap(int x, int y) {
   dbz_web_pulse_button(8, 3);
 }
 
+/* Intro crawl: BG3 nametable $7000, CHR $4000 (same as text_script). */
+static bool opening_crawl_sig(void) {
+  if(!game || !game->ppu) return false;
+  const BgLayer *bg3 = &game->ppu->bgLayer[2];
+  return bg3->tilemapAdr == 0x7000u && bg3->tileAdr == 0x4000u;
+}
+
+/* Title: mode 1, BG0 chr $5000 / tm $6000, BG1 $4000, BG3 chr $2000. */
+static bool opening_title_sig(void) {
+  if(!game || !game->ppu) return false;
+  if(game->ppu->mode != 1u) return false;
+  const BgLayer *bg0 = &game->ppu->bgLayer[0];
+  const BgLayer *bg1 = &game->ppu->bgLayer[1];
+  const BgLayer *bg2 = &game->ppu->bgLayer[2];
+  if(bg0->tileAdr != 0x5000u || bg1->tileAdr != 0x4000u || bg2->tileAdr != 0x2000u)
+    return false;
+  if(bg0->tilemapAdr != 0x6000u) return false;
+  if(opening_crawl_sig()) return false;
+  return true;
+}
+
+/* Playable overworld: command UI seeded, not title/crawl, not mid-Raditz. */
+static bool opening_overworld_ready(void) {
+  if(!game) return false;
+  if(opening_title_sig() || opening_crawl_sig()) return false;
+  uint8_t mode = game->ram[DBZ_WRAM_MENU_MODE];
+  uint8_t max = game->ram[DBZ_WRAM_MENU_MAX];
+  uint8_t ui = game->ram[DBZ_WRAM_UI_OPEN];
+  /* Command menu actually open — definitely playable. */
+  if(mode == 0 && max == 5 && ui == 1) return true;
+  /* Post-Raditz overworld with list UI seeded (menu may be closed). */
+  if(skip_saw_dialogue && game->ram[DBZ_WRAM_MSG_BANK] == 0 &&
+     mode == 0 && max == 5)
+    return true;
+  return false;
+}
+
+static void sync_skip_button(int show) {
+  if(show == skip_btn_shown) return;
+  skip_btn_shown = show;
+  EM_ASM({
+    var el = document.getElementById('skip-cutscene');
+    if(!el) return;
+    var lang = 'en';
+    try { lang = localStorage.getItem('dbz-lang') || 'en'; } catch (e) {}
+    el.textContent = (lang === 'ja') ? 'スキップ' : 'SKIP';
+    if($0) el.classList.remove('hidden');
+    else el.classList.add('hidden');
+  }, show);
+}
+
+static void opening_reset(void) {
+  opening_done = 0;
+  skip_arm = 0;
+  skip_cooldown = 0;
+  skip_saw_dialogue = 0;
+  overworld_streak = 0;
+  sync_skip_button(0);
+}
+
+/* Drive host Skip visibility + Start/A sequencer (frame-synced). */
+static void opening_skip_tick(void) {
+  if(!game || boot_phase != BOOT_PLAYING || opening_done) {
+    skip_arm = 0;
+    sync_skip_button(0);
+    return;
+  }
+  if(game->ram[DBZ_WRAM_MSG_BANK] != 0)
+    skip_saw_dialogue = 1;
+  if(opening_overworld_ready()) {
+    if(++overworld_streak >= 20) {
+      opening_done = 1;
+      skip_arm = 0;
+      sync_skip_button(0);
+      return;
+    }
+  } else {
+    overworld_streak = 0;
+  }
+  sync_skip_button(1);
+  if(!skip_arm) return;
+  if(skip_cooldown > 0) {
+    skip_cooldown--;
+    return;
+  }
+  /* Evidence: tests/start-game.inputs — Start @300/@600 (clouds/title/crawl),
+   * then A (0x100) through Raditz. No WRAM warp; no Start once dialogue
+   * has begun (Start on overworld would pause). */
+  if(opening_title_sig() || opening_crawl_sig() || !skip_saw_dialogue) {
+    dbz_web_pulse_button(3, 4); /* Start */
+    skip_cooldown = 28;
+  } else {
+    dbz_web_pulse_button(8, 3); /* A */
+    skip_cooldown = 18;
+  }
+}
+
+/* Host overlay Skip — top-right during opening only. */
+EMSCRIPTEN_KEEPALIVE
+void dbz_web_skip_cutscene(void) {
+  if(!game || boot_phase != BOOT_PLAYING || opening_done) return;
+  paused = false;
+  skip_arm = 1;
+  skip_cooldown = 0;
+}
+
 /*
  * Canvas tap in 512×480 framebuffer pixels (top-left origin).
  * Host menus: hit-test Densetsu rows and confirm. In-game Direct: write
@@ -1055,6 +1183,7 @@ static int boot_prepared_rom(uint8_t *rom, size_t rom_size) {
   turbo = false;
   loop_running = true;
   boot_phase = BOOT_PLAYING;
+  opening_reset();
   frequency = SDL_GetPerformanceFrequency();
   deadline = SDL_GetPerformanceCounter();
 
