@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "description": "Declarative multi-scene regression packs for dbz-port host replays.",
+  "defaults": {
+    "headless": true,
+    "capture_every": null
+  },
+  "scenes": [
+    {
+      "id": "ja_opening",
+      "mode": "verify",
+      "lang": "ja",
+      "frames": 3000,
+      "inputs": "tests/start-game.inputs",
+      "verify": true,
+      "extended": false,
+      "notes": "Reset to opening/new-game checkpoint (frame 3000)."
+    },
+    {
+      "id": "ja_kame_flight",
+      "mode": "chain",
+      "lang": "ja",
+      "frames": 600,
+      "inputs": "tests/kame-flight.inputs",
+      "verify": true,
+      "load_from": "ja_opening",
+      "extended": false,
+      "notes": "From opening checkpoint: Fly + northbound flight (~600f)."
+    },
+    {
+      "id": "en_intro_smoke",
+      "mode": "smoke_en",
+      "lang": "en",
+      "frames": 360,
+      "inputs": null,
+      "verify": false,
+      "golden": "tests/scenes/goldens/en/en_intro_smoke.json",
+      "extended": false,
+      "notes": "OCR-free EN boot smoke: video_hash + PC signatures (no --verify)."
+    },
+    {
+      "id": "ja_flight_event",
+      "mode": "verify",
+      "lang": "ja",
+      "frames": 5700,
+      "inputs": "tests/flight-event.inputs",
+      "verify": true,
+      "extended": true,
+      "notes": "Stub extended: full takeoff/flight/event dialogue from reset."
+    },
+    {
+      "id": "ja_battle_route",
+      "mode": "chain",
+      "lang": "ja",
+      "frames": 1800,
+      "inputs": "research/scout/battle-route.inputs",
+      "verify": true,
+      "load_from": "ja_opening",
+      "extended": true,
+      "notes": "Stub extended: documented battle route from opening checkpoint."
+    }
+  ]
+}

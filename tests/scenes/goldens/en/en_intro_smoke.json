@@ -1,0 +1,34 @@
+{
+  "scene_id": "en_intro_smoke",
+  "lang": "en",
+  "frames": 360,
+  "final_video_hash": "d49acd3daa302e0d",
+  "final_pc": "00:a95b",
+  "signatures": [
+    {
+      "frame": 60,
+      "video_hash": "790b440c7bce2325",
+      "pc": "04:8612"
+    },
+    {
+      "frame": 120,
+      "video_hash": "790b440c7bce2325",
+      "pc": "04:8618"
+    },
+    {
+      "frame": 240,
+      "video_hash": "274fb458d561bf95",
+      "pc": "00:a95e"
+    },
+    {
+      "frame": 300,
+      "video_hash": "29ef42af8d39b8ad",
+      "pc": "00:a95e"
+    },
+    {
+      "frame": 360,
+      "video_hash": "d49acd3daa302e0d",
+      "pc": "00:a95b"
+    }
+  ]
+}

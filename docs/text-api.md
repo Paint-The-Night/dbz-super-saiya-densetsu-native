@@ -158,3 +158,8 @@ calls `01:CF3A` (`$0733` stays 0). EN path: `dbz_text_en_intro_ensure` copies
 offline Klepto-ref assets from `text_en_intro.inc` while the crawl BG3 signature
 is live. Dialogue still uses pointer-swap + `dbz_text_en_font_ensure` after intro.
 
+## Regression
+
+See [`scene-regression.md`](scene-regression.md) for the declarative
+`en_intro_smoke` pack (OCR-free video_hash goldens against `--lang en`).
+

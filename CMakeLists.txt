@@ -73,6 +73,10 @@ if(DBZ_TEST_ROM AND EXISTS "${DBZ_TEST_ROM}")
   add_test(NAME native_equivalence COMMAND test-native "${DBZ_TEST_ROM}")
   add_test(NAME checkpoint_equivalence COMMAND ${Python3_EXECUTABLE}
     "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_checkpoint.py" $<TARGET_FILE:dbz-port> "${DBZ_TEST_ROM}")
+  add_test(NAME scene_regression COMMAND ${Python3_EXECUTABLE}
+    "${CMAKE_CURRENT_SOURCE_DIR}/tools/run_scenes.py"
+    --binary $<TARGET_FILE:dbz-port> --rom "${DBZ_TEST_ROM}")
+  set_tests_properties(scene_regression PROPERTIES LABELS "scene;gameplay" TIMEOUT 600)
   if(DBZ_EXTENDED_TESTS)
     add_test(NAME battle_equivalence COMMAND ${Python3_EXECUTABLE}
       "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_battle.py" $<TARGET_FILE:dbz-port> "${DBZ_TEST_ROM}")
