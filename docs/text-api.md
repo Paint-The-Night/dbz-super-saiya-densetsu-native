@@ -213,7 +213,7 @@ gate). Title *data* (AE6A / F150 / BD86) is in the same chrome table.
 | `$10:A000` gate | 46 B at file `$082000`: font copy when `$83:$85==$08:8000`. Hooked from `$00:C704`→`$F400`. Native path uses `dbz_text_en_font_ensure` instead |
 | Skipped `$00` code | A296→FCF0, A3C6→FD30, C704→F400, FCF0/FD30/FDB5 stubs (tests assert these file offs stay JP) |
 | Katakana circles | OBJ — ten 16×16 sprites at y≈`$80`, tiles `$20/$22/…/$2E/$40/$42`, attr `$30`, OBJ CHR `$0000`/`$1000` (not BG0) |
-| Native API | `dbz_text_en_title_ensure` on leave-vblank: blank JP kanji cells only (`attr $14`, tiles `1–$63` → `$1464`) + hide circle OAM (`Y=$F0`); skipped when intro BG3 `$7000`/`$4000` is live. JA: no-op |
+| Native API | `dbz_text_en_title_ensure` on leave-vblank: blank JP kanji cells only (`attr $14`, tiles `1–$63` → `$1464`) + hide circle OAM (`Y=$F0`); **never** writes BG3 `$6C00` (AE6A legend). Skipped when intro BG3 `$7000`/`$4000` is live. JA: no-op |
 | Data | `text_en_chrome.inc` (`tools/extract_chrome.py` — bank `$00` data + bank `$02`) |
 
 Idle boot: logo fly-in ~frame 1200 (EN=JA); subtitle/copyright ~1215 (EN≠JA). Circles blanked with kanji cells only.

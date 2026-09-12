@@ -11471,6 +11471,30 @@ int main(int argc,char **argv) {
     snes->ppu->bgLayer[0].tileAdr = 0x2000;
     dbz_text_en_title_ensure(&ce);
     require(!dbz_text_en_title_ready(), "title disarmed off signature");
+    /* AE6A legend lives on SNES BG3 (bgLayer[2] tm=$6C00). title_ensure must
+     * never wipe those cells — selective BG0 kanji blank only. */
+    snes->ppu->bgLayer[0].tileAdr = 0x5000;
+    snes->ppu->bgLayer[2].tilemapAdr = 0x6c00;
+    snes->ppu->bgLayer[2].tileAdr = 0x2000;
+    snes->ppu->vram[0x6c00 + 24 * 32 + 6] = 0x00ef; /* L */
+    snes->ppu->vram[0x6c00 + 24 * 32 + 7] = 0x00de; /* E */
+    snes->ppu->vram[0x6c00 + 24 * 32 + 8] = 0x00ea; /* G */
+    snes->ppu->vram[0x6000] = 0x1421;
+    dbz_text_en_title_reset();
+    dbz_text_en_title_ensure(&ce);
+    require(dbz_text_en_title_ready(), "EN title ready with BG3 legend");
+    require(snes->ppu->vram[0x6c00 + 24 * 32 + 6] == 0x00ef, "AE6A L tile preserved");
+    require(snes->ppu->vram[0x6c00 + 24 * 32 + 7] == 0x00de, "AE6A E tile preserved");
+    require(snes->ppu->vram[0x6c00 + 24 * 32 + 8] == 0x00ea, "AE6A G tile preserved");
+    require(snes->ppu->vram[0x6000] == 0x1464, "kanji still blanked");
+    /* Cart filter still serves EN LEGEND OF THE SAIYANS prefix. */
+    require(dbz_text_en_chrome_cart_filter(NULL, 0x02e6au, 0xfe) == 0x00, "AE6A[0] space");
+    require(dbz_text_en_chrome_cart_filter(NULL, 0x02e6bu, 0xfe) == 0xef, "AE6A[1] L");
+    require(dbz_text_en_chrome_cart_filter(NULL, 0x02e6cu, 0xfe) == 0xde, "AE6A[2] E");
+    require(dbz_text_en_chrome_cart_filter(NULL, 0x02e6du, 0xfe) == 0xea, "AE6A[3] G");
+    require(dbz_text_en_chrome_cart_filter(NULL, 0x02e6eu, 0xfe) == 0xde, "AE6A[4] E");
+    require(dbz_text_en_chrome_cart_filter(NULL, 0x02e6fu, 0xfe) == 0xf1, "AE6A[5] N");
+    require(dbz_text_en_chrome_cart_filter(NULL, 0x02e70u, 0xfe) == 0xdd, "AE6A[6] D");
     dbz_i18n_set(DBZ_LANG_JA);
     snes_free(snes);
   }
