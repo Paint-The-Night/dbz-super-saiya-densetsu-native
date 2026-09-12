@@ -25,8 +25,8 @@ Declarative replay scenes for systematic host-level regression. The runner is
 export ROM="${DBZ_TEST_ROM:-${DBZ_ROM:-Backup/Dragon Ball Z - Super Saiya Densetsu (Japan) (Rev 1).sfc}}"
 python3 tools/run_scenes.py --binary build/dbz-port --rom "$ROM"
 python3 tools/run_scenes.py --binary build/dbz-port --rom "$ROM" --list
-python3 tools/run_scenes.py --binary build/dbz-port --rom "$ROM" --only ja_opening,en_intro_smoke
-python3 tools/run_scenes.py --binary build/dbz-port --rom "$ROM" --update-golden en_intro_smoke
+python3 tools/run_scenes.py --binary build/dbz-port --rom "$ROM" --only ja_opening,en_title_smoke,en_intro_smoke
+python3 tools/run_scenes.py --binary build/dbz-port --rom "$ROM" --only en_title_smoke --update-golden en_title_smoke
 python3 tools/run_scenes.py --binary build/dbz-port --rom "$ROM" --extended   # include stubs
 ```
 

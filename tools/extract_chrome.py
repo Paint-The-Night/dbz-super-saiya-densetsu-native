@@ -1,8 +1,25 @@
 #!/usr/bin/env python3
-"""Extract Klepto bank-$02 menu/chrome diffs into src/text_en_chrome.inc.
+"""Extract Klepto chrome/title diffs into src/text_en_chrome.inc.
 
-Offline research only — product path never applies IPS. Bank $00 code hooks are
-intentionally omitted (they JSL into Klepto's $10 gate stub).
+Offline research only — product path never applies IPS.
+
+Overlays (cartRomFilter, lang=EN):
+  - LoROM bank $02 menu/field chrome (Talk/Look/Fly/…)
+  - Bank $00 *data* the JP loader already consumes:
+      $00:F150 compressed title-logo/subtitle stream (AE29 from $00:F130)
+      $00:AE6A title/copyright tile-index strings
+      $00:BD86 packed glyph tables + B3DE/B460 pointer immediates
+
+Skipped (JSL $10:A000 / unused stubs — not present on clean Rev 1):
+  - $00:A296 JSR $AE38 → $FCF0 + DMA src/size/dest
+  - $00:A3C6 LDX #$F130 / JSR $AE29 → JSR $FD30
+  - $00:C704 PLB/PLP/RTL → JMP $F400 → JSL $10:A000
+  - $00:FCF0 / $FD30 / $FDB5 unused-space stubs
+  - Bank $10 gate (46 B) and bank $11 font (already text_en_font.inc)
+
+Title *data* (overlaid):
+  - $00:F150 payload (C559 from identical F130 header)
+  - $00:AE6A / BD86 tile-index strings + B3DE/B460 pointer immediates
 """
 from __future__ import annotations
 
@@ -13,6 +30,24 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ROM = ROOT / "Backup" / "Dragon Ball Z - Super Saiya Densetsu (Japan) (Rev 1).sfc"
 DEFAULT_IPS = ROOT / "research" / "klepto-reference" / "klepto-ssd-en-1.02.ips"
 DEFAULT_OUT = ROOT / "src" / "text_en_chrome.inc"
+
+# Bank $00 *code* that JSLs $10:A000 or unused-space stubs. Title kanji is
+# BG0 tm=$6000 / chr=$5000 (stream $00:EFE3 unpatched). Logo is BG1 tm=$6800 /
+# chr=$4000. EN small-font legend/copyright is AE6A data (overlaid). $10-gate
+# equivalent for font is dbz_text_en_font_ensure. Kanji nametable is blanked
+# by dbz_text_en_title_ensure (leave-vblank).
+BANK00_CODE_SKIP = (
+    (0x02290, 0x022C0),  # $00:A296 JSR $FCF0 + DMA src/size/dest
+    (0x023C0, 0x023D0),  # $00:A3C6 JSR $FD30
+    (0x04700, 0x04710),  # $00:C704 JMP $F400 → JSL $10:A000
+    (0x07CF0, 0x08000),  # $00:FCF0 / $FD30 / $FDB5 stubs
+)
+
+# Inclusive scan windows (unheadered file offsets).
+SCAN_WINDOWS = (
+    (0x00000, 0x08000, "bank $00 data"),  # filtered by BANK00_CODE_SKIP
+    (0x10000, 0x18000, "bank $02 chrome"),
+)
 
 
 def apply_ips(rom: bytes, ips: bytes, header: int = 512) -> bytes:
@@ -39,15 +74,35 @@ def apply_ips(rom: bytes, ips: bytes, header: int = 512) -> bytes:
     return bytes(out[header:])
 
 
-def collect_runs(jp: bytes, en: bytes, start: int, end: int):
+def in_skip(off: int, skip: tuple[tuple[int, int], ...]) -> bool:
+    return any(a <= off < b for a, b in skip)
+
+
+def skip_end(off: int, skip: tuple[tuple[int, int], ...]) -> int:
+    for a, b in skip:
+        if a <= off < b:
+            return b
+    return off
+
+
+def collect_runs(
+    jp: bytes,
+    en: bytes,
+    start: int,
+    end: int,
+    skip: tuple[tuple[int, int], ...] = (),
+):
     runs = []
     i = start
     while i < end:
+        if in_skip(i, skip):
+            i = skip_end(i, skip)
+            continue
         if jp[i] != en[i]:
             j = i
-            while j < end and jp[j] != en[j]:
+            while j < end and jp[j] != en[j] and not in_skip(j, skip):
                 j += 1
-            runs.append((i, en[i:j]))
+            runs.append((i, bytes(en[i:j])))
             i = j
         else:
             i += 1
@@ -73,15 +128,23 @@ def main() -> None:
     if len(jp) == 1048576 + 512:
         jp = jp[512:]
     en = apply_ips(jp, args.klepto_ips.read_bytes())
-    runs = collect_runs(jp, en, 0x10000, 0x18000)
+
+    runs: list[tuple[int, bytes]] = []
+    for start, end, _label in SCAN_WINDOWS:
+        skip = BANK00_CODE_SKIP if start == 0x00000 else ()
+        runs.extend(collect_runs(jp, en, start, end, skip))
+    runs.sort(key=lambda r: r[0])
     total = sum(len(b) for _, b in runs)
+    bank00 = sum(len(b) for off, b in runs if off < 0x8000)
+    bank02 = sum(len(b) for off, b in runs if 0x10000 <= off < 0x18000)
 
     lines = [
-        "/* EN overworld/menu chrome — offline Klepto 1.02 bank $02 extract.",
+        "/* EN overworld/menu chrome + title-logo data — offline Klepto 1.02 extract.",
         " * DO NOT EDIT BY HAND — regenerate:",
         " *   python3 tools/extract_chrome.py",
         " * Runtime: cart read filter overlays these file offsets; ROM image stays JP.",
-        " * Bank $00 code hooks intentionally omitted (depend on Klepto $10 gate).",
+        " * Bank $00 *code* hooks omitted (they JSL Klepto $10:A000 / unused stubs).",
+        " * Title CHR: JP AE29 decompresses $00:F130 (header identical; payload @ F150).",
         " */",
         "#ifndef DBZ_TEXT_EN_CHROME_INC",
         "#define DBZ_TEXT_EN_CHROME_INC",
@@ -101,7 +164,10 @@ def main() -> None:
     lines.append("#endif /* DBZ_TEXT_EN_CHROME_INC */")
     lines.append("")
     args.out.write_text("\n".join(lines), encoding="utf-8")
-    print(f"wrote {args.out} runs={len(runs)} bytes={total}")
+    print(
+        f"wrote {args.out} runs={len(runs)} bytes={total} "
+        f"(bank00_data={bank00} bank02={bank02})"
+    )
 
 
 if __name__ == "__main__":

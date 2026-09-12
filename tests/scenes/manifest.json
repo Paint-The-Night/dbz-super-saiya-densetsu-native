@@ -41,6 +41,19 @@
       "diverge_after": 2100
     },
     {
+      "id": "en_title_smoke",
+      "mode": "smoke_en",
+      "lang": "en",
+      "frames": 1650,
+      "inputs": null,
+      "verify": false,
+      "golden": "tests/scenes/goldens/en/en_title_smoke.json",
+      "extended": false,
+      "notes": "Title before Start: AE6A legend/copyright + BG0 kanji blank (dbz_text_en_title_ensure). EN\u2260JA after subtitle phase (~1270).",
+      "contrast_ja": true,
+      "diverge_after": 1270
+    },
+    {
       "id": "en_menu_smoke",
       "mode": "smoke_en",
       "lang": "en",

@@ -81,12 +81,24 @@ void dbz_text_en_font_reset(void);
  * because the next NMI rewrites JP tiles before ppu_runLine. JA: no-op. */
 void dbz_text_en_intro_ensure(Cpu *c);
 void dbz_text_en_intro_reset(void);
+
+/* Title screen (mode 1, BG0 chr=$5000 / BG1 chr=$4000 / BG2 chr=$2000):
+ * DRAGON BALL Z logo is already Latin (BG1 tm=$6800). JP 超サイヤ伝説 lives
+ * on BG0 tm=$6000 (CHR $5000; stream $00:EFE3 unpatched). Klepto $10 gate /
+ * FCF0/FD30 stubs are not overlaid (they JSL $10:A000 or unused $FF). EN
+ * blanks that BG0 nametable ($1464 fill) and uses bank-$00 AE6A small-font
+ * legend/copyright via the cart filter. JA: no-op. Same leave-vblank as intro. */
+void dbz_text_en_title_ensure(Cpu *c);
+void dbz_text_en_title_reset(void);
+bool dbz_text_en_title_ready(void);
+
 /* Wire snes->leaveVblankHook so ensure runs at the correct phase. */
 void dbz_text_en_install_leave_vblank_hook(Snes *snes);
 
-/* Bank-$02 overworld/menu chrome (Talk/Search/Fly/…). Not CF3A — game reads
- * packed label bytes from LoROM bank $02 into BG3. EN overlays those file
- * offsets via snes->cartRomFilter (Klepto-ref text_en_chrome.inc). JA: identity.
+/* Bank-$02 overworld/menu chrome (Talk/Search/Fly/…) plus bank-$00 *data*
+ * (F150 stream / AE6A / BD86 strings). Not CF3A. EN overlays via
+ * snes->cartRomFilter (text_en_chrome.inc). Bank $00 *code* that JSLs
+ * $10:A000 / unused stubs is not overlaid. JA: identity.
  * Install with leave-vblank hook (shares installer). */
 uint8_t dbz_text_en_chrome_cart_filter(Snes *snes, uint32_t file_off, uint8_t rom_byte);
 void dbz_text_en_install_cart_filter(Snes *snes);

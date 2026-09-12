@@ -11,6 +11,7 @@
 static DbzTextStream g_stream;
 static bool g_en_font_ready;
 static bool g_en_intro_ready;
+static bool g_en_title_ready;
 
 void dbz_text_unbind(void) {
   memset(&g_stream, 0, sizeof g_stream);
@@ -74,10 +75,19 @@ uint8_t dbz_text_filter_script_byte(uint32_t addr24, uint8_t rom_byte) {
 void dbz_text_en_font_reset(void) {
   g_en_font_ready = false;
   g_en_intro_ready = false;
+  g_en_title_ready = false;
 }
 
 void dbz_text_en_intro_reset(void) {
   g_en_intro_ready = false;
+}
+
+void dbz_text_en_title_reset(void) {
+  g_en_title_ready = false;
+}
+
+bool dbz_text_en_title_ready(void) {
+  return g_en_title_ready && dbz_i18n_get() == DBZ_LANG_EN;
 }
 
 bool dbz_text_en_font_ready(void) {
@@ -185,15 +195,60 @@ void dbz_text_en_intro_ensure(Cpu *c) {
   g_en_intro_ready = true;
 }
 
+/*
+ * Title EN — BG0 tm=$6000 / chr=$5000 holds the JP 超サイヤ伝説 bitmap
+ * (5×20 tiles; unpatched stream). Logo is BG1 tm=$6800 / chr=$4000. Klepto's replacement
+ * rides unused-space stubs + $10:A000, which we do not overlay. Blank that
+ * nametable while the title signature is live so only the already-Latin
+ * DRAGON BALL Z logo + AE6A small-font legend/copyright remain. JA: no-op.
+ */
+void dbz_text_en_title_ensure(Cpu *c) {
+  if(!c || !c->mem) return;
+  if(dbz_i18n_get() != DBZ_LANG_EN) {
+    g_en_title_ready = false;
+    return;
+  }
+  Snes *snes = (Snes *)c->mem;
+  if(!snes->ppu) return;
+
+  /* Title signature: mode 1, kanji CHR $5000 (BG0), logo CHR $4000 (BG1), small font $2000.
+   * Intro crawl uses BG3 $7000/$4000 and must not hit this path. */
+  if(snes->ppu->mode != 1u) {
+    g_en_title_ready = false;
+    return;
+  }
+  BgLayer *bg0 = &snes->ppu->bgLayer[0];
+  BgLayer *bg1 = &snes->ppu->bgLayer[1];
+  BgLayer *bg2 = &snes->ppu->bgLayer[2];
+  if(bg0->tileAdr != 0x5000u || bg1->tileAdr != 0x4000u || bg2->tileAdr != 0x2000u) {
+    g_en_title_ready = false;
+    return;
+  }
+  if(bg0->tilemapAdr != 0x6000u) {
+    g_en_title_ready = false;
+    return;
+  }
+
+  /* BG0 tm=$6000 is the 5-row 超サイヤ伝説 bitmap (tiles 1–$63, attr $14).
+   * Tile $64 is the layer's empty fill (word $1464). Do not write 0 — tile 0
+   * in CHR $5000 is a hatch. BG1 tm=$6800 is the Latin DBZ logo — leave it. */
+  for(uint32_t i = 0; i < 0x400u; i++) {
+    snes->ppu->vram[(0x6000u + i) & 0x7fffu] = 0x1464u;
+  }
+  g_en_title_ready = true;
+}
+
 static void dbz_text_leave_vblank_hook(Snes *snes) {
   if(!snes || !snes->cpu) return;
+  dbz_text_en_title_ensure(snes->cpu);
   dbz_text_en_intro_ensure(snes->cpu);
 }
 
 uint8_t dbz_text_en_chrome_cart_filter(Snes *snes, uint32_t file_off, uint8_t rom_byte) {
   (void)snes;
   if(dbz_i18n_get() != DBZ_LANG_EN) return rom_byte;
-  /* Binary search chrome runs (sorted by file_off). */
+  /* Binary search chrome runs (sorted by file_off). Bank $02 menu labels plus
+   * bank $00 title *data* (F150 / AE6A / BD86). $10-gate code hooks omitted. */
   uint32_t lo = 0, hi = DBZ_TEXT_EN_CHROME_RUNS;
   while(lo < hi) {
     uint32_t mid = lo + (hi - lo) / 2u;

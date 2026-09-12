@@ -11401,6 +11401,58 @@ int main(int argc,char **argv) {
     require(!dbz_text_en_font_ready(), "font reset on JA");
     snes_free(snes);
   }
+  /* EN chrome cart filter: bank $02 + bank $00 *data* (title F150 / AE6A).
+   * $10-gate code hooks (A297 / A3C6 / C704 / FCF0) must stay JP. */
+  {
+    dbz_i18n_set(DBZ_LANG_JA);
+    require(dbz_text_en_chrome_cart_filter(NULL, 0x07150u, 0x00) == 0x00, "JA F150 identity");
+    require(dbz_text_en_chrome_cart_filter(NULL, 0x02297u, 0x38) == 0x38, "JA A297 identity");
+    dbz_i18n_set(DBZ_LANG_EN);
+    require(dbz_text_en_chrome_cart_filter(NULL, 0x07150u, 0x00) == 0x92, "EN title F150 byte");
+    require(dbz_text_en_chrome_cart_filter(NULL, 0x02e6au, 0xfe) == 0x00, "EN AE6A title string");
+    require(dbz_text_en_chrome_cart_filter(NULL, 0x15aba, 0x00) != 0x00, "EN bank $02 DABA chrome");
+    /* $10-gate / unused-space code hooks must stay JP. */
+    require(dbz_text_en_chrome_cart_filter(NULL, 0x02297u, 0x38) == 0x38, "A297 JSR not overlaid");
+    require(dbz_text_en_chrome_cart_filter(NULL, 0x023c6u, 0xa2) == 0xa2, "A3C6 loader not overlaid");
+    require(dbz_text_en_chrome_cart_filter(NULL, 0x04704u, 0xab) == 0xab, "C704 $10-gate not overlaid");
+    require(dbz_text_en_chrome_cart_filter(NULL, 0x07cf0u, 0xff) == 0xff, "FCF0 stub not overlaid");
+    require(dbz_text_en_chrome_cart_filter(NULL, 0x082000u, 0xe2) == 0xe2, "bank $10 gate not overlaid");
+    dbz_i18n_set(DBZ_LANG_JA);
+  }
+  /* Title ensure: JA no-op; EN blanks BG0 tm=$6000 (kanji) under title signature. */
+  {
+    Snes *snes = snes_init();
+    require(snes && snes->ppu, "title snes_init");
+    Cpu ce={0};
+    ce.mem=snes; ce.read=snes_cpuRead; ce.write=snes_cpuWrite; ce.idle=snes_cpuIdle;
+    snes->ppu->mode = 1;
+    snes->ppu->bgLayer[0].tileAdr = 0x5000;
+    snes->ppu->bgLayer[1].tileAdr = 0x4000;
+    snes->ppu->bgLayer[0].tilemapAdr = 0x6000;
+    snes->ppu->bgLayer[1].tilemapAdr = 0x6800;
+    snes->ppu->bgLayer[2].tileAdr = 0x2000;
+    snes->ppu->vram[0x6000] = 0x1234;
+    snes->ppu->vram[0x6000 + 0x3ff] = 0x5678;
+    snes->ppu->vram[0x6800] = 0xABCD;
+    dbz_i18n_set(DBZ_LANG_JA);
+    dbz_text_en_title_reset();
+    dbz_text_en_title_ensure(&ce);
+    require(!dbz_text_en_title_ready(), "JA title no-op");
+    require(snes->ppu->vram[0x6000] == 0x1234, "JA leaves kanji map");
+    dbz_i18n_set(DBZ_LANG_EN);
+    dbz_text_en_title_ensure(&ce);
+    require(dbz_text_en_title_ready(), "EN title ready");
+    require(snes->ppu->vram[0x6000] == 0x1464, "EN fills kanji tl");
+    require(snes->ppu->vram[0x6000 + 0x3ff] == 0x1464, "EN fills kanji br");
+    require(snes->ppu->vram[0x6800] == 0xABCD, "logo map untouched");
+    /* Wrong signature must not stay armed. */
+    snes->ppu->bgLayer[0].tileAdr = 0x2000;
+    dbz_text_en_title_ensure(&ce);
+    require(!dbz_text_en_title_ready(), "title disarmed off signature");
+    dbz_i18n_set(DBZ_LANG_JA);
+    snes_free(snes);
+  }
+
 
 
   printf("PASS: native equivalence suites including CD02/CD81/CD96/CDB6/CDCA/CC04/CC0E/CC25/CC92/CCA0/CCBB/CCC8/CCEE/CDE1/CDEE/CDF7/CE13/CE60/CE8B/CEFF/CF08/CF0F/CF60/CF65/CFB1/CFB9/D13E/D1D6/D05A/D06D/D095/D038/D118/D0BA/D260/D1E1/D1F4/D209/E24F/E253/E260/E2BD/E2F8/E31F/E342/E347/E446/E565/E7FF/E6D6/E6B1/E659/E61B/E5AA/EE5E/EE99/E97B/E9A2/E9D4/EA0E/ED88/E8DC/E87F/E845/EA52/EA6F/EB36/EB31/EC61/EAEB/ED4A/ED46/EDB4/EE01/E921/DE26/DEA1/DDF4-deep/EA8C/EED4/EF26/EF5A/EFCC/ECE4/1D8583/1D859B/DBF3/E073/DB65/DB2B/DC48/DC7C/DBC6/DDF4/B594/D3D6/D45F/DD29/D306-full/D274/D28D/D306/D30D/D330/D3C1/F0EA/F353/F167/D48F/D4D2/DA9C/F06A/F386/F76B/F77A/F782/F7B3/F7C2/F7CA/F820/F000/95C9/DA8D/F6A8/F685/F54F/F708/F82B/DA45/DA7C/B11D/A93D/A90D/A8E9/A5F7/F85E/E089/D8DB/D955/DA03/1D89D1/F480/B124/BDDC/95F6/9491/A9F4/D521/D55B/D566/F998/F91E/F952/A52E/1D8B46/1D8B7C/DD51/DD69/DFF3/CA8D/F548/D7F4/D81E/D849/D6E2/D743/D5B9/D60F/D6F6/D681/D873/D8B3/F410/A581/B6B2/B6C0/DF60/E102/93A9/A435/1D8AB3/1D8ABD/CA90/DEC3/DF51/CF3A/CFB2/F719/B00A/9886/C41F/90A5/DA64/DFE3/C98F/C9FA/1D8A85/1D8AA2/F692/97C9/B0BE/B0F9/B582/9488/CA10/9115/1D8A77/E38E/E3CC/86DE/8857/B0B1/1D8843/9768/B110/B045/90CC/8116/1D8906/86F5/1D8807/C1EE/C20D/9626/96D7/96E2/96ED/B572/C1C8/9B37/9B91/C0ED/C116/C07B/C232/9AFF/AA70/BECB/C00A/F9A0/C5ED/C707/A9E9/AE38/C029/96F3/A99B/FA86/BE54/8282/83B2/8411/889E/C987/FBBC/FAE9/FC00/871E/FA1A/C8C8/C885/F53B/F660/F67B/8974/B55A/F4B2/F983/FB2A/B960/AB00/8938/89E2/B72B/B6ED/B700/F802/F375/FE0E/A956/A961/8674/9083/FD64/B65D/B67A/B6AC/B6BF/A95B/8FB2/F021/F06F/8514/C9F9/CA98/CAAB/CA34/C535/B61E/B647/8490/84B9/84E2/85F1/EBC1/85A1/844A/87E9/87F9/877E/8D4E/8DFA/8DAC/EAD4/EB52/8F46/8C84/E8EE/BB46/EFD7/EFEA/EFFD/F00F/E36B/E32E/EF29/E419/E42A/E461/E4D1/E4F4/E942/8B7A/8E96/A6CB/9255/E837/FC33/E340/9485/94E7/FC47/FC74/FBDA/849C/85E9/FB8D/EF11/F089/F14D/89B8/D812/9BBF/8D2B/85B6/C559/C68C/90E6/946F and 8DFE-to-F14D; CPU state and bus sequences match.\n");

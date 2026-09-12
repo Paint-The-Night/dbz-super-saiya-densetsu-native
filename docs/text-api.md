@@ -153,7 +153,7 @@ python3 tools/extract_chrome.py
 | `src/text_en_font.inc` | Embedded 2bpp EN tileset (`$1800`) |
 | `src/text_en_scripts.inc` | Generated EN main-script glyph tables (366 entries / 346 unique) |
 | `src/text_en_banks.inc` | Generated EN menu/battle tables (569 entries) |
-| `src/text_en_chrome.inc` | Bank `$02` overworld/menu chrome overlays |
+| `src/text_en_chrome.inc` | Bank `$02` menu chrome + bank `$00` title *data* |
 | `src/text_en_intro.inc` | Opening crawl EN CHR + BG1/BG2 |
 | `src/i18n.h` / `.c` | Language + `dbz_i18n_en_script` API (includes both tables) |
 | `src/native_video.inc` | `text_script_cf3a_step`, `text_script_cfb2_step` |
@@ -178,8 +178,8 @@ via `dbz_text_en_install_leave_vblank_hook` (after NMI DMA, before
 DMA and never reaches the framebuffer. Dialogue still uses pointer-swap +
 `dbz_text_en_font_ensure` after intro.
 
-Idle boot reaches the JP crawl page ~frame 1769; Latin EN is first visible in
-video_hash vs JA around frame **2093** (scroll-in).
+Idle boot: title EN≠JA from frame **1273** (kanji blank + AE6A legend). JP crawl
+page ~1769; crawl Latin still differs from JA around **2093** (scroll-in).
 
 
 ## Overworld / menu chrome (bank `$02`, not CF3A)
@@ -198,24 +198,40 @@ in the `07:8F16` script far-table. The game copies them into BG3 (`tm=$2C00`,
 | JA | Filter returns `rom_byte` unchanged |
 | Font | `dbz_text_en_font_ensure` **re-writes** on every `00:90C1` (overworld reloads JP font) |
 
-Bank `$00` Klepto code hooks are **not** overlaid (they JSL the `$10:A000` gate).
+Bank `$00` Klepto *code* hooks are **not** overlaid (they JSL `$10:A000` or
+unused `$FF` stubs). Font already uses `dbz_text_en_font_ensure` (native `$10`
+gate). Title *data* (AE6A / F150 / BD86) is in the same chrome table.
+
+## Title logo (bank `$00`, not CF3A)
+
+| Item | Evidence |
+|------|----------|
+| Logo | SNES BG1 tm=`$6800` / chr=`$4000` — already Latin "DRAGON BALL Z" |
+| JP subtitle | SNES BG0 tm=`$6000` / chr=`$5000` — 5×20 tiles `1–$63` attr `$14` (超サイヤ伝説). Stream `$00:EFE3` is **unpatched** in Klepto 1.02 |
+| Small-font legend | SNES BG3 tm=`$6C00` / chr=`$2000` — tile indices at `$00:AE6A` (Klepto-ref "LEGEND OF THE SAIYANS" / © BANDAI / BY SIRYOINK / PUSH START) |
+| `$10:A000` gate | 46 B at file `$082000`: `SEP/LDA $85/CMP #$08/LDA $83/CMP #$8000/JSR $A015` copies `$91:8036` font. Hooked from `$00:C704` (`JMP $F400`). Native C68C never fetches C704; font is `dbz_text_en_font_ensure` |
+| Skipped `$00` code | A296→FCF0, A3C6→FD30, C704→F400, FCF0/FD30/FDB5 stubs |
+| Native API | `dbz_text_en_title_ensure` on leave-vblank: fill BG0 tm with `$1464` (tileset empty). JA: no-op |
+| Data | `text_en_chrome.inc` (`tools/extract_chrome.py` — bank `$00` data + bank `$02`) |
+
+Idle boot: logo fly-in ~frame 1200 (EN=JA); subtitle/copyright ~1273 (EN≠JA).
 
 ## Remaining JP surfaces (lang=EN)
 
 | Surface | Status |
 |---------|--------|
 | Opening crawl tilemaps | **EN** (`dbz_text_en_intro_ensure` + leave-vblank hook) |
+| Title logo + subtitle / copyright | **EN** (AE6A legend/copyright + `title_ensure` blanks JP kanji). Large-font Klepto subtitle bitmap is **not** installed (`$10` stubs skipped) |
 | CF3A dialogue (main 366 + menu/battle 569) | **EN** pointer-swap + font |
 | Overworld command menu + bank `$02` field chrome | **EN** (`cartRomFilter` + `text_en_chrome.inc`) |
 | Far-table sel 7 trailing 7 unused slots | JP ROM bytes (also unused in JA) |
 | Host LANGUAGE boot menu | Host SDL strings (EN/JA), not ROM |
-| Title-logo JP subtitle / bank `$00` title CHR | Still JP (Klepto `$00` graphics; code hooks skipped) |
-| Player name-entry screen | **Not observed** on new-game → overworld route (fixed cast names) |
-| Non-script HUD numerals / face chrome | Shared graphics; not JP script |
+| Player name-entry screen | **Not observed** on new-game → overworld (fixed cast names). BD86 glyph tables are overlaid if that screen is ever reached |
+| Non-script HUD numerals / face chrome | Shared graphics; not JP script. Bank `$08` 102 B Klepto glyph diffs are already covered by the full EN font upload |
 
 ## Regression
 
-See [`scene-regression.md`](scene-regression.md) for `en_intro_smoke` (2400f crawl) and `en_menu_smoke` (4500f overworld
-menu via `tests/en-to-overworld.inputs`) — OCR-free video_hash goldens + live
-**EN≠JA** contrast.
+See [`scene-regression.md`](scene-regression.md) for `en_title_smoke` (1650f title
+before Start), `en_intro_smoke` (2400f crawl) and `en_menu_smoke` (4500f
+overworld menu) — OCR-free video_hash goldens + live **EN≠JA** contrast.
 
