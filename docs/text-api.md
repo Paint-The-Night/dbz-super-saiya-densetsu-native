@@ -89,9 +89,30 @@ With EN pointer-swap, `[$00]` points at the overlay, so different-length streams
 | Glyph indices | Script bytes map 1:1 to 2bpp tile numbers (attr `#$24` in `$7E3000`); Latin lowercase starts ~`$05`=`a` |
 | Data file | `src/text_en_font.inc` (extracted from Klepto IPS offline; not applied at runtime) |
 
+## EN script table coverage
+
+| Item | Value |
+|------|-------|
+| Far bank | `$0733==2` → `06:8000` (366 u16 pointers) |
+| Covered EN indices | **345 / 366** (`DBZ_EN_MAIN_SCRIPT_COUNT`) |
+| Skipped empty | indices **23–42** (20 zero-length Klepto slots) |
+| Skipped over-overlay | index **365** (2745 bytes > `$0800` max) |
+| Data | `src/text_en_scripts.inc` (generated; behind `dbz_i18n_en_script`) |
+| Other far banks | `07:8F2E` / `07:8F82` / … — menu/battle; Klepto differs; **not** in this table yet |
+
 ## Tooling
 
-`tools/extract_script_strings.py` — dump JP pointers/strings; `--klepto` aligns EN reference bytes by index.
+`tools/extract_script_strings.py` — dump JP pointers/strings; `--klepto` aligns EN
+reference bytes by index.
+
+Regenerate the C include (requires pinned Rev 1 ROM + Klepto IPS under
+`research/klepto-reference/`):
+
+```sh
+python3 tools/extract_script_strings.py --klepto --c-inc src/text_en_scripts.inc
+```
+
+Do not hand-edit `text_en_scripts.inc`. Product path never applies IPS.
 
 ## Files
 
@@ -99,6 +120,7 @@ With EN pointer-swap, `[$00]` points at the overlay, so different-length streams
 |------|------|
 | `src/text_script.h` / `.c` | Bind / overlay / filter / EN font API |
 | `src/text_en_font.inc` | Embedded 2bpp EN tileset (`$1800`) |
-| `src/i18n.h` / `.c` | Language + EN script tables |
+| `src/text_en_scripts.inc` | Generated EN main-script glyph tables (345 entries) |
+| `src/i18n.h` / `.c` | Language + `dbz_i18n_en_script` API (includes tables) |
 | `src/native_video.inc` | `text_script_cf3a_step`, `text_script_cfb2_step` |
 | `docs/i18n.md` | Policy + ship state |

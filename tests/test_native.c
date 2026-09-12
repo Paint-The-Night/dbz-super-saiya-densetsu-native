@@ -11380,6 +11380,10 @@ int main(int argc,char **argv) {
     require(snes_read(snes, 0x7e9000u) == 0x00, "EN mirror $7E9000 tile0");
     require(snes_read(snes, 0x7e9060u) != 0x00, "EN mirror tile6 bytes");
     size_t n=0; require(dbz_i18n_en_script(2, 3, &n) && n > 0, "EN script idx 3");
+    require(dbz_i18n_en_script(2, 100, &n) && n > 0, "EN script idx 100");
+    require(dbz_i18n_en_script(2, 364, &n) && n > 0, "EN script idx 364");
+    require(!dbz_i18n_en_script(2, 365, &n), "idx 365 over overlay skipped");
+    require(!dbz_i18n_en_script(2, 23, &n), "empty idx 23 no table");
     dbz_i18n_set(DBZ_LANG_JA);
     require(!dbz_text_en_font_ready(), "font reset on JA");
     snes_free(snes);

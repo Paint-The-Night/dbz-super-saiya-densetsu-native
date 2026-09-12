@@ -16,6 +16,7 @@ Usage:
   python3 tools/extract_script_strings.py
   python3 tools/extract_script_strings.py --klepto --limit 20
   python3 tools/extract_script_strings.py --json out.json
+  python3 tools/extract_script_strings.py --klepto --c-inc src/text_en_scripts.inc
 """
 from __future__ import annotations
 
@@ -150,6 +151,89 @@ def far_table(blob: bytes, n: int = 8) -> list[dict]:
     return rows
 
 
+
+OVERLAY_MAX = 0x800  # DBZ_TEXT_EN_OVERLAY_MAX — skip longer EN blobs
+MAIN_BANK_SEL = 2
+
+
+def file_to_cpu06(fo: int) -> int:
+    """LoROM file offset → bank-06-style 24-bit CPU long (matches i18n jp_base)."""
+    bank = fo >> 15
+    addr = 0x8000 + (fo & 0x7FFF)
+    return (bank << 16) | addr
+
+
+def emit_c_inc(jp_strings: list[dict], en_strings: list[dict], out: Path) -> dict:
+    """Write src/text_en_scripts.inc for i18n.c (DbzEnScript + DBZ_MAIN_SCRIPT_BANK_SEL in scope)."""
+    entries: list[tuple[int, str, int, int]] = []
+    skipped_empty: list[int] = []
+    skipped_over: list[tuple[int, int]] = []
+    chunks: list[str] = [
+        "/* Auto-generated EN main-script tables (Klepto 1.02 reference bytes).",
+        " * DO NOT EDIT BY HAND — regenerate:",
+        " *   python3 tools/extract_script_strings.py --klepto --c-inc src/text_en_scripts.inc",
+        " * Policy: offline IPS apply for research extract only; product never patches ROM.",
+        " * Bank sel = $0733 index 2 → 06:8000. Skips empty / len>$0800 (overlay max).",
+        " */",
+        "#ifndef DBZ_TEXT_EN_SCRIPTS_INC",
+        "#define DBZ_TEXT_EN_SCRIPTS_INC",
+        "",
+    ]
+    for jp_s, en_s in zip(jp_strings, en_strings):
+        i = int(en_s["index"])
+        raw = bytes.fromhex(en_s["hex"].replace(" ", "")) if en_s["hex"] else b""
+        if len(raw) != en_s["length"]:
+            raise SystemExit(f"hex/length mismatch at index {i}")
+        if len(raw) == 0:
+            skipped_empty.append(i)
+            continue
+        if len(raw) > OVERLAY_MAX:
+            skipped_over.append((i, len(raw)))
+            continue
+        jp_base = file_to_cpu06(int(jp_s["file_offset"]))
+        name = f"EN_SCRIPT_{i}"
+        parts = [f"0x{b:02x}" for b in raw]
+        body_lines = []
+        for c in range(0, len(parts), 12):
+            slice_ = parts[c : c + 12]
+            comma = "," if c + 12 < len(parts) else ""
+            body_lines.append("  " + ", ".join(slice_) + comma)
+        chunks.append(f"static const uint8_t {name}[] = {{")
+        chunks.extend(body_lines)
+        chunks.append("};")
+        chunks.append("")
+        entries.append((i, name, jp_base, len(raw)))
+
+    over_note = ", ".join(f"{i}({n})" for i, n in skipped_over) or "none"
+    empty_note = (
+        f"{skipped_empty[0]}–{skipped_empty[-1]} ({len(skipped_empty)})"
+        if skipped_empty
+        else "none"
+    )
+    chunks.append(f"#define DBZ_EN_MAIN_SCRIPT_COUNT {len(entries)}u")
+    chunks.append(f"#define DBZ_EN_MAIN_SCRIPT_PTR_TOTAL {PTR_COUNT}u")
+    chunks.append(f"/* Skipped empty: {empty_note}; over-overlay: {over_note} */")
+    chunks.append("")
+    chunks.append("static const DbzEnScript EN_SCRIPTS[] = {")
+    for i, name, jp_base, _ln in entries:
+        chunks.append(
+            f"  {{DBZ_MAIN_SCRIPT_BANK_SEL, {i}u, {name}, sizeof {name}, 0x{jp_base:06X}u}},"
+        )
+    chunks.append("};")
+    chunks.append("")
+    chunks.append("#endif /* DBZ_TEXT_EN_SCRIPTS_INC */")
+    chunks.append("")
+    out.write_text("\n".join(chunks))
+    return {
+        "path": str(out),
+        "covered": len(entries),
+        "ptr_total": PTR_COUNT,
+        "skipped_empty": skipped_empty,
+        "skipped_over": skipped_over,
+        "bytes": sum(e[3] for e in entries),
+    }
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--rom", type=Path, default=ROM)
@@ -157,6 +241,11 @@ def main() -> int:
     ap.add_argument("--klepto-ips", type=Path, default=KLEPTO_IPS)
     ap.add_argument("--limit", type=int, default=0, help="Print only first N strings (0=all meta)")
     ap.add_argument("--json", type=Path, help="Write full dump JSON")
+    ap.add_argument(
+        "--c-inc",
+        type=Path,
+        help="With --klepto: write generated C include (EN script tables for i18n.c)",
+    )
     args = ap.parse_args()
 
     jp = load_rom(args.rom)
@@ -188,6 +277,18 @@ def main() -> int:
         report["klepto_en_strings"] = extract_strings(en)
         report["klepto_note"] = (
             "Offline IPS apply for research only — product path never patches ROM"
+        )
+
+    if args.c_inc:
+        if not args.klepto or "klepto_en_strings" not in report:
+            raise SystemExit("--c-inc requires --klepto (EN reference extract)")
+        meta = emit_c_inc(report["jp_strings"], report["klepto_en_strings"], args.c_inc)
+        report["c_inc"] = meta
+        print(
+            f"wrote {meta['path']}: covered {meta['covered']}/{meta['ptr_total']} "
+            f"({meta['bytes']} bytes); empty={len(meta['skipped_empty'])} "
+            f"over={meta['skipped_over']}",
+            file=sys.stderr,
         )
 
     if args.json:
