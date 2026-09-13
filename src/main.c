@@ -8,6 +8,7 @@
 #include "text_script.h"
 #include "i18n.h"
 #include "rom.h"
+#include "checkpoint.h"
 
 enum { WIDTH=512, HEIGHT=480, PIXEL_BYTES=WIDTH*HEIGHT*4, MAX_EVENTS=4096 };
 typedef struct { unsigned start, duration, mask; } InputEvent;
@@ -85,33 +86,16 @@ static void battery_save(Snes *s,const char *directory) {
   snprintf(final,sizeof(final),"%s/dbz-rev1.srm",directory);
   if(rename(temp,final)) die("Could not publish battery save");
 }
-static uint32_t little32(const uint8_t *p) {
-  return (uint32_t)p[0]|((uint32_t)p[1]<<8)|((uint32_t)p[2]<<16)|((uint32_t)p[3]<<24);
-}
-static void put32(uint8_t *p,uint32_t v) {
-  for(unsigned i=0;i<4;i++) p[i]=(uint8_t)(v>>(i*8));
-}
 // Checkpoints bind the machine state and exact audio phase to this ROM.
 // Raw final.state artifacts remain available for differential diagnosis.
 static void checkpoint_save(const char *dir,const uint8_t *state,int size,uint32_t phase) {
-  uint8_t *data=calloc(1,(size_t)size+144);if(!data) die("Checkpoint allocation failed");
-  memcpy(data,"DBZCHK1\n",8);memcpy(data+8,DBZ_ROM_SHA256,64);
-  put32(data+136,phase);put32(data+140,(uint32_t)size);memcpy(data+144,state,(size_t)size);
-  char digest[65];dbz_sha256(data+136,(size_t)size+8,digest);memcpy(data+72,digest,64);
-  write_file(dir,"final.dbzstate",data,(size_t)size+144);free(data);
+  if(!dbz_checkpoint_save_file(dir,state,size,phase)) die("Could not write checkpoint");
 }
 static uint32_t checkpoint_load(const char *path,Snes *game,Snes *reference,int size) {
-  FILE *f=fopen(path,"rb");if(!f) die("Cannot open checkpoint");
-  size_t length=(size_t)size+144;uint8_t *data=malloc(length);
-  if(!data) die("Checkpoint allocation failed");
-  bool valid=fread(data,1,length,f)==length && fgetc(f)==EOF && !ferror(f);fclose(f);
-  if(!valid || memcmp(data,"DBZCHK1\n",8) || memcmp(data+8,DBZ_ROM_SHA256,64) ||
-     little32(data+140)!=(uint32_t)size || little32(data+136)>=600988) die("Invalid or incompatible checkpoint");
-  char digest[65];dbz_sha256(data+136,(size_t)size+8,digest);
-  if(memcmp(data+72,digest,64)) die("Checkpoint checksum mismatch");
-  if(!snes_loadState(game,data+144,size) || (reference&&!snes_loadState(reference,data+144,size)))
-    die("Checkpoint core format mismatch");
-  uint32_t phase=little32(data+136);free(data);return phase;
+  uint32_t phase=0;
+  if(!dbz_checkpoint_load_file(path,game,reference,size,&phase))
+    die("Invalid or incompatible checkpoint");
+  return phase;
 }
 static void raw_state_load(const char *path,Snes *game,Snes *reference,int size) {
   FILE *f=fopen(path,"rb");if(!f) die("Cannot open raw state");

@@ -60,6 +60,12 @@ print(f"index uses {js_name} + {wasm_name}")
 PY2
 # No IPS/patches in dist — native i18n only (see docs/i18n.md)
 
+# Post-Raditz opening checkpoints for host SKIP (Rev 1 SHA-bound DBZCHK1).
+mkdir -p "${DIST}/checkpoints"
+cp -f "${ROOT}/web/checkpoints/opening-en.dbzstate" "${DIST}/checkpoints/"
+cp -f "${ROOT}/web/checkpoints/opening-ja.dbzstate" "${DIST}/checkpoints/"
+
+
 # Sanity: refuse if any ROM-like payload slipped in
 if find "${DIST}" -type f \( -name '*.sfc' -o -name '*.smc' -o -name '*.srm' \) | grep -q .; then
   echo "ERROR: ROM/save artifact found under dist — aborting" >&2
@@ -99,6 +105,9 @@ cat > "${DIST}/_headers" << 'HDR'
 
 /dbz.*.wasm
   Content-Type: application/wasm
+  Cache-Control: public, max-age=31536000, immutable
+
+/checkpoints/*
   Cache-Control: public, max-age=31536000, immutable
 HDR
 

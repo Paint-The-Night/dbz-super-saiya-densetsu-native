@@ -9,11 +9,10 @@
  * mirror, then pulses A only — tap-the-thing UX (host-driven selection +
  * SNES A), not N× D-pad scroll. CONTROLS also reopens in-game via chrome.
  * Opening SKIP (host overlay, top-right; also canvas top-right hit-rect)
- * synthesizes the game's own intro skip: Start on title/crawl/clouds
- * (tests/start-game.inputs), then A through Raditz — not a WRAM warp.
- * Start is never sent after leaving intro visuals (would pause OW).
- * After Raditz, A opens the command menu once then freezes (A-spam
- * selects Talk and thrash-loops $0723=9e; $0733 never returns to 0).
+ * loads a Rev-1-bound post-Raditz opening.dbzstate (Kame House command UI)
+ * via dbz_web_apply_opening_checkpoint — no Raditz dialogue on screen.
+ * JS fetches web/checkpoints/opening-{en|ja}.dbzstate (same DBZCHK1 format
+ * as --load-checkpoint). Mash Start/A remains only as a fetch-fail fallback.
  * Direct Y origins are lifted one DBZ_UI_ROW_PITCH vs tip measurements.
  * The same clean JP ROM always boots (no IPS / ROM patching). */
 #include <SDL.h>
@@ -27,6 +26,7 @@
 #include "native.h"
 #include "text_script.h"
 #include "rom.h"
+#include "checkpoint.h"
 #include "snes.h"
 
 enum { WIDTH = 512, HEIGHT = 480, PIXEL_BYTES = WIDTH * HEIGHT * 4 };
@@ -1223,7 +1223,44 @@ static void opening_skip_tick(void) {
   skip_cooldown = 12;
 }
 
-/* Host overlay Skip — top-right during opening only. */
+/* Apply a Rev-1 DBZCHK1 opening checkpoint (post-Raditz Kame House).
+ * Primary Skip path — jumps past title/crawl/Raditz with no dialogue mash.
+ * Returns 0 ok, 1 not playing, 2 bad args, 3 invalid/incompatible checkpoint. */
+EMSCRIPTEN_KEEPALIVE
+int dbz_web_apply_opening_checkpoint(const uint8_t *data, int length) {
+  if(!game || boot_phase != BOOT_PLAYING || opening_done) return 1;
+  if(!data || length <= 0) return 2;
+  int expect = snes_saveState(game, NULL);
+  uint32_t phase = 0;
+  if(!dbz_checkpoint_apply(data, (size_t)length, game, NULL, expect, &phase))
+    return 3;
+  sample_phase = phase;
+  clear_input_pulses();
+  keys_kb = 0;
+  keys_touch = 0;
+  keys_gesture = 0;
+  skip_arm = 0;
+  skip_cooldown = 0;
+  skip_saw_dialogue = 1;
+  skip_past_intro = 1;
+  overworld_streak = 0;
+  opening_done = 1;
+  paused = false;
+  sync_skip_armed_ui(0);
+  sync_skip_button(0);
+  snes_setPixels(game, pixels);
+  present_pixels();
+  if(dbz_i18n_get() == DBZ_LANG_EN)
+    set_status(dbz_i18n_str(DBZ_STR_EN_WIP_STATUS));
+  else if(ctrl_mode == CTRL_DIRECT)
+    set_status(dbz_i18n_str(DBZ_STR_PLAYING_DIRECT_STATUS));
+  else
+    set_status(dbz_i18n_str(DBZ_STR_PLAYING_STATUS));
+  return 0;
+}
+
+/* Fallback only: Start/A mash when checkpoint fetch fails. Prefer
+ * dbz_web_apply_opening_checkpoint from JS. */
 EMSCRIPTEN_KEEPALIVE
 void dbz_web_skip_cutscene(void) {
   if(!game || boot_phase != BOOT_PLAYING || opening_done) return;
@@ -1255,7 +1292,12 @@ void dbz_web_canvas_tap(int x, int y) {
     return;
   }
   if(boot_phase == BOOT_PLAYING && !opening_done && opening_skip_hit(x, y)) {
-    dbz_web_skip_cutscene();
+    /* Prefer JS checkpoint fetch (same as HTML SKIP); mash only if missing. */
+    EM_ASM({
+      if(typeof window.dbzSkipOpening === 'function') window.dbzSkipOpening();
+      else if(typeof Module._dbz_web_skip_cutscene === 'function')
+        Module._dbz_web_skip_cutscene();
+    });
     return;
   }
   if(boot_phase == BOOT_PLAYING && ctrl_mode == CTRL_DIRECT)

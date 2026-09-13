@@ -201,11 +201,10 @@ C APIs (frame-synced in `web_main.c`):
 - `dbz_web_set_controls_mode` / `dbz_web_get_controls_mode` — 0 Traditional, 1 Direct
 - `dbz_web_canvas_tap(x, y)` — Direct hit-test / in-game write→A
 - `dbz_web_open_controls_menu` — reopen CONTROLS parchment mid-play
-- `dbz_web_skip_cutscene` — host **SKIP** (top-right). Visible only during
-  the opening (title / crawl / Raditz), then latches off on overworld.
-  Synthesizes the game’s own skip: **Start** on title/crawl/clouds
-  (`tests/start-game.inputs` frames 300/600), **A** while Raditz dialogue
-  is active, then one **A** to open the command menu. Not a WRAM warp;
-  Start is not sent after intro visuals; post-menu A is suppressed.
-  Headless: `DBZ_SKIP_SIM=1` on `dbz-port`.
+- `dbz_web_apply_opening_checkpoint` — primary **SKIP**: apply a Rev-1
+  `DBZCHK1` buffer (`checkpoints/opening-{en|ja}.dbzstate`). Instant Kame
+  House; hides Skip. Same validation as desktop `--load-checkpoint`.
+- `dbz_web_skip_cutscene` — mash Start/A fallback only (fetch/apply failure).
+  Headless proof of the checkpoint path:
+  `./build/dbz-port --load-checkpoint web/checkpoints/opening-en.dbzstate …`.
 - Each frame: `keys_kb | keys_touch | keys_gesture | pulse` → `snes_setButtonState`
