@@ -12,6 +12,8 @@
  * synthesizes the game's own intro skip: Start on title/crawl/clouds
  * (tests/start-game.inputs), then A through Raditz — not a WRAM warp.
  * Start is never sent after leaving intro visuals (would pause OW).
+ * After Raditz, A opens the command menu once then freezes (A-spam
+ * selects Talk and thrash-loops $0723=9e; $0733 never returns to 0).
  * Direct Y origins are lifted one DBZ_UI_ROW_PITCH vs tip measurements.
  * The same clean JP ROM always boots (no IPS / ROM patching). */
 #include <SDL.h>
@@ -1049,19 +1051,40 @@ static bool opening_title_sig(void) {
   return true;
 }
 
-/* Playable overworld: command UI seeded, not title/crawl, not mid-Raditz. */
+/* Drop queued SNES pulses (pending A must not fire Talk after latch). */
+static void clear_input_pulses(void) {
+  for(int i = 0; i < PULSE_SLOTS; i++) {
+    pulses[i].mask = 0;
+    pulses[i].remaining = 0;
+    pulses[i].delay = 0;
+  }
+}
+
+/* Playable overworld: command UI seeded, not title/crawl, not mid-Raditz.
+ * Evidence (start-game WRAM): after Raditz, $0733 stays nonzero; $0D64==5 and
+ * $0D66==0 mark Kame House list UI. ui==1 = menu open; ui==0 = closed OK. */
 static bool opening_overworld_ready(void) {
   if(!game) return false;
   if(opening_title_sig() || opening_crawl_sig()) return false;
   uint8_t mode = game->ram[DBZ_WRAM_MENU_MODE];
   uint8_t max = game->ram[DBZ_WRAM_MENU_MAX];
   uint8_t ui = game->ram[DBZ_WRAM_UI_OPEN];
-  /* Command menu actually open — definitely playable. */
+  /* Command menu open — Talk/Look/Fly/Item/Menu. */
   if(mode == 0 && max == 5 && ui == 1) return true;
-  /* Post-Raditz overworld with list UI seeded (menu may be closed). */
-  if(skip_saw_dialogue && game->ram[DBZ_WRAM_MSG_BANK] == 0 &&
-     mode == 0 && max == 5)
+  /* Post-Raditz: list seeded (menu may be closed). Do NOT require $0733==0. */
+  if(skip_past_intro && mode == 0 && max == 5 && ui != 7 && ui != 9)
     return true;
+  return false;
+}
+
+/* Raditz opening dialogue (ui $07) or pre-menu mode-9 cutscene (max still 0). */
+static bool opening_raditz_dialogue(void) {
+  if(!game) return false;
+  uint8_t mode = game->ram[DBZ_WRAM_MENU_MODE];
+  uint8_t max = game->ram[DBZ_WRAM_MENU_MAX];
+  uint8_t ui = game->ram[DBZ_WRAM_UI_OPEN];
+  if(ui == 7) return true;
+  if(mode == 9 && max == 0) return true;
   return false;
 }
 
@@ -1132,7 +1155,9 @@ static void opening_skip_tick(void) {
   }
 
   if(opening_overworld_ready()) {
-    if(++overworld_streak >= 20) {
+    /* Kill any in-flight A immediately — a pending pulse selects Talk. */
+    clear_input_pulses();
+    if(++overworld_streak >= 12) {
       opening_done = 1;
       skip_arm = 0;
       sync_skip_armed_ui(0);
@@ -1160,8 +1185,9 @@ static void opening_skip_tick(void) {
     return;
   }
   /* Evidence: tests/start-game.inputs — Start @300/@600 (clouds/title/crawl),
-   * then A through Raditz. Do NOT Start after leaving intro visuals
-   * (Start on overworld pauses). Cap Start spam on pre-title clouds. */
+   * then A through Raditz ($0733=3 / $0D66=9 / DP+$25=7). After dialogue,
+   * one A opens the command menu ($0D64=5); further A selects Talk and
+   * thrash-loops party dialogue ($0723=9e). Do NOT Start after intro. */
   int use_start = 0;
   if(!skip_past_intro) {
     if(title || crawl) use_start = 1;
@@ -1171,10 +1197,30 @@ static void opening_skip_tick(void) {
     dbz_web_pulse_button(3, 4); /* Start */
     skip_start_count++;
     skip_cooldown = 48; /* ~0.8s — between spam-28 and replay-300 */
-  } else {
-    dbz_web_pulse_button(8, 3); /* A */
-    skip_cooldown = 12;
+    return;
   }
+  uint8_t mode = game->ram[DBZ_WRAM_MENU_MODE];
+  uint8_t max = game->ram[DBZ_WRAM_MENU_MAX];
+  uint8_t ui = game->ram[DBZ_WRAM_UI_OPEN];
+  if(opening_raditz_dialogue()) {
+    /* Advance Raditz lines; ~40f matches compressed start-game cadence. */
+    dbz_web_pulse_button(8, 2);
+    skip_cooldown = 40;
+    return;
+  }
+  if(ui == 3 || ui == 0x0f) {
+    /* Scene wipe / menu-open flash — wait. */
+    skip_cooldown = 6;
+    return;
+  }
+  if(skip_past_intro && mode == 0 && ui == 0 && max != 5) {
+    /* Quiet Kame House after Raditz — single A to seed/open command UI. */
+    dbz_web_pulse_button(8, 2);
+    skip_cooldown = 90;
+    return;
+  }
+  /* Party/Talk submenu or unknown — do not mash A (causes 9e thrash). */
+  skip_cooldown = 12;
 }
 
 /* Host overlay Skip — top-right during opening only. */

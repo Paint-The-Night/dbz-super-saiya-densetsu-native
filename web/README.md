@@ -185,9 +185,10 @@ Chrome strip below the canvas (text links, not a fake SNES pad):
 Host **SKIP** (Densetsu cream/orange, top-right of the stage) appears once
 the ROM is running and hides after the overworld command UI is seeded. Tap
 it (HTML overlay **or** canvas top-right hit-rect — Traditional and Direct)
-to jump the opening via Start on title/crawl/clouds then A through Raditz.
-While armed the button shows an orange pulse; inputs pause once the command
-menu is stably open so A cannot thrash into the party menu.
+to jump the opening via Start on title/crawl/clouds, A through Raditz
+dialogue only, then one A to open the Kame House command menu. While armed
+the button shows an orange pulse; pending pulses are cleared and inputs
+freeze once `$0D66==0` / `$0D64==5` so A cannot thrash Talk→party (`$0723=9e`).
 
 Optional **Show classic pad** checkbox is Traditional / accessibility-only;
 default UX hides `#touch-pad`.
@@ -201,9 +202,10 @@ C APIs (frame-synced in `web_main.c`):
 - `dbz_web_canvas_tap(x, y)` — Direct hit-test / in-game write→A
 - `dbz_web_open_controls_menu` — reopen CONTROLS parchment mid-play
 - `dbz_web_skip_cutscene` — host **SKIP** (top-right). Visible only during
-  the opening (title / crawl / early Raditz), then latches off on overworld.
+  the opening (title / crawl / Raditz), then latches off on overworld.
   Synthesizes the game’s own skip: **Start** on title/crawl/clouds
-  (`tests/start-game.inputs` frames 300/600), then **A** through Raditz
-  dialogue. Not a WRAM warp; Start is not sent after dialogue begins
-  (Start on overworld would pause).
+  (`tests/start-game.inputs` frames 300/600), **A** while Raditz dialogue
+  is active, then one **A** to open the command menu. Not a WRAM warp;
+  Start is not sent after intro visuals; post-menu A is suppressed.
+  Headless: `DBZ_SKIP_SIM=1` on `dbz-port`.
 - Each frame: `keys_kb | keys_touch | keys_gesture | pulse` → `snes_setButtonState`

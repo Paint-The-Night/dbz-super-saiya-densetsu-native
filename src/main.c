@@ -223,6 +223,12 @@ int main(int argc,char **argv) {
   FILE *trace=dump_dir?open_output(dump_dir,"frames.jsonl","w"):NULL;
   const bool trace_reference = verify && getenv("DBZ_TRACE_REFERENCE") != NULL;
   unsigned frame=0,keys=0;bool running=true,paused=false,turbo=false,matched=true;
+  /* DBZ_SKIP_SIM: headless mirror of web opening Skip (no WRAM warp). */
+  const bool skip_sim = getenv("DBZ_SKIP_SIM") != NULL;
+  int skip_arm = skip_sim ? 1 : 0;
+  int skip_cooldown = 0, skip_saw_dialogue = 0, skip_past_intro = 0;
+  int skip_start_count = 0, overworld_streak = 0, opening_done = 0;
+  int skip_pulse_btn = -1, skip_pulse_left = 0;
   uint64_t started=SDL_GetPerformanceCounter(),deadline=started,frequency=SDL_GetPerformanceFrequency();
   uint64_t active_audio=0;
   while(running && (!frame_limit || frame<frame_limit)) {
@@ -243,8 +249,68 @@ int main(int argc,char **argv) {
     frame++;
     // Recorded game input must be reproducible even while the window is focused.
     unsigned mask=input_path?replay_mask(frame):keys;
+    if(skip_sim && skip_arm && !opening_done) {
+      mask = 0;
+      if(skip_pulse_left > 0 && skip_pulse_btn >= 0) {
+        mask = 1u << skip_pulse_btn;
+        skip_pulse_left--;
+        if(skip_pulse_left == 0) skip_pulse_btn = -1;
+      }
+    }
     for(int b=0;b<12;b++) { snes_setButtonState(game,1,b,(mask>>b)&1u);if(verify) snes_setButtonState(reference,1,b,(mask>>b)&1u); }
     snes_runFrame(game);
+    if(skip_sim && skip_arm && !opening_done) {
+      bool crawl = game->ppu && game->ppu->bgLayer[2].tilemapAdr == 0x7000u &&
+                   game->ppu->bgLayer[2].tileAdr == 0x4000u;
+      bool title = false;
+      if(game->ppu && game->ppu->mode == 1u && !crawl) {
+        const BgLayer *bg0 = &game->ppu->bgLayer[0];
+        const BgLayer *bg1 = &game->ppu->bgLayer[1];
+        const BgLayer *bg2 = &game->ppu->bgLayer[2];
+        title = bg0->tileAdr == 0x5000u && bg1->tileAdr == 0x4000u &&
+                bg2->tileAdr == 0x2000u && bg0->tilemapAdr == 0x6000u;
+      }
+      if(game->ram[0x0733] != 0) skip_saw_dialogue = 1;
+      uint8_t mode = game->ram[0x0D66], max = game->ram[0x0D64], ui = game->ram[0x0025];
+      if(!(title || crawl)) {
+        if(skip_saw_dialogue || ui == 7 || mode == 9) skip_past_intro = 1;
+      }
+      int ow_ready = 0;
+      if(!title && !crawl) {
+        if(mode == 0 && max == 5 && ui == 1) ow_ready = 1;
+        else if(skip_past_intro && mode == 0 && max == 5 && ui != 7 && ui != 9) ow_ready = 1;
+      }
+      if(ow_ready) {
+        skip_pulse_btn = -1; skip_pulse_left = 0;
+        if(++overworld_streak >= 12) {
+          opening_done = 1; skip_arm = 0;
+          fprintf(stderr,
+            "SKIP_SIM OK frame=%u mode=%02x max=%02x ui=%02x $0733=%02x $0723=%02x\n",
+            frame, mode, max, ui, game->ram[0x0733], game->ram[0x0723]);
+        }
+      } else {
+        overworld_streak = 0;
+        if(skip_cooldown > 0) skip_cooldown--;
+        else if(skip_pulse_left <= 0) {
+          int use_start = 0;
+          if(!skip_past_intro) {
+            if(title || crawl) use_start = 1;
+            else if(!skip_saw_dialogue && skip_start_count < 4) use_start = 1;
+          }
+          if(use_start) {
+            skip_pulse_btn = 3; skip_pulse_left = 4; skip_start_count++; skip_cooldown = 48;
+          } else if(ui == 7 || (mode == 9 && max == 0)) {
+            skip_pulse_btn = 8; skip_pulse_left = 2; skip_cooldown = 40;
+          } else if(ui == 3 || ui == 0x0f) {
+            skip_cooldown = 6;
+          } else if(skip_past_intro && mode == 0 && ui == 0 && max != 5) {
+            skip_pulse_btn = 8; skip_pulse_left = 2; skip_cooldown = 90;
+          } else {
+            skip_cooldown = 12;
+          }
+        }
+      }
+    }
     if(verify) {
       if(trace_reference) { execution.cpu=reference->cpu; execution.enabled=false; }
       snes_runFrame(reference);
@@ -278,6 +344,12 @@ int main(int argc,char **argv) {
     }
   }
   if(trace) fclose(trace);
+  if(skip_sim && !opening_done) {
+    fprintf(stderr,
+      "SKIP_SIM FAIL frame=%u mode=%02x max=%02x ui=%02x $0733=%02x streak=%d\n",
+      frame, game->ram[0x0D66], game->ram[0x0D64], game->ram[0x0025],
+      game->ram[0x0733], overworld_streak);
+  }
   double elapsed=(double)(SDL_GetPerformanceCounter()-started)/(double)frequency;
   FILE *report=dump_dir?open_output(dump_dir,"report.json","w"):stdout;
   fprintf(report,"{\"rom_sha256\":\"%s\",\"frames\":%u,\"verification_enabled\":%s,\"equivalence_passed\":%s,\"elapsed_seconds\":%.3f,\"frames_with_audio\":%" PRIu64 ",",DBZ_ROM_SHA256,frame,verify?"true":"false",verify?(matched?"true":"false"):"null",elapsed,active_audio);
