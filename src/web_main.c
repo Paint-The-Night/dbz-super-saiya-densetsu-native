@@ -7,7 +7,8 @@
  * bits 0–11 via snes_setButtonState. Direct hit-tests measured menu rects,
  * writes the live selection cursor ($0D62 / Status $0D63) plus $1100,Y
  * mirror, then pulses A only — tap-the-thing UX (host-driven selection +
- * SNES A), not N× D-pad scroll. CONTROLS also reopens in-game via chrome.
+ * SNES A), not N× D-pad scroll. CONTROLS also reopens in-game via chrome
+ * or a host-drawn party-submenu Controls row (Text stays the real Text UI).
  * Opening SKIP (host overlay, top-right; also canvas top-right hit-rect)
  * loads a Rev-1-bound post-Raditz opening.dbzstate (Kame House command UI)
  * via dbz_web_apply_opening_checkpoint — no Raditz dialogue on screen.
@@ -59,6 +60,8 @@ static int lang_sel;          /* 0 = ENGLISH, 1 = 日本語 */
 static int ctrl_mode = CTRL_TRADITIONAL;
 static int ctrl_sel;          /* 0 = Traditional, 1 = Direct touch */
 static int controls_live;     /* 1 = CONTROLS overlay mid-play (not boot) */
+static int party_host_ctrl_sel; /* 1 = host Controls row selected (Traditional) */
+static unsigned party_host_prev_keys;
 static int opening_done;      /* 1 = reached playable overworld; hide Skip */
 static int skip_arm;          /* 1 = Skip sequencer running */
 static int skip_cooldown;     /* frames until next Start/A pulse */
@@ -570,6 +573,9 @@ static void frame_tick(void);
 static void opening_skip_tick(void);
 static void opening_reset(void);
 static void sync_skip_button(int show);
+static int party_submenu_open(void);
+static void draw_party_controls_row(void);
+static int party_host_controls_filter(unsigned *keys);
 
 static void enter_playing_chrome(void) {
   EM_ASM({
@@ -747,7 +753,7 @@ static void controls_confirm(void) {
   }, mode);
 }
 
-/* Re-open CONTROLS parchment mid-play (chrome / party Text). Live update — no reboot. */
+/* Re-open CONTROLS parchment mid-play (chrome / party Controls row). Live update — no reboot. */
 EMSCRIPTEN_KEEPALIVE
 void dbz_web_open_controls_menu(void) {
   if(!game || boot_phase != BOOT_PLAYING) return;
@@ -825,9 +831,17 @@ static void frame_tick(void) {
   }
 
   unsigned keys = collect_keys();
+  if(party_host_controls_filter(&keys))
+    return;
   for(int b = 0; b < 12; b++) snes_setButtonState(game, 1, b, (keys >> b) & 1u);
   snes_runFrame(game);
   snes_setPixels(game, pixels);
+  if(party_submenu_open()) {
+    lang_blink_frame++;
+    draw_party_controls_row();
+  } else {
+    party_host_ctrl_sel = 0;
+  }
   sample_phase += 320400000;
   int count = (int)(sample_phase / 600988);
   sample_phase %= 600988;
@@ -926,7 +940,7 @@ enum {
   DBZ_CMD_MENU_Y0 = 258, /* 290 − ROW_PITCH */
   DBZ_CMD_MENU_Y1 = 460,
   DBZ_CMD_MENU_ROW0_Y = 262, /* 294 − ROW_PITCH */
-  /* Party Cards/Status/Order/Text/Save — right of command window */
+  /* Party Cards/Status/Order/Text/Save (+ host Controls) — right of command */
   DBZ_PARTY_MENU_X0 = 160,
   DBZ_PARTY_MENU_X1 = 320,
   DBZ_PARTY_MENU_Y0 = 258,
@@ -954,7 +968,11 @@ enum {
   DBZ_WRAM_MENU_MODE = 0x0D66, /* 0=cmd, 1=party, $0A=flight, $0F=Status */
   DBZ_WRAM_MENU_SAVE = 0x1100, /* per-mode mirror; Y = $0D66 */
   DBZ_WRAM_MSG_BANK = 0x0733,  /* dialogue bank; 0 on title/crawl */
-  DBZ_PARTY_TEXT_INDEX = 3     /* party Text row → host CONTROLS */
+  /* Host-drawn 6th party row (Controls) under Save — not a ROM index. */
+  DBZ_PARTY_CTRL_ROW = 5,
+  DBZ_PARTY_CTRL_Y0 = 422, /* ROW0_Y + 5 * ROW_PITCH */
+  DBZ_PARTY_CTRL_Y1 = 458,
+  DBZ_PARTY_SAVE_INDEX = 4
 };
 
 static int direct_clamp_row(int target, int max_excl) {
@@ -962,6 +980,75 @@ static int direct_clamp_row(int target, int max_excl) {
   if(target < 0) return 0;
   if(target >= max_excl) return max_excl - 1;
   return target;
+}
+
+static int party_submenu_open(void) {
+  if(!game) return 0;
+  return game->ram[DBZ_WRAM_UI_OPEN] == 1 &&
+         game->ram[DBZ_WRAM_MENU_MODE] == 1 &&
+         game->ram[DBZ_WRAM_MENU_MAX] == 5;
+}
+
+/* Densetsu-styled host label under Save (Cards…Save + Controls). */
+static void draw_party_controls_row(void) {
+  const int x = DBZ_PARTY_MENU_X0;
+  const int y = DBZ_PARTY_CTRL_Y0;
+  const int w = DBZ_PARTY_MENU_X1 - DBZ_PARTY_MENU_X0;
+  const int h = DBZ_PARTY_CTRL_Y1 - DBZ_PARTY_CTRL_Y0;
+  fill_rect(x, y, w, h, DBZ_UI_CREAM_R, DBZ_UI_CREAM_G, DBZ_UI_CREAM_B);
+  fill_rect(x, y, w, 2, DBZ_UI_ORANGE_R, DBZ_UI_ORANGE_G, DBZ_UI_ORANGE_B);
+  fill_rect(x, y + h - 3, w, 3, DBZ_UI_DARK_R, DBZ_UI_DARK_G, DBZ_UI_DARK_B);
+  fill_rect(x, y, 3, h, DBZ_UI_ORANGE_R, DBZ_UI_ORANGE_G, DBZ_UI_ORANGE_B);
+  fill_rect(x + w - 3, y, 3, h, DBZ_UI_DARK_R, DBZ_UI_DARK_G, DBZ_UI_DARK_B);
+  const bool cursor_on = ((lang_blink_frame / DBZ_UI_BLINK_HALF) & 1u) == 0u;
+  if(cursor_on && party_host_ctrl_sel)
+    draw_cursor_tri(x + 4, y + 10);
+  const char *label = dbz_i18n_str(DBZ_STR_CTRL_TITLE);
+  const bool ja = dbz_i18n_get() == DBZ_LANG_JA;
+  if(ja && ctrl_labels_ready)
+    blit_label(label_ctrl_title, x + 24, y + 6, 80, 22);
+  else
+    draw_text(x + 24, y + 10, label, DBZ_UI_TEXT_R, DBZ_UI_TEXT_G, DBZ_UI_TEXT_B, 2);
+}
+
+/*
+ * Traditional: Down from Save selects the host Controls row; A opens CONTROLS;
+ * Up returns to Save. Swallow those edges so the ROM does not wrap Save→Cards.
+ * Direct tap uses the host hit-rect instead. Chrome Controls always remains.
+ */
+/* Returns 1 if CONTROLS was opened (caller must skip the rest of the frame). */
+static int party_host_controls_filter(unsigned *keys) {
+  if(!party_submenu_open()) {
+    party_host_ctrl_sel = 0;
+    party_host_prev_keys = *keys;
+    return 0;
+  }
+  unsigned pressed = (*keys) & ~party_host_prev_keys;
+  party_host_prev_keys = *keys;
+  const unsigned bit_up = 1u << 4;
+  const unsigned bit_down = 1u << 5;
+  const unsigned bit_a = 1u << 8;
+  if(party_host_ctrl_sel) {
+    if(pressed & bit_up) {
+      party_host_ctrl_sel = 0;
+      *keys &= ~bit_up;
+    }
+    if((*keys) & bit_down)
+      *keys &= ~bit_down;
+    if(pressed & bit_a) {
+      *keys &= ~bit_a;
+      dbz_web_open_controls_menu();
+      return 1;
+    }
+    if((*keys) & bit_a)
+      *keys &= ~bit_a;
+    return 0;
+  }
+  if(game->ram[DBZ_WRAM_MENU_CURSOR] == DBZ_PARTY_SAVE_INDEX && (pressed & bit_down)) {
+    party_host_ctrl_sel = 1;
+    *keys &= ~bit_down;
+  }
+  return 0;
 }
 
 /* Host-driven selection: write live cursor (+ mirror) then pulse A only. */
@@ -982,7 +1069,7 @@ static void direct_set_status_cursor(uint8_t col, uint8_t row) {
 
 /*
  * Tap-the-thing: hit-test → write $0D62 (Status also $0D63) → pulse A.
- * Party Text opens the host CONTROLS overlay instead of the in-game Text UI.
+ * Party Text (index 3) is normal write→A. Host Controls row opens CONTROLS.
  */
 static void direct_in_game_tap(int x, int y) {
   if(!game) {
@@ -1002,13 +1089,14 @@ static void direct_in_game_tap(int x, int y) {
     target = direct_clamp_row((y - DBZ_CMD_MENU_ROW0_Y) / DBZ_UI_ROW_PITCH, 5);
   } else if(mode == 1 && max == 5 &&
             x >= DBZ_PARTY_MENU_X0 && x < DBZ_PARTY_MENU_X1 &&
-            y >= DBZ_PARTY_MENU_Y0 && y < DBZ_PARTY_MENU_Y1) {
-    target = direct_clamp_row((y - DBZ_PARTY_MENU_ROW0_Y) / DBZ_UI_ROW_PITCH, 5);
-    if(target == DBZ_PARTY_TEXT_INDEX) {
-      direct_set_list_cursor(mode, (uint8_t)target);
+            y >= DBZ_PARTY_MENU_Y0 && y < DBZ_PARTY_CTRL_Y1) {
+    /* Host Controls row (6th) — not a ROM $0D62 index. */
+    if(y >= DBZ_PARTY_CTRL_Y0) {
+      party_host_ctrl_sel = 0;
       dbz_web_open_controls_menu();
       return;
     }
+    target = direct_clamp_row((y - DBZ_PARTY_MENU_ROW0_Y) / DBZ_UI_ROW_PITCH, 5);
   } else if(mode == 0x0A && max == 3 &&
             x >= DBZ_FLY_MENU_X0 && x < DBZ_FLY_MENU_X1 &&
             y >= DBZ_FLY_MENU_Y0 && y < DBZ_FLY_MENU_Y1) {
@@ -1026,6 +1114,7 @@ static void direct_in_game_tap(int x, int y) {
     dbz_web_pulse_button(8, 3);
     return;
   }
+  party_host_ctrl_sel = 0;
   direct_set_list_cursor(mode, (uint8_t)target);
   dbz_web_pulse_button(8, 3);
 }

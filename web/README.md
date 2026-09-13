@@ -98,8 +98,9 @@ SDL-drawn boot menus (`src/web_main.c`):
 2. **CONTROLS / 操作** — Traditional (gestures/pad) or Direct touch.
 
 Not a third row on the language menu — two screens. The same CONTROLS parchment
-reopens mid-play from the chrome **Controls** button (or Direct → party Text)
-via `_dbz_web_open_controls_menu` and updates `dbz-controls` live without reboot.
+reopens mid-play from the chrome **Controls** button or the host party-submenu
+**Controls** row via `_dbz_web_open_controls_menu` and updates `dbz-controls`
+live without reboot. Party **Text** stays the in-game Text command.
 
 - **Japanese** — `dbz_i18n_set(DBZ_LANG_JA)` then (after Controls) boot clean Rev 1.
 - **English** — `dbz_i18n_set(DBZ_LANG_EN)` then boot the **same** clean Rev 1.
@@ -173,7 +174,7 @@ N× D-pad scroll.
 | Surface | Behavior |
 |---------|----------|
 | Host LANGUAGE / CONTROLS | Hit-test the two Densetsu rows; set host cursor and confirm |
-| In-game | **Write→A:** if DP+`$25==1` and tap hits a measured rect (command 0 / party 1 / flight `$0A` / Status `$0F`), write `$0D62` (Status also `$0D63` + `$1100,Y` mirror) then pulse A. Party Text opens host CONTROLS. Hit-rect **Y origins are one `DBZ_UI_ROW_PITCH` (32px @2×) above** the raw tip/divider measurements — playtest 2026-09-12 had to tap the row below; Status 3×3 gets the same 32px lift. See `docs/ram-map.md`. |
+| In-game | **Write→A:** if DP+`$25==1` and tap hits a measured rect (command 0 / party 1 / flight `$0A` / Status `$0F`), write `$0D62` (Status also `$0D63` + `$1100,Y` mirror) then pulse A. Party **Text** is normal write→A; host **Controls** row under Save opens CONTROLS. Hit-rect **Y origins are one `DBZ_UI_ROW_PITCH` (32px @2×) above** the raw tip/divider measurements — playtest 2026-09-12 had to tap the row below; Status 3×3 gets the same 32px lift. See `docs/ram-map.md`. |
 
 Two-finger Start / three-finger Select still work in Direct (system shortcuts,
 not a virtual pad overlay). Classic pad stays **hidden by default** in Direct;

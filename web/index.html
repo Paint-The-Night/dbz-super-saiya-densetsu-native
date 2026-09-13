@@ -102,7 +102,7 @@
     <section class="panel controls">
       <h2>Controls</h2>
       <p class="gesture-map"><strong>Traditional:</strong> Drag to move · Tap = A · Long-press = B · Swipe flick = step · Two-finger = Start<br>
-        <strong>Direct touch:</strong> Tap host LANGUAGE / CONTROLS rows. In-game: tap a measured menu row/cell — writes $0D62 (Status also $0D63) then pulses A. Party <em>Text</em> or chrome <strong>Controls</strong> reopens CONTROLS live.</p>
+        <strong>Direct touch:</strong> Tap host LANGUAGE / CONTROLS rows. In-game: tap a measured menu row/cell — writes $0D62 (Status also $0D63) then pulses A. Party <em>Controls</em> (host row under Save) or chrome <strong>Controls</strong> reopens CONTROLS live; party <em>Text</em> is the real Text UI.</p>
       <ul>
         <li><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> — D-pad</li>
         <li><kbd>Z</kbd> B · <kbd>X</kbd> A · <kbd>A</kbd> Y · <kbd>S</kbd> X</li>
@@ -114,7 +114,7 @@
         <input type="checkbox" id="classic-pad-toggle">
         Show classic pad (accessibility)
       </label>
-      <p class="note">After ROM load, the <strong>in-game</strong> LANGUAGE menu then the CONTROLS menu (Traditional vs Direct touch) run on the canvas. Re-open CONTROLS anytime from the chrome strip (or Direct→party Text) without rebooting. Choice is stored as <code>dbz-lang</code> and <code>dbz-controls</code>. Hold Start on load to skip both with the remembered pair. Direct is host-driven selection + SNES A (writes measured cursor WRAM), not a fake D-pad scroll. During the opening crawl / Raditz sequence a top-right <strong>SKIP</strong> loads a post-Raditz Kame House checkpoint (no Raditz dialogue).</p>
+      <p class="note">After ROM load, the <strong>in-game</strong> LANGUAGE menu then the CONTROLS menu (Traditional vs Direct touch) run on the canvas. Re-open CONTROLS anytime from the chrome strip or the party-submenu <strong>Controls</strong> row (under Save) without rebooting. Party <em>Text</em> stays in-game Text. Choice is stored as <code>dbz-lang</code> and <code>dbz-controls</code>. Hold Start on load to skip both with the remembered pair. Direct is host-driven selection + SNES A (writes measured cursor WRAM), not a fake D-pad scroll. During the opening crawl / Raditz sequence a top-right <strong>SKIP</strong> loads a post-Raditz Kame House checkpoint (no Raditz dialogue).</p>
     </section>
 
     <footer>
