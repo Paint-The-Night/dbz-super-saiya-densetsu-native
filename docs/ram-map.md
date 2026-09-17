@@ -622,10 +622,11 @@ pulses A only (tap-the-thing). Addresses below are evidence-backed.
 | `$1100,Y` | byte | Per-mode cursor **save slot** (`Y = $0D66`). Mode 0 mirrors live `$0D62`; mode 1 keeps parent Menu index in `$1100` while `$1101` mirrors live party `$0D62`; mode `$0A` → `$110A`; Status `$0F` → `$110F` (column) | `01:B86D` `LDA $0D62` / `STA $1100,Y`; `01:B9E9` reload. Party diffs: `$1100=4` while `$0D62`/`$1101` track 0..4 |
 | DP+`$25` | byte | **UI-open gate**: `1` while command/party/flight UI is up; `0` when closed | Open (A) vs closed (B) WRAM pair; stays `1` across `$0D62` moves; Down with menu closed does **not** change `$0D62` |
 
-### Party submenu (`$0D66=1`) — recovered 2026-09-12
+### Party submenu (`$0D66=1`) — recovered 2026-09-12; Controls ext 2026-09-17
 
-Open from overworld command **Menu** (index 4) with A. Live list is still `$0D62` /
-`$0D64=#5` (Cards=0 … Save=4). Up/Down diffs `0,1,2,3,4` and Up from Save→Text.
+Open from overworld command **Menu** (index 4) with A. Live list is `$0D62` /
+`$0D64=#6` with engine extension (ROM table `$02:E232` mode1 max filtered
+`5→6`): Cards=0 … Save=4, **Controls=5**. Up/Down wrap via `01:BA44` vs `$0D64`.
 `$1100` stays `4` (parent Menu); `$1101` tracks the live party index. Triangle tips
 at 2× ≈ `312 + i*32`, window `x∈[160,320)`, `y∈[290,460)`.
 
@@ -672,7 +673,7 @@ N× D-pad scroll. Integrity = selection WRAM + SNES A, not a fake pad UI.
 | `$0D66` | Writes | Hit-rect (2×, Y lifted 32) | Notes |
 |---|---|---|---|
 | `0` | `$0D62` + `$1100` | `x∈[30,280)`, `y∈[258,460)`, row0=262 pitch 32 | Talk…Menu |
-| `1` | `$0D62` + `$1101` | `x∈[160,320)`, `y∈[258,460)`, row0=262 | Cards…Save (Text index 3 = normal write→A) |
+| `1` | `$0D62` + `$1101` | `x∈[160,320)`, `y∈[258,492)`, row0=262 | Cards…Save…**Controls** (index 5 → CONTROLS parchment; Text=3 normal write→A) |
 | `$0A` | `$0D62` + `$110A` | `x∈[30,280)`, `y∈[326,460)`, row0=326 | Land/Item/Menu |
 | `$0F` | `$0D62` col, `$0D63` row, `$110F` | 3×3 cells via dividers 214/342 × 136/264 | Status grid |
 | other | — | — | **tap = A** only |
@@ -682,6 +683,7 @@ divider measurements (command tips ≈ `310+i*32`, Status lines `168`/`296`).
 Playtest 2026-09-12: hit-rects sat one row too low (had to tap the row
 below). Status uses the same 32px lift, not a full ~128px cell.
 
-Menu closed → A. Mid-play CONTROLS reopens only via chrome **Controls**
-(`dbz_web_open_controls_menu`) and updates `dbz-controls` live without reboot.
-Party **Text** is normal write→A (not hijacked). No host-drawn sixth party row.
+Menu closed → A. Mid-play CONTROLS: primary = party **Controls** row (engine
+ext, index 5); chrome **Controls** remains an optional shortcut. Both call
+`dbz_web_open_controls_menu` and update `dbz-controls` live without reboot.
+Party **Text** is normal write→A (not hijacked). No host-drawn sticker row.

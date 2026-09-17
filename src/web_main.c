@@ -7,8 +7,9 @@
  * bits 0–11 via snes_setButtonState. Direct hit-tests measured menu rects,
  * writes the live selection cursor ($0D62 / Status $0D63) plus $1100,Y
  * mirror, then pulses A only — tap-the-thing UX (host-driven selection +
- * SNES A), not N× D-pad scroll. CONTROLS also reopens in-game via chrome
- * Controls only (party Text stays the real Text UI — never hijacked).
+ * SNES A), not N× D-pad scroll. CONTROLS reopens in-game via the native
+ * party-submenu Controls row (engine ext — $0D64=6) or chrome Controls
+ * shortcut. Party Text stays the real Text UI — never hijacked.
  * Opening SKIP (host overlay, top-right; also canvas top-right hit-rect)
  * loads a Rev-1-bound post-Raditz opening.dbzstate (Kame House command UI)
  * via dbz_web_apply_opening_checkpoint — no Raditz dialogue on screen.
@@ -28,6 +29,7 @@
 #include "text_script.h"
 #include "rom.h"
 #include "checkpoint.h"
+#include "menu_ext.h"
 #include "snes.h"
 
 enum { WIDTH = 512, HEIGHT = 480, PIXEL_BYTES = WIDTH * HEIGHT * 4 };
@@ -60,6 +62,7 @@ static int lang_sel;          /* 0 = ENGLISH, 1 = 日本語 */
 static int ctrl_mode = CTRL_TRADITIONAL;
 static int ctrl_sel;          /* 0 = Traditional, 1 = Direct touch */
 static int controls_live;     /* 1 = CONTROLS overlay mid-play (not boot) */
+static unsigned party_ctrl_prev_keys; /* Traditional A-edge on Controls */
 static int opening_done;      /* 1 = reached playable overworld; hide Skip */
 static int skip_arm;          /* 1 = Skip sequencer running */
 static int skip_cooldown;     /* frames until next Start/A pulse */
@@ -748,7 +751,7 @@ static void controls_confirm(void) {
   }, mode);
 }
 
-/* Re-open CONTROLS parchment mid-play (chrome Controls). Live update — no reboot. */
+/* Re-open CONTROLS parchment mid-play (party Controls row or chrome). Live — no reboot. */
 EMSCRIPTEN_KEEPALIVE
 void dbz_web_open_controls_menu(void) {
   if(!game || boot_phase != BOOT_PLAYING) return;
@@ -826,6 +829,20 @@ static void frame_tick(void) {
   }
 
   unsigned keys = collect_keys();
+  /* Party Controls (index 5): A opens CONTROLS parchment; swallow so the ROM
+   * does not dispatch an out-of-range party action. */
+  if(dbz_menu_ext_controls_selected(game)) {
+    unsigned pressed = keys & ~party_ctrl_prev_keys;
+    party_ctrl_prev_keys = keys;
+    const unsigned bit_a = 1u << 8;
+    if(pressed & bit_a) {
+      dbz_web_open_controls_menu();
+      return;
+    }
+    keys &= ~bit_a; /* hold-A while selected must not leak into the ROM */
+  } else {
+    party_ctrl_prev_keys = keys;
+  }
   for(int b = 0; b < 12; b++) snes_setButtonState(game, 1, b, (keys >> b) & 1u);
   snes_runFrame(game);
   snes_setPixels(game, pixels);
@@ -927,11 +944,11 @@ enum {
   DBZ_CMD_MENU_Y0 = 258, /* 290 − ROW_PITCH */
   DBZ_CMD_MENU_Y1 = 460,
   DBZ_CMD_MENU_ROW0_Y = 262, /* 294 − ROW_PITCH */
-  /* Party Cards/Status/Order/Text/Save — right of command window */
+  /* Party Cards/Status/Order/Text/Save/Controls — right of command window */
   DBZ_PARTY_MENU_X0 = 160,
   DBZ_PARTY_MENU_X1 = 320,
   DBZ_PARTY_MENU_Y0 = 258,
-  DBZ_PARTY_MENU_Y1 = 460,
+  DBZ_PARTY_MENU_Y1 = 492, /* 6 rows @ pitch 32 from row0 */
   DBZ_PARTY_MENU_ROW0_Y = 262,
   /* Flight Land/Item/Menu ($0D66=$0A) — bottom three slots of command window */
   DBZ_FLY_MENU_X0 = 30,
@@ -982,7 +999,8 @@ static void direct_set_status_cursor(uint8_t col, uint8_t row) {
 
 /*
  * Tap-the-thing: hit-test → write $0D62 (Status also $0D63) → pulse A.
- * Party Text (index 3) is normal write→A. CONTROLS is chrome-only mid-play.
+ * Party Text (index 3) is normal write→A. Party Controls (index 5) opens
+ * the CONTROLS parchment (engine extension — not a host sticker).
  */
 static void direct_in_game_tap(int x, int y) {
   if(!game) {
@@ -1000,10 +1018,14 @@ static void direct_in_game_tap(int x, int y) {
      x >= DBZ_CMD_MENU_X0 && x < DBZ_CMD_MENU_X1 &&
      y >= DBZ_CMD_MENU_Y0 && y < DBZ_CMD_MENU_Y1) {
     target = direct_clamp_row((y - DBZ_CMD_MENU_ROW0_Y) / DBZ_UI_ROW_PITCH, 5);
-  } else if(mode == 1 && max == 5 &&
+  } else if(mode == 1 && max == 6 &&
             x >= DBZ_PARTY_MENU_X0 && x < DBZ_PARTY_MENU_X1 &&
             y >= DBZ_PARTY_MENU_Y0 && y < DBZ_PARTY_MENU_Y1) {
-    target = direct_clamp_row((y - DBZ_PARTY_MENU_ROW0_Y) / DBZ_UI_ROW_PITCH, 5);
+    target = direct_clamp_row((y - DBZ_PARTY_MENU_ROW0_Y) / DBZ_UI_ROW_PITCH, 6);
+    if(target == (int)DBZ_MENU_PARTY_CONTROLS_INDEX) {
+      dbz_web_open_controls_menu();
+      return;
+    }
   } else if(mode == 0x0A && max == 3 &&
             x >= DBZ_FLY_MENU_X0 && x < DBZ_FLY_MENU_X1 &&
             y >= DBZ_FLY_MENU_Y0 && y < DBZ_FLY_MENU_Y1) {

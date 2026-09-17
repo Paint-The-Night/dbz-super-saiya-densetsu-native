@@ -1,4 +1,5 @@
 #include "text_script.h"
+#include "menu_ext.h"
 #include "i18n.h"
 #include "snes.h"
 
@@ -314,7 +315,8 @@ uint8_t dbz_text_en_chrome_cart_filter(Snes *snes, uint32_t file_off, uint8_t ro
 
 void dbz_text_en_install_cart_filter(Snes *snes) {
   if(!snes) return;
-  snes->cartRomFilter = dbz_text_en_chrome_cart_filter;
+  /* menu_ext chains EN chrome after party structural overlays. */
+  dbz_menu_ext_install(snes);
 }
 
 void dbz_text_en_install_leave_vblank_hook(Snes *snes) {

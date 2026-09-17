@@ -241,6 +241,24 @@ Safe EN title remains: blank BG0 kanji + hide katakana-circle OBJ + AE6A
 small-font "LEGEND OF THE SAIYANS". A true large-font EN subtitle would be a
 **new native render** (not Klepto data recovery).
 
+
+
+## Party menu extension (Controls row)
+
+Fan-game / engine API — not a host canvas sticker. Extends the recovered party
+submenu (Cards / Status / Order / Text / Save) with a 6th **Controls** row.
+
+| Piece | Role |
+|-------|------|
+| `$02:E232` mode1 max | cart filter `5→6` → `$0D64` (01:BA44 wrap / D-pad) |
+| `$02:E0F2` mode1 w×h | cart filter `10×12→12×14` tiles (room under Save) |
+| `$02:DA16[1]` | retarget to `$02:F500` (unused `$FF`); C serves 6-row descriptor |
+| Descriptor | `src/menu_ext.c` — JA rows 0–4 = Rev 1 `$02:DACE` bytes; EN = chrome tiles; row5 Controls / ソウサ |
+| Confirm | web host: A or Direct tap on index 5 → `dbz_web_open_controls_menu` (chrome Controls remains a shortcut) |
+
+See `docs/ram-map.md` § party submenu. Install via `dbz_menu_ext_install` (chained
+from `dbz_text_en_install_cart_filter`).
+
 ## Remaining JP surfaces (lang=EN)
 
 | Surface | Status |
@@ -252,7 +270,7 @@ small-font "LEGEND OF THE SAIYANS". A true large-font EN subtitle would be a
 | Overworld command menu + bank `$02` field chrome | **EN** from clean EN boot (`cartRomFilter` + `text_en_chrome.inc`). **Caveat:** loading a JA-origin checkpoint then switching `--lang en` can leave WRAM-cached JP chrome indices under the EN font (mojibake) until a scene reload re-reads bank `$02` via the filter |
 | Battle encounter / command streams | **EN** via bank tables (sel 1/3/…); `en_battle_smoke` covers encounter messages on the scout battle route |
 | Item empty-bag message | **EN** (CF3A bank 0 + pointer-swap font ensure) |
-| Party submenu (Cards / Status / Order / Text / Save) | **EN** when opened from a clean EN boot (bank `$02` / bank tables) |
+| Party submenu (Cards / Status / Order / Text / Save / **Controls**) | **EN** + engine ext 6th row (`menu_ext.c`); JA rows 0–4 identity |
 | Far-table sel 7 trailing 7 unused slots | JP ROM bytes (also unused in JA) |
 | Host LANGUAGE boot menu | Host SDL strings (EN/JA), not ROM |
 | Player name-entry screen | **Not observed** on new-game → overworld (fixed cast names). BD86 glyph tables are overlaid if that screen is ever reached |
