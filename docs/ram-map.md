@@ -616,9 +616,9 @@ pulses A only (tap-the-thing). Addresses below are evidence-backed.
 
 | Address | Width | Observed role | Evidence |
 |---|---|---|---|
-| `$0D62` | byte | **Live menu selection index** (0=Talk … 4=Menu on the overworld command list) | Up/Down diffs `0,1,2,3,4`; Up from 2→1. ROM: `01:BA44` `INC $0D62` / `01:BA68` `DEC $0D62`, compare/wrap vs `$0D64`; `01:B149`/`01:B14C` clamp with `CMP #$05` |
-| `$0D64` | byte | Exclusive max index (command menu: `#5` → valid `0..4`) | Adjacent to `$0D62`; `CMP $0D64` before wrap-to-zero at `01:BA44`. Seeded `#5` at `01:BDB2` |
-| `$0D66` | byte | Menu-mode / UI class (`0` = overworld command; `1` = party Cards…Save; `$0A` = flight Land/Item/Menu; `$0F` = Status 3×3 grid) | Gates `01:BA33` cluster (`CMP #$28`/`#$0B`/`#$26`); `01:B86D` uses it as Y for `$1100,Y`; Status specialty at `01:B7E5` `CMP #$0F` |
+| `$0D62` | byte | **Live menu selection index** (0=Talk … 4=Menu on the overworld command list) | Up/Down diffs `0,1,2,3,4`; Up from 2→1. ROM: `01:BA44` `INC $0D62` / `01:BA6E` `DEC $0D62`, compare/wrap vs `$0D64`. `$01:BA68` is `JMP $BAF1` |
+| `$0D64` | byte | Exclusive max index (command menu: `#5` → valid `0..4`) | Adjacent to `$0D62`; `CMP $0D64` at `01:BA4A` before wrap-to-zero. Seeded `#5` at `01:BDB2` |
+| `$0D66` | byte | Menu-mode / UI class (`0` = overworld command; `1` = party Cards…Save; `$0A` = flight Land/Item/Menu; `$0F` = Status 3×3 grid) | Gates `01:BA33` (`CMP #$28` / `#$0B` / `#$26`). `01:B86D` uses it as Y for `$1100,Y`. `$01:B7E5` is `LDA $0D66`; `CMP #$0F` is the next instruction at `$01:B7E8` |
 | `$1100,Y` | byte | Per-mode cursor **save slot** (`Y = $0D66`). Mode 0 mirrors live `$0D62`; mode 1 keeps parent Menu index in `$1100` while `$1101` mirrors live party `$0D62`; mode `$0A` → `$110A`; Status `$0F` → `$110F` (column) | `01:B86D` `LDA $0D62` / `STA $1100,Y`; `01:B9E9` reload. Party diffs: `$1100=4` while `$0D62`/`$1101` track 0..4 |
 | DP+`$25` | byte | **UI-open gate**: `1` while command/party/flight UI is up; `0` when closed | Open (A) vs closed (B) WRAM pair; stays `1` across `$0D62` moves; Down with menu closed does **not** change `$0D62` |
 
@@ -651,8 +651,10 @@ Open **Status** from the party list (index 1) with A. Live axes:
 
 Grid lines at 2× (cream interior): vertical dividers `x=214` / `342`; horizontal
 `y=168` / `296`; outer content `x∈[42,476)`, `y∈[42,428)`. Hit-cells are the
-3×3 slots those lines bound. ROM specialty: `01:B7E5` `CMP #$0F` before shared
-nav. Card-battle Fight UI was **not** reached within the 1800f battle-route
+3×3 slots those lines bound. ROM: `$01:B7E5` loads `$0D66` and `$01:B7E8`
+compares it with `#$0F` before shared nav. The `$01:B130` search loop is a
+separate clamp (`INC $0D62` at `$B148`, `CMP #$05` at `$B14E`); `$B149` and
+`$B14C` are operand bytes. Card-battle Fight UI was **not** reached within the 1800f battle-route
 window (flight menu `$0A` only) — still a Direct gap.
 
 ### Rejected / non-cursor candidates (same pass)

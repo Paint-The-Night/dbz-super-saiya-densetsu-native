@@ -444,7 +444,8 @@ the upload call at `$00:85F5`.
 | 05:CDE1–CF07 | ($CAFA,DA@$CDE1)/(,E2/$CDEE)/(,EE@$CDF7)/(,D8@$CE13)/(,D6@$CE60)/(,D4@$CE8B)+$CEFF/$CE4C; bit table $CE87–8A | 295 | 136 |
 | 05:CD02–CDE0 | ($CAFA,E6@$CD02)/(,E4@$CD81)/(,E0@$CD96)/(,DC@$CDB6)/(,DE@$CDCA) timer/slot via $CEFF/$D566/$DFF3/$86FC; shared $CDDC | 223 | 96 |
 | 05:CC04–CD01 | ($CAFA,104@$CC04)/(,F6@$CC0E)/(,F4@$CC25)/(,F0@$CC92)/(,EC@$CCA0)/(,EA@$CCBB)/(,E8@$CCC8)/(,148@$CCEE); $CCEE→$CD38 | 254 | 116 |
-| **Total** | **Four hundred forty-nine complete routines plus a reset prefix** | **30095** | **13358** |
+| 01:BA2A–BAF0 | Menu cursor. DP+$48 bit2/3 (Down/Up) or, when $0D6A is negative, bit0/1 (Right/Left). Wrap vs $0D64. Mode #$0B steps $0D63 through $018B74. JMP out to $BBA6/$BB2F/$BAF1/$BB84/$BB94 | 199 | 86 |
+| **Total** | **Four hundred fifty complete routines plus a reset prefix** | **30294** | **13444** |
 
 
 
@@ -498,9 +499,10 @@ Differential tests cover CA8D/DD51/D4E7 exits, DFF3 boundaries, and the CCEE→C
 ## How far from complete?
 
 The project now has a reproducible scoped tracker. The pinned static-analysis
-worklist contains 13,237 instruction variants. Of those, 13358 instruction sites
-are covered by reviewed C replacements: **100.91% of the discovered worklist**
-(inventory now meets or exceeds the pinned worklist after closing the remaining `$CAFA` CC/CD leaves).
+worklist contains 13,237 instruction variants. Of those, 13444 instruction sites
+are covered by reviewed C replacements: **101.56% of the discovered worklist**
+(inventory now meets or exceeds the pinned worklist after closing the remaining `$CAFA` CC/CD leaves
+and the `$01:BA2A` menu cursor).
 Run `python3 tools/progress.py` to recalculate this figure. If the local
 SNESRecomp manifest exists, the script sums it directly; a public clone uses the
 same checked-in probe total.
@@ -569,7 +571,7 @@ Next work is a reproducible actual battle and larger game-logic translations.
 `src/native_video.inc` reconstructs the complete frame graphics upload routine,
 unused-sprite hiding, and palette-shadow clearing. The new `ram-map.md` records
 the verified shadow buffers, flags, and eight-byte VRAM queue entry layout.
-The current inventory is 30095 ROM bytes / 13358 instruction sites.
+The current inventory is 30294 ROM bytes / 13444 instruction sites.
 
 The isolated suite now also covers interrupt-enable, VRAM queue find/mark,
 PPU multiply, DMA1 setup, pointer resolve, palette-shadow copy, actor-table
@@ -830,3 +832,10 @@ The bank-3 `$E769–E78C` sibling long-memory copy loops are native, covering
 both indexed spans, their 16-bit counters, carry gates, and RTSs. Differential
 tests cover all 14 manifest-listed sites, adding 14 verified sites and 36 ROM
 bytes.
+
+`$01:BA2A–BAF0` is the shared menu cursor (86 sites / 199 bytes). Down/Up are
+DP+$48 bits 2 and 3; a negative `$0D6A` switches that test to Right/Left (bits
+0 and 1) after `JSL $01:BA1D`. The index lives in `$0D62`, wraps against
+`$0D64`, and mode `#$0B` also steps the `$0D63` page through `$018B74`. Mode
+`#$28` jumps to `$BBA6`, and mode `#$26` jumps to `$BAF1` / `$BB2F` / `$BB84` /
+`$BB94`. Those tails, and the `$00:800E` main loop, are still interpreted.

@@ -68,6 +68,35 @@ static unsigned getword(Bus *b,unsigned addr) {
 static void plant_bank1(Bus *a, Bus *b, unsigned start, const uint8_t *bytes, unsigned n) {
   for(unsigned i=0;i<n;i++) a->ram[start+i]=b->ram[start+i]=bytes[i];
 }
+/* Step $01:BA2A–BAF0 until PC leaves that span. Both CPUs see the same RAM. */
+static unsigned walk_ba2a(Bus *a, Bus *b, DbzExecution *stats, uint16_t pc,
+    uint8_t pad, uint8_t cursor, uint8_t span, uint8_t mode, uint8_t row,
+    uint8_t gate, uint8_t flag, uint16_t dp, uint8_t db, uint16_t *out_pc) {
+  memset(a->ram, 0, sizeof(a->ram)); memset(b->ram, 0, sizeof(b->ram));
+  unsigned pad_at = (unsigned)(dp + 0x48u);
+  a->ram[pad_at] = b->ram[pad_at] = pad;
+  a->ram[0x0d62] = b->ram[0x0d62] = cursor;
+  a->ram[0x0d63] = b->ram[0x0d63] = row;
+  a->ram[0x0d64] = b->ram[0x0d64] = span;
+  a->ram[0x0d66] = b->ram[0x0d66] = mode;
+  a->ram[0x0d6a] = b->ram[0x0d6a] = flag;
+  a->ram[0x01b2] = b->ram[0x01b2] = gate;
+  word(a, 0x200, 0x8fff); word(b, 0x200, 0x8fff);
+  Cpu ca = make_cpu(a, pc, 0), cb = make_cpu(b, pc, 0);
+  ca.k = cb.k = 1; ca.xf = cb.xf = false; ca.db = cb.db = db; ca.dp = cb.dp = dp; ca.sp = cb.sp = 0x1ff;
+  unsigned n = 0;
+  while(ca.pc >= 0xba2a && ca.pc <= 0xbaf0) {
+    require(n < 64, "ba2a walk did not leave");
+    a->count = b->count = 0;
+    require(dbz_native_step(&ca, stats), "ba2a walk step");
+    lakesnes_cpu_runOpcode(&cb);
+    compare(&ca, &cb, a, b);
+    n++;
+  }
+  require(n > 0, "ba2a walk empty");
+  *out_pc = ca.pc;
+  return n;
+}
 
 int main(int argc,char **argv) {
   require(argc==2,"ROM argument required");
@@ -815,6 +844,91 @@ int main(int argc,char **argv) {
       if(sites[i]==0xba14 || sites[i]==0xba21) ca.z=cb.z=true;
       require(dbz_native_step(&ca,stats),"expected ba10 flag step"); lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
     }
+  }
+  {
+    const uint16_t sites[] = {
+      0xba2a,0xba2d,0xba2f,0xba33,0xba36,0xba38,0xba3a,
+      0xba3d,0xba3f,0xba40,0xba41,0xba42,
+      0xba44,0xba47,0xba4a,0xba4d,0xba4f,
+      0xba52,0xba55,0xba57,0xba59,0xba5b,0xba5d,
+      0xba5e,0xba61,0xba63,0xba65,0xba68,
+      0xba6b,0xba6c,0xba6e,0xba71,
+      0xba73,0xba76,0xba77,0xba79,0xba7b,
+      0xba7e,0xba81,0xba83,0xba85,0xba87,0xba89,
+      0xba8c,0xba8f,0xba91,0xba93,
+      0xba96,0xba9a,0xba9c,0xba9d,0xba9f,0xbaa0,0xbaa2,
+      0xbaa3,0xbaa5,0xbaa6,0xbaa9,0xbaaa,0xbaae,0xbab1,
+      0xbab3,0xbab6,0xbab9,0xbabb,0xbabd,0xbabf,
+      0xbac2,0xbac5,0xbac6,0xbac8,0xbaca,0xbacd,0xbad1,
+      0xbad2,0xbad5,0xbad7,0xbada,0xbadc,0xbadf,
+      0xbae1,0xbae4,0xbae8,0xbaeb,0xbaed,0xbaf0
+    };
+    require(sizeof(sites)/sizeof(sites[0])==86,"ba2a site count");
+    for(unsigned i=0;i<86;i++) {
+      memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
+      Cpu ca=make_cpu(a,sites[i],0), cb=make_cpu(b,sites[i],0);
+      ca.k=cb.k=1; ca.xf=cb.xf=false; ca.sp=cb.sp=0x1ff; ca.db=cb.db=0;
+      word(a,0x200,0x8fff); word(b,0x200,0x8fff);
+      a->ram[0x0d62]=b->ram[0x0d62]=1; a->ram[0x0d64]=b->ram[0x0d64]=5;
+      a->ram[0x01b2]=b->ram[0x01b2]=0x20; a->count=b->count=0;
+      require(dbz_native_step(&ca,stats),"expected ba2a cursor step");
+      lakesnes_cpu_runOpcode(&cb); compare(&ca,&cb,a,b);
+    }
+    uint16_t landed=0;
+    walk_ba2a(a,b,stats,0xba3d,0x04,1,5,0,0,0,0,0,0,&landed);
+    require(landed==0x9000 && a->ram[0x0d62]==2,"down steps the cursor");
+    walk_ba2a(a,b,stats,0xba3d,0x04,4,5,0,0,0,0,0,0,&landed);
+    require(landed==0x9000 && a->ram[0x0d62]==0,"down wraps through the exclusive max");
+    walk_ba2a(a,b,stats,0xba3d,0x08,2,5,0,0,0,0,0,0,&landed);
+    require(landed==0x9000 && a->ram[0x0d62]==1,"up steps the cursor");
+    walk_ba2a(a,b,stats,0xba3d,0x08,0,5,0,0,0,0,0,0,&landed);
+    require(landed==0x9000 && a->ram[0x0d62]==4,"up wraps to max-1");
+    walk_ba2a(a,b,stats,0xba3d,0x00,2,5,0,0,0,0,0,0,&landed);
+    require(landed==0x9000 && a->ram[0x0d62]==2,"no direction leaves the cursor");
+    walk_ba2a(a,b,stats,0xba33,0,1,5,0x28,0,0,0,0,0,&landed);
+    require(landed==0xbba6,"mode 28 jumps to the grid walker");
+    walk_ba2a(a,b,stats,0xba3d,0x04,4,5,0x26,0,0,0,0,0,&landed);
+    require(landed==0xbaf1 && a->ram[0x0d62]==0,"mode 26 past-max jumps to BAF1");
+    walk_ba2a(a,b,stats,0xba44,0,4,5,0x0b,0,0x20,0,0,0,&landed);
+    require(landed==0xa4eb && a->ram[0x0d62]==0 && a->ram[0x0d63]==1,"mode 0b advances the page");
+    walk_ba2a(a,b,stats,0xba44,0,4,5,0x0b,0,0x01,0,0,0,&landed);
+    require(landed==0xa4eb && a->ram[0x0d62]==4 && a->ram[0x0d63]==0,"mode 0b keeps the page when the table byte wins");
+    walk_ba2a(a,b,stats,0xba44,0,4,5,0x0b,2,0x20,0,0,0,&landed);
+    require(landed==0xa4eb && a->ram[0x0d63]==3 && a->ram[0x0d62]==4,"mode 0b clamps the page at 3");
+    walk_ba2a(a,b,stats,0xba3d,0x08,0,5,0x0b,1,0,0,0,0,&landed);
+    require(landed==0xa4eb && a->ram[0x0d63]==0 && a->ram[0x0d62]==8,"mode 0b down-wrap rewinds the page");
+    walk_ba2a(a,b,stats,0xba3d,0x08,0,5,0x0b,0,0,0,0,0,&landed);
+    require(landed==0xa4eb && a->ram[0x0d62]==0 && a->ram[0x0d63]==0,"mode 0b down-wrap at page 0 clears the cursor");
+    walk_ba2a(a,b,stats,0xba9a,0x01,1,5,0,0,0,0,0,0,&landed);
+    require(landed==0x9000 && a->ram[0x0d62]==2,"right steps the cursor when 0D6A is negative");
+    walk_ba2a(a,b,stats,0xba9a,0x02,2,5,0,0,0,0,0,0,&landed);
+    require(landed==0x9000 && a->ram[0x0d62]==1,"left steps the cursor when 0D6A is negative");
+    walk_ba2a(a,b,stats,0xba9a,0x00,2,5,0,0,0,0,0,0,&landed);
+    require(landed==0x9000 && a->ram[0x0d62]==2,"neither left nor right returns");
+    walk_ba2a(a,b,stats,0xba2a,0x04,1,5,0,0,0,0,0,0,&landed);
+    require(landed==0xba10,"clear 0D6A enters the down/up flag class");
+    walk_ba2a(a,b,stats,0xba2a,0x04,1,5,0,0,0,0x80,0,0,&landed);
+    require(landed==0xba1d,"negative 0D6A enters the left/right flag class");
+    walk_ba2a(a,b,stats,0xba3d,0x04,1,5,0,0,0,0,0x100,0x7e,&landed);
+    require(landed==0x9000 && a->ram[0x0d62]==2,"nonzero direct page and data bank still step");
+    Cpu guard=make_cpu(a,0xba2a,0); guard.k=1; guard.xf=true; a->count=0;
+    require(!dbz_native_step(&guard,stats)&&a->count==0,"ba2a 8-bit X falls back");
+    guard=make_cpu(a,0xba44,0); guard.k=1; guard.mf=false; guard.xf=false; a->count=0;
+    require(!dbz_native_step(&guard,stats)&&a->count==0,"ba2a 16-bit A falls back");
+    guard=make_cpu(a,0xba44,0); guard.k=1; guard.e=true; guard.xf=false; a->count=0;
+    require(!dbz_native_step(&guard,stats)&&a->count==0,"ba2a emulation falls back");
+    guard=make_cpu(a,0xba44,0); guard.k=2; guard.xf=false; a->count=0;
+    require(!dbz_native_step(&guard,stats)&&a->count==0,"ba2a other bank falls back");
+    guard=make_cpu(a,0xba2b,0); guard.k=1; guard.xf=false; a->count=0;
+    require(!dbz_native_step(&guard,stats)&&a->count==0,"ba2a operand byte falls back");
+    guard=make_cpu(a,0xb149,0); guard.k=1; guard.xf=false; a->count=0;
+    require(!dbz_native_step(&guard,stats)&&a->count==0,"b149 stays interpreted");
+    guard=make_cpu(a,0xb14c,0); guard.k=1; guard.xf=false; a->count=0;
+    require(!dbz_native_step(&guard,stats)&&a->count==0,"b14c stays interpreted");
+    guard=make_cpu(a,0xb7e5,0); guard.k=1; guard.xf=false; a->count=0;
+    require(!dbz_native_step(&guard,stats)&&a->count==0,"b7e5 stays interpreted");
+    guard=make_cpu(a,0xbaf1,0); guard.k=1; guard.xf=false; a->count=0;
+    require(!dbz_native_step(&guard,stats)&&a->count==0,"baf1 stays interpreted");
   }
   {
     memset(a->ram,0,sizeof(a->ram)); memset(b->ram,0,sizeof(b->ram));
