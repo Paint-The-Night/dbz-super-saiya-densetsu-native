@@ -332,6 +332,8 @@ bool dbz_native_step(Cpu *c, DbzExecution *x) {
       done = actor_index_8241_step(c, c->pc); x->display_control_steps += done;
     } else if((c->pc >= 0xba10 && c->pc <= 0xba1c) || (c->pc >= 0xba1d && c->pc <= 0xba29)) {
       done = actor_flag_ba10_step(c, c->pc); x->display_control_steps += done;
+    } else if(c->pc >= 0xba2a && c->pc <= 0xbaf0) {
+      done = menu_cursor_ba2a_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xce57 && c->pc <= 0xce6c) {
       done = actor_status_ce57_step(c, c->pc); x->display_control_steps += done;
     } else if(c->pc >= 0xce96 && c->pc <= 0xceab) {
